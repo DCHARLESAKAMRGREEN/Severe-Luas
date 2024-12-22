@@ -35,9 +35,9 @@ while true do
         elseif ping >= 40 then
             powerValue = 69.5 - 3.85
         elseif ping >= 35 then
-            powerValue = 69.5 - 1.25
-        elseif ping >= 30 then
             powerValue = 69.5 - 1
+        elseif ping >= 30 then
+            powerValue = 69.5 - 0.75
         end
 
         if power.Value >= powerValue then
