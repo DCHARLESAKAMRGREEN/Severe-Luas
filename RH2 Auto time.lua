@@ -5,7 +5,7 @@ local power = player.Backpack.ActionValues.Power
 local ShotAdjustments = {
     [100] = 69.5 - 26, [95] = 69.5 - 24, [90] = 69.5 - 22, 
     [85] = 69.5 - 19, [80] = 69.5 - 17, [75] = 69.5 - 15,
-    [70] = 69.5 - 14, [65] = 69.5 - 8., [60] = 69.5 - 7.45,
+    [70] = 69.5 - 14, [65] = 69.5 - 8.35, [60] = 69.5 - 7.45,
     [55] = 69.5 - 4.15, [50] = 69.5 - 3.75, [45] = 69.5 - 2.95,
     [40] = 69.5 - 2.75, [35] = 69 - 0, [30] = 69 - 0
 }
@@ -14,14 +14,20 @@ local LayupAdjustments = {
     [100] = 66.8165 - 26, [95] = 66.8165 - 24, [90] = 66.8165 - 22, 
     [85] = 66.8165 - 19, [80] = 66.8165 - 17, [75] = 66.8165 - 15,
     [70] = 66.8165 - 14, [65] = 66.8165 - 8.35, [60] = 66.8165 - 7.45,
-    [55] = 66.8165 - 4.25, [50] = 66.8165 - 3.75, [45] = 66.8165 - 3.15,
-    [40] = 66.8165 - 3, [35] = 66.8165 - 0, [30] = 66.8165 - 0
+    [55] = 66.8165 - 4.15, [50] = 66.8165 - 3.75, [45] = 66.8165 - 2.95,
+    [40] = 66.8165 - 2.75, [35] = 66.8165 - 0, [30] = 66.8165 - 0
 }
 
 local function getPowerValue(ping, pingTable)
-    for threshold, value in pairs(pingTable) do
+    local sortedThresholds = {}
+    for threshold in pairs(pingTable) do
+        table.insert(sortedThresholds, threshold)
+    end
+    table.sort(sortedThresholds, function(a, b) return a > b end)
+
+    for _, threshold in ipairs(sortedThresholds) do
         if ping >= threshold then
-            return value
+            return pingTable[threshold]
         end
     end
     return pingTable[30]
