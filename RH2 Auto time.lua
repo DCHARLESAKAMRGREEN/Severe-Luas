@@ -3,7 +3,7 @@ local player = Players.LocalPlayer or Players:GetChildren()[1]
 local power = player.Backpack.ActionValues.Power
 
 local ShotAdjustments = {
-    [100] = 69.5 - 9.15, [95] = 69.5 - 8.65, [90] = 69.5 - 8.15, 
+    [100] = 69.5 - 9.15, [95] = 69.5 - 8.25, [90] = 69.5 - 8, 
     [85] = 69.5 - 7.645, [80] = 69.5 - 7.15, [75] = 69.5 - 6.5,
     [70] = 69.5 - 6, [65] = 69.5 - 5.75, [60] = 69.5 - 5,
     [55] = 69.5 - 3.95, [50] = 69.5 - 3.65, [45] = 69.5 - 3.05,
