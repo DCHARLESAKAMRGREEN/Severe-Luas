@@ -19,9 +19,9 @@ while true do
         elseif ping >= 80 then
             powerValue = 69.5 - 7.5
         elseif ping >= 75 then
-            powerValue = 69.5 - 6.85
+            powerValue = 69.5 - 6.75
         elseif ping >= 70 then
-            powerValue = 69.5 - 6.5
+            powerValue = 69.5 - 6.15
         elseif ping >= 65 then
             powerValue = 69.5 - 5.5
         elseif ping >= 60 then
