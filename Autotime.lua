@@ -9,15 +9,15 @@ while true do
 
     if table.find(pressedKeys, "E") or table.find(pressedKeys, "Space") then
         if ping >= 100 then
-            powerValue = 69.5 - 10.5
+            powerValue = 69.5 - 9.25
         elseif ping >= 95 then
-            powerValue = 69.5 - 10
+            powerValue = 69.5 - 8.75
         elseif ping >= 90 then
-            powerValue = 69.5 - 9.5
-        elseif ping >= 85 then
             powerValue = 69.5 - 8
-        elseif ping >= 80 then
+        elseif ping >= 85 then
             powerValue = 69.5 - 7.5
+        elseif ping >= 80 then
+            powerValue = 69.5 - 7.25
         elseif ping >= 75 then
             powerValue = 69.5 - 6.75
         elseif ping >= 70 then
