@@ -2,44 +2,43 @@ local Players = game:GetService("Players")
 local player = Players.LocalPlayer or Players:GetChildren()[1]
 local power = player.Backpack.ActionValues.Power
 
+local ShotAdjustments = {
+    [100] = 69.5 - 9.25, [95] = 69.5 - 8.75, [90] = 69.5 - 8, 
+    [85] = 69.5 - 7.25, [80] = 69.5 - 7, [75] = 69.5 - 6.85,
+    [70] = 69.5 - 6.35, [65] = 69.5 - 5.5, [60] = 69.5 - 5.35,
+    [55] = 69.5 - 4.15, [50] = 69.5 - 3.95, [45] = 69.5 - 3.45,
+    [40] = 69.5 - 3.25, [35] = 69.5 - 0.5, [30] = 69.5 - 0.25
+}
+
+local LayupAdjustments = {
+    [100] = 66.825 - 12.5, [95] = 66.825 - 11.75, [90] = 66.825 - 11,
+    [85] = 66.825 - 10.25, [80] = 66.825 - 10, [75] = 66.825 - 9.85,
+    [70] = 66.825 - 9.35, [65] = 66.825 - 8.5, [60] = 66.825 - 8.35,
+    [55] = 66.825 - 7.15, [50] = 66.825 - 6.95, [45] = 66.825 - 6.45,
+    [40] = 66.825 - 6.25, [35] = 66.825 - 4.5, [30] = 66.825 - 4.25
+}
+
+local function getPowerValue(ping, pingTable)
+    for threshold, value in pairs(pingTable) do
+        if ping >= threshold then
+            return value
+        end
+    end
+    return pingTable[30]
+end
+
 while true do
     local pressedKeys = getpressedkeys()
     local ping = getping()
+
     local powerValue
+    if table.find(pressedKeys, "Shift") and table.find(pressedKeys, "W") then
+        powerValue = getPowerValue(ping, LayupAdjustments)
+    else
+        powerValue = getPowerValue(ping, ShotAdjustments)
+    end
 
     if table.find(pressedKeys, "E") or table.find(pressedKeys, "Space") then
-        if ping >= 100 then
-            powerValue = 69.5 - 9.25
-        elseif ping >= 95 then
-            powerValue = 69.5 - 8.75
-        elseif ping >= 90 then
-            powerValue = 69.5 - 8
-        elseif ping >= 85 then
-            powerValue = 69.5 - 7.25
-        elseif ping >= 80 then
-            powerValue = 69.5 - 7
-        elseif ping >= 75 then
-            powerValue = 69.5 - 6.85
-        elseif ping >= 70 then
-            powerValue = 69.5 - 6.35
-        elseif ping >= 65 then
-            powerValue = 69.5 - 5.5
-        elseif ping >= 60 then
-            powerValue = 69.5 - 5.35
-        elseif ping >= 55 then
-            powerValue = 69.5 - 4.15
-        elseif ping >= 50 then
-            powerValue = 69.5 - 3.95
-        elseif ping >= 45 then
-            powerValue = 69.5 - 3.45
-        elseif ping >= 40 then
-            powerValue = 69.5 - 3.25
-        elseif ping >= 35 then
-            powerValue = 69.5 - 0.5
-        elseif ping >= 30 then
-            powerValue = 69.5 - 0.25
-        end
-
         if power.Value >= powerValue then
             if table.find(pressedKeys, "E") then
                 keyrelease(0x45)
