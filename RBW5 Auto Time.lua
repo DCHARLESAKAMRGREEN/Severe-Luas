@@ -7,8 +7,8 @@ local Adjustments = {
     {Ping = 85, Value = 0.5345},
     {Ping = 75, Value = 0.5735},
     {Ping = 62, Value = 0.6375},
-    {Ping = 51, Value = 0.71},
-    {Ping = 42, Value = 0.7410},
+    {Ping = 51, Value = 0.7065},
+    {Ping = 40, Value = 0.7435},
     {Ping = 25, Value = 0.7715}
 }
 
