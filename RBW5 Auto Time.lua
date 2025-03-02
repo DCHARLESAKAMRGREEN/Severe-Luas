@@ -1,59 +1,55 @@
 local Workspace = findservice(Game, "Workspace")
 local Player = getlocalplayer()
 local Character = getname(Player)
-local threshold = 1
+local Threshold = 1
 
 local Adjustments = {
-    [85] = 0.5075,
-    [71] = 0.5375,
-    [62] = 0.6205,
-    [51] = 0.6795,
-    [42] = 0.7055,
-    [25] = 0.7525
+    {Ping = 85, Value = 0.5345},
+    {Ping = 75, Value = 0.5735},
+    {Ping = 62, Value = 0.6375},
+    {Ping = 51, Value = 0.71},
+    {Ping = 42, Value = 0.7410},
+    {Ping = 25, Value = 0.7715}
 }
 
-local AdjustmentsTable = {}
-for k in pairs(Adjustments) do
-    table.insert(AdjustmentsTable, k)
-end
-table.sort(AdjustmentsTable, function(a, b) return a > b end)
+table.sort(Adjustments, function(a, b) return a.Ping > b.Ping end)
 
-local function GetAdjustments(ping)
-    for _, value in ipairs(AdjustmentsTable) do
-        if ping > value then
-            return Adjustments[value]
+local getping = getping
+local getvalue = getvalue
+local typeof = typeof
+
+local function GetAdjustments(Ping)
+    for i = 1, #Adjustments do
+        if Ping > Adjustments[i].Ping then
+            return Adjustments[i].Value
         end
     end
 end
 
 local function Calculations()
     while true do
-        local ping = getping()
-        if ping then
-            local value = GetAdjustments(ping)
-            if value then
-                threshold = value
+        local Ping = getping()
+        if Ping then
+            local Value = GetAdjustments(Ping)
+            if Value then
+                Threshold = Value
             end
         end
-        wait()
+        wait(0.1)
     end
 end
 
 local function ShotMeter()
+    local ShotMeter = findfirstchild(findfirstchild(findfirstchild(Workspace, Character), "Properties"), "ShotMeter")
+
     while true do
-        local path = findfirstchild(Workspace, Character)
-        local properties = findfirstchild(path, "Properties")
-        local shotmeter = findfirstchild(properties, "ShotMeter")
-        
-        while true do
-            local shotvalue = getvalue(shotmeter)
-            if typeof(shotvalue) == "number" and shotvalue ~= 2 and shotvalue >= threshold then
-                keyrelease(0x45)
-            end
-            wait()
+        local ShotValue = getvalue(ShotMeter)
+        if typeof(ShotValue) == "number" and ShotValue ~= 2 and ShotValue >= Threshold then
+            keyrelease(0x45)
         end
+        wait(0)
     end
 end
 
 spawn(Calculations)
-spawn(ShotMeter)
+ShotMeter()
