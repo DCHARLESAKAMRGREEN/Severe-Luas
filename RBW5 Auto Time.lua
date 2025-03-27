@@ -9,8 +9,8 @@ local Adjustments = {
     {Ping = 70, Value = 0.5675},
     {Ping = 62, Value = 0.6185},
     {Ping = 52, Value = 0.6950},
-    {Ping = 40, Value = 0.7385},
-    {Ping = 25, Value = 0.7735}
+    {Ping = 40, Value = 0.7295},
+    {Ping = 25, Value = 0.7495}
 }
 
 table.sort(Adjustments, function(a, b) return a.Ping > b.Ping end)
