@@ -9,7 +9,7 @@ local Adjustments = {
     {Ping = 70, Value = 0.5675},
     {Ping = 62, Value = 0.6185},
     {Ping = 52, Value = 0.6950},
-    {Ping = 40, Value = 0.7295},
+    {Ping = 40, Value = 0.7290},
     {Ping = 25, Value = 0.7500}
 }
 
