@@ -1,0 +1,209 @@
+local Colors = {
+    ["Accent"] = {113, 93, 133},
+    ["Window Background"] = {30, 30, 30},
+    ["Window Border"] = {45, 45, 45},
+    ["Tab Background"] = {20, 20, 20},
+    ["Tab Border"] = {45, 45, 45},
+    ["Tab Toggle Background"] = {28, 28, 28},
+    ["Section Background"] = {18, 18, 18},
+    ["Section Border"] = {35, 35, 35},
+    ["Text"] = {200, 200, 200},
+    ["Disabled Text"] = {110, 110, 110},
+    ["Object Background"] = {25, 25, 25},
+    ["Object Border"] = {35, 35, 35},
+    ["Dropdown Option Background"] = {19, 19, 19}
+}
+
+local Library = {}
+
+function Library:Create(title)
+    local self = {}
+    
+    -- Window background
+    self.WindowBackground = Drawing.new("Square")
+    self.WindowBackground.Size = {650, 750}
+    self.WindowBackground.Position = {350, 100}
+    self.WindowBackground.Color = Colors["Window Background"]
+    self.WindowBackground.Filled = true
+    self.WindowBackground.Thickness = 1
+    self.WindowBackground.Transparency = 1
+    self.WindowBackground.Visible = true
+
+    -- Title
+    self.Title = Drawing.new("Text")
+    self.Title.Text = title or "Severe UI"
+    self.Title.Size = 16
+    self.Title.Font = 5
+    self.Title.Color = Colors["Text"]
+    self.Title.Outline = true
+    self.Title.OutlineColor = {0, 0, 0}
+    self.Title.Position = {self.WindowBackground.Position.x + 10, self.WindowBackground.Position.y + 5}
+    self.Title.Transparency = 1
+    self.Title.Visible = true
+    self.Title.Center = false
+
+    -- Tab background
+    self.TabBackground = Drawing.new("Square")
+    self.TabBackground.Position = {self.WindowBackground.Position.x + 10, self.WindowBackground.Position.y + 25}
+    self.TabBackground.Size = {self.WindowBackground.Size.x - 20, 25}
+    self.TabBackground.Color = Colors["Tab Background"]
+    self.TabBackground.Filled = true
+    self.TabBackground.Thickness = 1
+    self.TabBackground.Transparency = 1
+    self.TabBackground.Visible = true
+
+    -- Tab border
+    self.TabBorder = Drawing.new("Square")
+    self.TabBorder.Position = {self.TabBackground.Position.x, self.TabBackground.Position.y}
+    self.TabBorder.Size = {self.TabBackground.Size.x, self.TabBackground.Size.y}
+    self.TabBorder.Color = Colors["Tab Border"]
+    self.TabBorder.Filled = false
+    self.TabBorder.Thickness = 1
+    self.TabBorder.Transparency = 1
+    self.TabBorder.Visible = true
+
+    -- Content background
+    self.WindowBackground2 = Drawing.new("Square")
+    self.WindowBackground2.Position = {self.WindowBackground.Position.x + 10, self.WindowBackground.Position.y + 50}
+    self.WindowBackground2.Size = {self.WindowBackground.Size.x - 20, self.WindowBackground.Size.y - 60}
+    self.WindowBackground2.Color = Colors["Section Background"]
+    self.WindowBackground2.Filled = true
+    self.WindowBackground2.Thickness = 1
+    self.WindowBackground2.Transparency = 1
+    self.WindowBackground2.Visible = true
+
+    -- Content border
+    self.Window2Border = Drawing.new("Square")
+    self.Window2Border.Position = {self.WindowBackground2.Position.x, self.WindowBackground2.Position.y}
+    self.Window2Border.Size = {self.WindowBackground2.Size.x, self.WindowBackground2.Size.y}
+    self.Window2Border.Color = Colors["Section Border"]
+    self.Window2Border.Filled = false
+    self.Window2Border.Thickness = 1
+    self.Window2Border.Transparency = 1
+    self.Window2Border.Visible = true
+
+    -- Window border
+    self.WindowBorder = Drawing.new("Square")
+    self.WindowBorder.Size = {self.WindowBackground.Size.x, self.WindowBackground.Size.y}
+    self.WindowBorder.Position = {self.WindowBackground.Position.x, self.WindowBackground.Position.y}
+    self.WindowBorder.Color = Colors["Window Border"]
+    self.WindowBorder.Filled = false
+    self.WindowBorder.Thickness = 1
+    self.WindowBorder.Transparency = 1
+    self.WindowBorder.Visible = true
+
+    -- Tab system
+    self.Tabs = {}
+    self.TabButtons = {}
+    self.TabContents = {}
+    self.ActiveTab = nil
+
+    -- Function to add a tab
+    function self:Tab(tabName)
+        if not tabName then
+            tabName = "Tab " .. (#self.Tabs + 1)
+        end
+        
+        -- Create tab button
+        local tabCount = #self.Tabs
+        local tabWidth = 100 -- Fixed width for tabs
+        local tabX = self.TabBackground.Position.x + (tabCount * tabWidth)
+        
+        -- Create the tab button
+        local tabButton = Drawing.new("Square")
+        tabButton.Size = {tabWidth, self.TabBackground.Size.y}
+        tabButton.Position = {tabX, self.TabBackground.Position.y}
+        tabButton.Color = Colors["Tab Toggle Background"]
+        tabButton.Filled = true
+        tabButton.Thickness = 1
+        tabButton.Transparency = 1
+        tabButton.Visible = true
+        
+        -- Create tab button border
+        local tabButtonBorder = Drawing.new("Square")
+        tabButtonBorder.Size = {tabWidth, self.TabBackground.Size.y}
+        tabButtonBorder.Position = {tabX, self.TabBackground.Position.y}
+        tabButtonBorder.Color = Colors["Tab Border"]
+        tabButtonBorder.Filled = false
+        tabButtonBorder.Thickness = 1
+        tabButtonBorder.Transparency = 1
+        tabButtonBorder.Visible = true
+        
+        -- Create tab button text
+        local tabButtonText = Drawing.new("Text")
+        tabButtonText.Text = tabName
+        tabButtonText.Size = 14
+        tabButtonText.Font = 5
+        tabButtonText.Color = Colors["Text"]
+        tabButtonText.Outline = true
+        tabButtonText.OutlineColor = {0, 0, 0}
+        tabButtonText.Position = {tabX + (tabWidth / 2), self.TabBackground.Position.y + (self.TabBackground.Size.y / 2) - 7}
+        tabButtonText.Transparency = 1
+        tabButtonText.Visible = true
+        tabButtonText.Center = true
+        
+        -- Create tab content container
+        local tabContent = {
+            Name = tabName,
+            Elements = {},
+            Visible = false
+        }
+        
+        -- Store everything
+        local tabObj = {
+            Name = tabName,
+            Button = tabButton,
+            ButtonBorder = tabButtonBorder,
+            ButtonText = tabButtonText,
+            Content = tabContent
+        }
+        
+        table.insert(self.Tabs, tabObj)
+        self.TabButtons[tabName] = tabObj
+        self.TabContents[tabName] = tabContent
+        
+        -- If this is the first tab, make it active
+        if #self.Tabs == 1 then
+            self:SelectTab(tabName)
+        end
+        
+        -- Return tab content for chaining
+        return tabContent
+    end
+
+    -- Function to select a tab
+    function self:SelectTab(tabName)
+        -- Hide all tab contents
+        for _, tab in ipairs(self.Tabs) do
+            -- Reset tab appearance
+            tab.Button.Color = Colors["Tab Toggle Background"]
+            tab.Content.Visible = false
+            
+            -- Hide all elements of this tab
+            for _, element in pairs(tab.Content.Elements) do
+                if element.Visible ~= nil then
+                    element.Visible = false
+                end
+            end
+        end
+        
+        -- Show selected tab content
+        local selectedTab = self.TabButtons[tabName]
+        if selectedTab then
+            selectedTab.Button.Color = Colors["Accent"]
+            selectedTab.Content.Visible = true
+            self.ActiveTab = tabName
+            
+            -- Show all elements of this tab
+            for _, element in pairs(selectedTab.Content.Elements) do
+                if element.Visible ~= nil then
+                    element.Visible = true
+                end
+            end
+        end
+    end
+    
+    return self
+end
+
+return Library
