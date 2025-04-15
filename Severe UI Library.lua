@@ -56,8 +56,8 @@ local function SetVisibilityRecursive(InterfaceCollection, Visible)
              SetElementVisibility(Interface.ButtonText, Visible)
              Interface.Visible = Visible
         elseif Interface.Type == "Toggle" then
-             SetElementVisibility(Interface.ToggleBackground, Visible)
              SetElementVisibility(Interface.ToggleBorder, Visible)
+             SetElementVisibility(Interface.ToggleFill, Visible)
              SetElementVisibility(Interface.ToggleText, Visible)
              Interface.Visible = Visible
         else
@@ -364,14 +364,14 @@ function Library:Create(TitleText)
                          local ToggleX = ColumnX + Padding
                          local ToggleY = CurrentInternalY
 
-                         SetElementVisibility(InterfaceObj.ToggleBackground, true)
                          SetElementVisibility(InterfaceObj.ToggleBorder, true)
+                         SetElementVisibility(InterfaceObj.ToggleFill, true)
                          SetElementVisibility(InterfaceObj.ToggleText, true)
 
-                         InterfaceObj.ToggleBackground.Position = {ToggleX, ToggleY}
-                         InterfaceObj.ToggleBackground.Size = {ToggleSize, ToggleSize}
                          InterfaceObj.ToggleBorder.Position = {ToggleX, ToggleY}
                          InterfaceObj.ToggleBorder.Size = {ToggleSize, ToggleSize}
+                         InterfaceObj.ToggleFill.Position = {ToggleX + 1, ToggleY + 1}
+                         InterfaceObj.ToggleFill.Size = {ToggleSize - 2, ToggleSize - 2}
 
                          local TextYOffset = math.floor((ToggleSize - 12) / 2)
                          InterfaceObj.ToggleText.Position = {ToggleX + ToggleSize + 5, ToggleY + TextYOffset}
@@ -545,90 +545,61 @@ function Library:Create(TitleText)
                 return ButtonObj
             end
 
-function SectionObj:Toggle(ToggleName, DefaultState, Callback)
-    -- Create outer border box
-    local ToggleBorder = Drawing.new("Square")
-    ToggleBorder.Color = Colors["ObjectBorder"]
-    ToggleBorder.Filled = false
-    ToggleBorder.Thickness = 1
-    ToggleBorder.Transparency = 1
-    ToggleBorder.Visible = self.Visible
+            function SectionObj:Toggle(ToggleName, DefaultState, Callback)
+                local ToggleBorder = Drawing.new("Square")
+                ToggleBorder.Color = Colors["ObjectBorder"]
+                ToggleBorder.Filled = false
+                ToggleBorder.Thickness = 1
+                ToggleBorder.Transparency = 1
+                ToggleBorder.Visible = self.Visible
 
-    -- Create inner fill box (initially hidden)
-    local ToggleFill = Drawing.new("Square")
-    ToggleFill.Color = Colors["Accent"]
-    ToggleFill.Filled = true
-    ToggleFill.Transparency = 0.5
-    ToggleFill.Visible = false
+                local ToggleFill = Drawing.new("Square")
+                ToggleFill.Color = Colors["Accent"]
+                ToggleFill.Filled = true
+                ToggleFill.Transparency = 0.5
+                ToggleFill.Visible = DefaultState or false
 
-    -- Create label text
-    local ToggleText = Drawing.new("Text")
-    ToggleText.Text = ToggleName or "Toggle"
-    ToggleText.Size = 12
-    ToggleText.Font = 5
-    ToggleText.Color = Colors["Text"]
-    ToggleText.Outline = true
-    ToggleText.OutlineColor = {0, 0, 0}
-    ToggleText.Transparency = 1
-    ToggleText.Center = false
-    ToggleText.Visible = self.Visible
+                local ToggleText = Drawing.new("Text")
+                ToggleText.Text = ToggleName or "Toggle"
+                ToggleText.Size = 12
+                ToggleText.Font = 5
+                ToggleText.Color = Colors["Text"]
+                ToggleText.Outline = true
+                ToggleText.OutlineColor = {0, 0, 0}
+                ToggleText.Transparency = 1
+                ToggleText.Center = false
+                ToggleText.Visible = self.Visible
 
-    local State = DefaultState or false
-    
-    local function UpdateToggleVisuals()
-        -- Position the fill inside the border (with 1px padding)
-        local borderPos = ToggleBorder.Position
-        local borderSize = ToggleBorder.Size
-        ToggleFill.Position = {borderPos.x + 1, borderPos.y + 1}
-        ToggleFill.Size = {borderSize.x - 2, borderSize.y - 2}
+                local State = DefaultState or false
+                
+                local function UpdateToggleVisuals()
+                    ToggleFill.Visible = State
+                    local IsHovered = WindowActive and WindowActive:IsHovered(ToggleBorder)
+                    ToggleBorder.Color = IsHovered and Colors["Accent"] or Colors["ObjectBorder"]
+                end
+                
+                UpdateToggleVisuals()
 
-        -- Update visibility based on state
-        ToggleFill.Visible = State
-        
-        -- Handle hover effects
-        local IsHovered = WindowActive and WindowActive:IsHovered(ToggleBorder)
-        ToggleBorder.Color = IsHovered and Colors["Accent"] or Colors["ObjectBorder"]
-    end
-    
-    local ToggleObj = {
-        Type = "Toggle",
-        Name = ToggleName,
-        Callback = Callback,
-        ToggleBorder = ToggleBorder,
-        ToggleFill = ToggleFill,
-        ToggleText = ToggleText,
-        Visible = self.Visible,
-        State = State,
-        Update = UpdateToggleVisuals
-    }
+                local ToggleObj = {
+                    Type = "Toggle",
+                    Name = ToggleName,
+                    Callback = Callback,
+                    ToggleBorder = ToggleBorder,
+                    ToggleFill = ToggleFill,
+                    ToggleText = ToggleText,
+                    Visible = self.Visible,
+                    State = State,
+                    Update = UpdateToggleVisuals
+                }
 
-    -- Initial setup
-    UpdateToggleVisuals()
-    table.insert(self.Interfaces, ToggleObj)
+                table.insert(self.Interfaces, ToggleObj)
 
-    -- Position all elements during layout
-    local function PositionElements()
-        local ToggleSize = 20
-        local ToggleX = ColumnX + Padding
-        local ToggleY = CurrentInternalY
+                if IsVisible and Main.ActiveTab == TabContent.Name then
+                    Main:UpdateLayout()
+                end
 
-        ToggleBorder.Position = {ToggleX, ToggleY}
-        ToggleBorder.Size = {ToggleSize, ToggleSize}
-        
-        UpdateToggleVisuals() -- Positions fill relative to border
-
-        local TextYOffset = math.floor((ToggleSize - 12) / 2)
-        ToggleText.Position = {ToggleX + ToggleSize + 5, ToggleY + TextYOffset}
-
-        return ToggleSize + Padding
-    end
-
-    if IsVisible and Main.ActiveTab == TabContent.Name then
-        Main:UpdateLayout()
-    end
-
-    return ToggleObj
-end
+                return ToggleObj
+            end
 
             if Side == "Left" then
                 table.insert(self.LeftSections, SectionObj)
@@ -797,9 +768,9 @@ spawn(function()
                                                      return
                                                  end
                                              end
-                                         elseif InterfaceObj.Type == "Toggle" and InterfaceObj.ToggleBackground.Visible then
-                                             local togglePos = InterfaceObj.ToggleBackground.Position
-                                             local toggleSize = InterfaceObj.ToggleBackground.Size
+                                         elseif InterfaceObj.Type == "Toggle" and InterfaceObj.ToggleBorder.Visible then
+                                             local togglePos = InterfaceObj.ToggleBorder.Position
+                                             local toggleSize = InterfaceObj.ToggleBorder.Size
                                              local textPos = InterfaceObj.ToggleText.Position
                                              local textBounds = InterfaceObj.ToggleText.TextBounds or {x = 100, y = 12}
                                              
@@ -856,8 +827,8 @@ spawn(function()
                                              InterfaceObj.ButtonBorder.Color = IsCurrentlyHovered and Colors["Accent"] or InterfaceObj.DefaultBorderColor
                                          end
                                      elseif InterfaceObj.Type == "Toggle" then
-                                         local togglePos = InterfaceObj.ToggleBackground.Position
-                                         local toggleSize = InterfaceObj.ToggleBackground.Size
+                                         local togglePos = InterfaceObj.ToggleBorder.Position
+                                         local toggleSize = InterfaceObj.ToggleBorder.Size
                                          local textPos = InterfaceObj.ToggleText.Position
                                          local textBounds = InterfaceObj.ToggleText.TextBounds or {x = 100, y = 12}
                                          
@@ -872,15 +843,9 @@ spawn(function()
                                          if IsCurrentlyHovered then
                                              IsMouseOverUI = true
                                              HoveredButton = InterfaceObj
-                                             if not InterfaceObj.State then
-                                                 InterfaceObj.ToggleBorder.Color = Colors["Accent"]
-                                             end
+                                             InterfaceObj.ToggleBorder.Color = Colors["Accent"]
                                          else
-                                             if InterfaceObj.State then
-                                                 InterfaceObj.ToggleBorder.Color = Colors["Accent"]
-                                             else
-                                                 InterfaceObj.ToggleBorder.Color = Colors["ObjectBorder"]
-                                             end
+                                             InterfaceObj.ToggleBorder.Color = InterfaceObj.State and Colors["Accent"] or Colors["ObjectBorder"]
                                          end
                                      end
                                  end
@@ -897,5 +862,5 @@ spawn(function()
     end
 end)
 
-print("V5")
+print'e'
 return Library
