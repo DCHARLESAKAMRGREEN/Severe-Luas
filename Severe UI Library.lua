@@ -574,20 +574,21 @@ function SectionObj:Toggle(ToggleName, DefaultState, Callback)
 
     local State = DefaultState or false
 
-    local function UpdateToggleVisuals()
-        local IsHovered = WindowActive and WindowActive:IsHovered(ToggleBackground)
+local function UpdateToggleVisuals()
+    local IsHovered = WindowActive and WindowActive:IsHovered(ToggleBackground)
 
-        if State then
-            ToggleBackground.Filled = true
-            ToggleBackground.Transparency = 0.5
-            ToggleBorder.Visible = false
-        else
-            ToggleBackground.Filled = false
-            ToggleBackground.Transparency = 1
-            ToggleBorder.Visible = IsHovered
-            ToggleBorder.Color = IsHovered and Colors["Accent"] or Colors["ObjectBorder"]
-        end
+    if State then
+        ToggleBackground.Filled = true
+        ToggleBackground.Transparency = 0
+        ToggleBackground.Color = Colors["Accent"]
+        ToggleBorder.Visible = false
+    else
+        ToggleBackground.Filled = false
+        ToggleBackground.Transparency = 1
+        ToggleBorder.Visible = IsHovered
+        ToggleBorder.Color = Colors["Accent"]
     end
+end
 
     UpdateToggleVisuals()
 
@@ -882,5 +883,5 @@ spawn(function()
     end
 end)
 
-print("V2.0")
+print("V2.1")
 return Library
