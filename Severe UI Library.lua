@@ -51,6 +51,9 @@ local function SetVisibility(Elements, Visible)
          if Element.Remove and Element.Position then
              Element.Visible = Visible
          end
+         if Element.SelectedHighlight and Element.SelectedHighlight.Visible ~= nil then
+            Element.SelectedHighlight.Visible = false
+         end
     end
 end
 
@@ -72,6 +75,9 @@ function ToggleUI()
              TabObj.Button.Visible = IsVisible
              TabObj.ButtonBorder.Visible = IsVisible
              TabObj.ButtonText.Visible = IsVisible
+             if TabObj.SelectedHighlight then
+                 TabObj.SelectedHighlight.Visible = IsVisible and (TabObj.Name == Main.ActiveTab)
+             end
 
              local IsActiveTab = TabObj.Name == Main.ActiveTab
              SetVisibility(TabObj.Content.LeftSections, IsVisible and IsActiveTab)
@@ -228,11 +234,18 @@ function Library:Create(Title)
         local TabH = Main.TabBackground.Size.y
 
         for i, TabObj in ipairs(Main.Tabs) do
-            TabObj.Button.Size = {TabWidth, TabH}
-            TabObj.Button.Position = {CurrentX, TabY}
-            TabObj.ButtonBorder.Size = {TabWidth, TabH}
-            TabObj.ButtonBorder.Position = {CurrentX, TabY}
+            local Button = TabObj.Button
+            local ButtonBorder = TabObj.ButtonBorder
             local ButtonText = TabObj.ButtonText
+            local Highlight = TabObj.SelectedHighlight
+
+            Button.Size = {TabWidth, TabH}
+            Button.Position = {CurrentX, TabY}
+            ButtonBorder.Size = {TabWidth, TabH}
+            ButtonBorder.Position = {CurrentX, TabY}
+            Highlight.Size = {TabWidth, TabH}
+            Highlight.Position = {CurrentX, TabY}
+
             if ButtonText.TextBounds then
                  ButtonText.Position = {CurrentX + (TabWidth / 2), TabY + (TabH / 2) - (ButtonText.TextBounds.y / 2)}
             else
@@ -264,13 +277,18 @@ function Library:Create(Title)
 
         local function PositionSection(SectionObj, ColumnX, CurrentY)
             local PlaceholderHeight = 100
-            SectionObj.Background.Position = {ColumnX, CurrentY}
-            SectionObj.Border.Position = {ColumnX, CurrentY}
-            SectionObj.Background.Size = {ColumnWidth, PlaceholderHeight}
-            SectionObj.Border.Size = {ColumnWidth, PlaceholderHeight}
-            if SectionObj.Title then
-                SectionObj.Title.Position = {ColumnX + 5, CurrentY + 3}
-                SectionObj.Title.Visible = SectionObj.Visible
+            local Background = SectionObj.Background
+            local Border = SectionObj.Border
+            local Title = SectionObj.Title
+
+            Background.Position = {ColumnX, CurrentY}
+            Border.Position = {ColumnX, CurrentY}
+            Background.Size = {ColumnWidth, PlaceholderHeight}
+            Border.Size = {ColumnWidth, PlaceholderHeight}
+
+            if Title then
+                Title.Position = {ColumnX + 5, CurrentY + 3}
+                Title.Visible = SectionObj.Visible
             end
             return CurrentY + PlaceholderHeight + 5
         end
@@ -317,6 +335,12 @@ function Library:Create(Title)
         TabButtonText.Transparency = 1
         TabButtonText.Center = true
         SetInitialVisibility(TabButtonText)
+
+        local SelectedHighlight = Drawing.new("Square")
+        SelectedHighlight.Color = Colors["Tab Selected Background"]
+        SelectedHighlight.Transparency = 0.15
+        SelectedHighlight.Filled = true
+        SelectedHighlight.Visible = false
 
         local TabContent = {
             Name = TabName,
@@ -390,6 +414,7 @@ function Library:Create(Title)
             Button = TabButton,
             ButtonBorder = TabButtonBorder,
             ButtonText = TabButtonText,
+            SelectedHighlight = SelectedHighlight,
             Content = TabContent
         }
 
@@ -409,6 +434,7 @@ function Library:Create(Title)
              TabButton.Visible = false
              TabButtonBorder.Visible = false
              TabButtonText.Visible = false
+             SelectedHighlight.Visible = false
         end
 
         return TabContent
@@ -419,8 +445,7 @@ function Library:Create(Title)
         if not IsVisible then return end
 
         for _, OtherTab in ipairs(Main.Tabs) do
-            OtherTab.Button.Color = Colors["Tab Toggle Background"]
-            OtherTab.Button.Transparency = 1
+            OtherTab.SelectedHighlight.Visible = false
             OtherTab.Content.Visible = false
             SetVisibility(OtherTab.Content.LeftSections, false)
             SetVisibility(OtherTab.Content.RightSections, false)
@@ -428,8 +453,7 @@ function Library:Create(Title)
         end
 
         local SelectedTab = Main.TabButtons[TabName]
-        SelectedTab.Button.Color = Colors["Tab Selected Background"]
-        SelectedTab.Button.Transparency = 0.15
+        SelectedTab.SelectedHighlight.Visible = true
         SelectedTab.Content.Visible = true
         Main.ActiveTab = TabName
 
@@ -507,5 +531,5 @@ spawn(function()
     end
 end)
 
-print("Severes UI Library Initalized")
+print("UI Library Loaded")
 return Library
