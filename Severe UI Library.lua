@@ -81,7 +81,6 @@ end
 
 function ToggleUI()
     IsVisible = not IsVisible
-    -- Removed set_window_passthrough call
 
     if WindowActive then
         local Main = WindowActive
@@ -287,7 +286,7 @@ function Library:Create(TitleText)
             if ButtonText.TextBounds then
                  ButtonText.Position = {RoundedStartX + (RoundedWidth / 2), TabY + (TabH / 2) - (ButtonText.TextBounds.y / 2)}
             else
-                 ButtonText.Position = {RoundedStartX + (RoundedWidth / 2), TabY + (TabH / 2) - 7} -- Approx center Y
+                 ButtonText.Position = {RoundedStartX + (RoundedWidth / 2), TabY + (TabH / 2) - 7}
             end
             ButtonText.Center = true
         end
@@ -580,7 +579,7 @@ function Library:Create(TitleText)
     end
 
     function Main:SelectTab(TabName)
-        if not Main.TabButtons[TabName] then warn("Tab not found: " .. tostring(TabName)) return end
+        if not Main.TabButtons[TabName] then return end
 
         Main.ActiveTab = TabName
 
@@ -600,7 +599,6 @@ function Library:Create(TitleText)
     end
 
     WindowActive = Main
-    -- Removed initial set_window_passthrough call
     return Main
 end
 
@@ -612,6 +610,8 @@ spawn(function()
         Mouse.Clicked = isleftclicked()
         Mouse.Pressed = isleftpressed()
         HoveredButton = nil
+        local UIClickHandled = false
+        local IsMouseOverUI = false
 
         local Keys = getpressedkeys()
         local IsToggleKeyPressed = false
@@ -629,13 +629,8 @@ spawn(function()
         end
         TogglePressed = IsToggleKeyPressed
 
-        local IsMouseOverUI = false
-
         if IsVisible and WindowActive then
-            if WindowActive:IsHoveringWindow() then
-                 IsMouseOverUI = true
-            end
-
+            if WindowActive:IsHoveringWindow() then IsMouseOverUI = true end
             for _, TabObj in ipairs(WindowActive.Tabs) do
                 if TabObj.Button.Visible and WindowActive:IsHovered(TabObj.Button) then
                     IsMouseOverUI = true
@@ -645,68 +640,62 @@ spawn(function()
 
             local WindowPos = WindowActive.WindowBackground.Position
             local DragAreaYMax = WindowActive.TabBackground.Position.y
-
             if Mouse.Clicked and IsMouseOverUI and Mouse.Y < DragAreaYMax and not IsDragging then
                 IsDragging = true
                 DragOffsetX = Mouse.X - WindowPos.x
                 DragOffsetY = Mouse.Y - WindowPos.y
+                UIClickHandled = true
             elseif Mouse.Pressed and IsDragging then
                 IsMouseOverUI = true
                 local NewX = Mouse.X - DragOffsetX
                 local NewY = Mouse.Y - DragOffsetY
                 WindowActive.WindowBackground.Position = {NewX, NewY}
                 WindowActive:UpdateElementPositions()
+                UIClickHandled = true
             elseif not Mouse.Pressed and IsDragging then
                 IsDragging = false
             end
 
-            if not IsDragging and WindowActive.ActiveTab then
-                 local CurrentTabContent = WindowActive.TabContents[WindowActive.ActiveTab]
-                 if CurrentTabContent then
-                     local function ProcessSectionInterfaces(Sections)
-                         for _, SectionObj in ipairs(Sections) do
-                             if SectionObj.Visible and SectionObj.Interfaces then
-                                 for InterfaceIndex, InterfaceObj in ipairs(SectionObj.Interfaces) do
-                                     if InterfaceObj.Type == "Button" and InterfaceObj.ButtonBackground.Visible then
-                                         local IsHover = WindowActive:IsHovered(InterfaceObj.ButtonBackground)
-                                         if IsHover then
-                                             HoveredButton = InterfaceObj
-                                             IsMouseOverUI = true
-                                         end
+            if Mouse.Clicked and not IsDragging and not UIClickHandled then
+                for _, TabObj in ipairs(WindowActive.Tabs) do
+                    if TabObj.Button.Visible and WindowActive:IsHovered(TabObj.Button) then
+                        WindowActive:SelectTab(TabObj.Name)
+                        UIClickHandled = true
+                        break
+                    end
+                end
 
-                                         local ClickID = CurrentTabContent.Name .. "_" .. SectionObj.Name .. "_" .. tostring(InterfaceIndex)
-
-                                         if Mouse.Clicked and IsHover and not ClickedButtons[ClickID] then
-                                              ClickedButtons[ClickID] = {
-                                                  Obj = InterfaceObj,
-                                                  StartTime = tick()
-                                              }
-                                              InterfaceObj.ButtonBackground.Color = Colors["Tab Selected Background"]
-                                              InterfaceObj.ButtonBackground.Transparency = 0.135
-                                              InterfaceObj.ButtonBorder.Color = Colors["Accent"]
-
-                                              if InterfaceObj.Callback then
-                                                  spawn(InterfaceObj.Callback)
-                                              end
+                if not UIClickHandled and WindowActive.ActiveTab then
+                    local CurrentTabContent = WindowActive.TabContents[WindowActive.ActiveTab]
+                    if CurrentTabContent then
+                         local function CheckButtonClick(Sections)
+                             if UIClickHandled then return end
+                             for _, SectionObj in ipairs(Sections) do
+                                 if SectionObj.Visible and SectionObj.Interfaces then
+                                     for InterfaceIndex, InterfaceObj in ipairs(SectionObj.Interfaces) do
+                                         if InterfaceObj.Type == "Button" and InterfaceObj.ButtonBackground.Visible then
+                                             local IsHover = WindowActive:IsHovered(InterfaceObj.ButtonBackground)
+                                             if IsHover then
+                                                 local ClickID = CurrentTabContent.Name .. "_" .. SectionObj.Name .. "_" .. tostring(InterfaceIndex)
+                                                 if not ClickedButtons[ClickID] then
+                                                     ClickedButtons[ClickID] = { Obj = InterfaceObj, StartTime = tick() }
+                                                     InterfaceObj.ButtonBackground.Color = Colors["Tab Selected Background"]
+                                                     InterfaceObj.ButtonBackground.Transparency = 0.135
+                                                     InterfaceObj.ButtonBorder.Color = Colors["Accent"]
+                                                     if InterfaceObj.Callback then spawn(InterfaceObj.Callback) end
+                                                     UIClickHandled = true
+                                                     return
+                                                 end
+                                             end
                                          end
                                      end
                                  end
                              end
                          end
-                     end
-                     ProcessSectionInterfaces(CurrentTabContent.LeftSections)
-                     ProcessSectionInterfaces(CurrentTabContent.RightSections)
-                 end
-
-                 if Mouse.Clicked and not IsMouseOverUI then
-                     for _, TabObj in ipairs(WindowActive.Tabs) do
-                         if TabObj.Button.Visible and WindowActive:IsHovered(TabObj.Button) then
-                             WindowActive:SelectTab(TabObj.Name)
-                             IsMouseOverUI = true
-                             break
-                         end
-                     end
-                 end
+                         CheckButtonClick(CurrentTabContent.LeftSections)
+                         CheckButtonClick(CurrentTabContent.RightSections)
+                    end
+                end
             end
 
             if WindowActive.ActiveTab then
@@ -719,30 +708,24 @@ spawn(function()
                                      if InterfaceObj.Type == "Button" then
                                          local ClickID = CurrentTabContent.Name .. "_" .. SectionObj.Name .. "_" .. tostring(InterfaceIndex)
                                          local ClickData = ClickedButtons[ClickID]
+                                         local IsCurrentlyHovered = WindowActive:IsHovered(InterfaceObj.ButtonBackground)
+
+                                         if IsCurrentlyHovered then
+                                             IsMouseOverUI = true
+                                             HoveredButton = InterfaceObj
+                                         end
 
                                          if ClickData then
-                                             -- VVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVV --
-                                             -- Changed duration check from 0.3 to 0.1 seconds   --
-                                             -- VVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVV --
-                                             if tick() - ClickData.StartTime >= 0.1 then
+                                             if tick() - ClickData.StartTime >= 0.05 then
                                                   InterfaceObj.ButtonBackground.Color = InterfaceObj.OriginalBackgroundColor
                                                   InterfaceObj.ButtonBackground.Transparency = InterfaceObj.OriginalBackgroundTransparency
                                                   ClickedButtons[ClickID] = nil
-
-                                                  if HoveredButton == InterfaceObj then
-                                                      InterfaceObj.ButtonBorder.Color = Colors["Accent"]
-                                                  else
-                                                      InterfaceObj.ButtonBorder.Color = InterfaceObj.DefaultBorderColor
-                                                  end
+                                                  InterfaceObj.ButtonBorder.Color = IsCurrentlyHovered and Colors["Accent"] or InterfaceObj.DefaultBorderColor
                                              else
                                                  InterfaceObj.ButtonBorder.Color = Colors["Accent"]
                                              end
                                          else
-                                             if HoveredButton == InterfaceObj then
-                                                  InterfaceObj.ButtonBorder.Color = Colors["Accent"]
-                                             else
-                                                  InterfaceObj.ButtonBorder.Color = InterfaceObj.DefaultBorderColor
-                                             end
+                                             InterfaceObj.ButtonBorder.Color = IsCurrentlyHovered and Colors["Accent"] or InterfaceObj.DefaultBorderColor
                                          end
                                      end
                                  end
@@ -755,11 +738,9 @@ spawn(function()
              end
         end
 
-        -- Removed final set_window_passthrough call
-
         wait()
     end
 end)
 
-print("V1.1 - No Passthrough, 0.1s Click")
+print("V1.2 - 0.05s Click, Tab Fix Attempt")
 return Library
