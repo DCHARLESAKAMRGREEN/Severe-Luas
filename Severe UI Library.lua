@@ -545,61 +545,61 @@ function Library:Create(TitleText)
                 return ButtonObj
             end
 
-            function SectionObj:Toggle(ToggleName, DefaultState, Callback)
-                local ToggleBorder = Drawing.new("Square")
-                ToggleBorder.Color = Colors["ObjectBorder"]
-                ToggleBorder.Filled = false
-                ToggleBorder.Thickness = 1
-                ToggleBorder.Transparency = 1
-                ToggleBorder.Visible = self.Visible
+function SectionObj:Toggle(ToggleName, DefaultState, Callback)
+    local ToggleBorder = Drawing.new("Square")
+    ToggleBorder.Color = Colors["ObjectBorder"]
+    ToggleBorder.Filled = false
+    ToggleBorder.Thickness = 1
+    ToggleBorder.Transparency = 1
+    ToggleBorder.Visible = self.Visible
 
-                local ToggleFill = Drawing.new("Square")
-                ToggleFill.Color = Colors["Accent"]
-                ToggleFill.Filled = true
-                ToggleFill.Transparency = 0.5
-                ToggleFill.Visible = DefaultState or false
+    local ToggleFill = Drawing.new("Square")
+    ToggleFill.Color = Colors["Accent"]
+    ToggleFill.Filled = true
+    ToggleFill.Transparency = 0.5
+    ToggleFill.Visible = false
 
-                local ToggleText = Drawing.new("Text")
-                ToggleText.Text = ToggleName or "Toggle"
-                ToggleText.Size = 12
-                ToggleText.Font = 5
-                ToggleText.Color = Colors["Text"]
-                ToggleText.Outline = true
-                ToggleText.OutlineColor = {0, 0, 0}
-                ToggleText.Transparency = 1
-                ToggleText.Center = false
-                ToggleText.Visible = self.Visible
+    local ToggleText = Drawing.new("Text")
+    ToggleText.Text = ToggleName or "Toggle"
+    ToggleText.Size = 12
+    ToggleText.Font = 5
+    ToggleText.Color = Colors["Text"]
+    ToggleText.Outline = true
+    ToggleText.OutlineColor = {0, 0, 0}
+    ToggleText.Transparency = 1
+    ToggleText.Center = false
+    ToggleText.Visible = self.Visible
 
-                local State = DefaultState or false
-                
-                local function UpdateToggleVisuals()
-                    ToggleFill.Visible = State
-                    local IsHovered = WindowActive and WindowActive:IsHovered(ToggleBorder)
-                    ToggleBorder.Color = IsHovered and Colors["Accent"] or Colors["ObjectBorder"]
-                end
-                
-                UpdateToggleVisuals()
+    local State = DefaultState or false
+    
+    local function UpdateToggleVisuals()
+        ToggleFill.Visible = State
+        local IsHovered = WindowActive and WindowActive:IsHovered(ToggleBorder)
+        ToggleBorder.Color = (IsHovered or State) and Colors["Accent"] or Colors["ObjectBorder"]
+    end
+    
+    UpdateToggleVisuals()
 
-                local ToggleObj = {
-                    Type = "Toggle",
-                    Name = ToggleName,
-                    Callback = Callback,
-                    ToggleBorder = ToggleBorder,
-                    ToggleFill = ToggleFill,
-                    ToggleText = ToggleText,
-                    Visible = self.Visible,
-                    State = State,
-                    Update = UpdateToggleVisuals
-                }
+    local ToggleObj = {
+        Type = "Toggle",
+        Name = ToggleName,
+        Callback = Callback,
+        ToggleBorder = ToggleBorder,
+        ToggleFill = ToggleFill,
+        ToggleText = ToggleText,
+        Visible = self.Visible,
+        State = State,
+        Update = UpdateToggleVisuals
+    }
 
-                table.insert(self.Interfaces, ToggleObj)
+    table.insert(self.Interfaces, ToggleObj)
 
-                if IsVisible and Main.ActiveTab == TabContent.Name then
-                    Main:UpdateLayout()
-                end
+    if IsVisible and Main.ActiveTab == TabContent.Name then
+        Main:UpdateLayout()
+    end
 
-                return ToggleObj
-            end
+    return ToggleObj
+end
 
             if Side == "Left" then
                 table.insert(self.LeftSections, SectionObj)
@@ -862,5 +862,5 @@ spawn(function()
     end
 end)
 
-print'e'
+print'f'
 return Library
