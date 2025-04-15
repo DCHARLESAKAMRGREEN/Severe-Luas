@@ -17,11 +17,16 @@ local Colors = {
 local MouseService = findservice(Game, "MouseService")
 local Mouse = {
     X = 0,
-    Y = 0
+    Y = 0,
+    Clicked = false,
+    Pressed = false
 }
 
 local Library = {}
 local ActiveWindow = nil
+local IsDragging = false
+local DragOffsetX = 0
+local DragOffsetY = 0
 
 function Library:Create(Title)
     local Main = {}
@@ -97,15 +102,29 @@ function Library:Create(Title)
     Main.TabContents = {}
     Main.ActiveTab = nil
 
-    function Main:IsHovered()
+    function Main:IsHovered(Element)
         local MouseX, MouseY = Mouse.X, Mouse.Y
-        local WindowX, WindowY = Main.WindowBackground.Position.x, Main.WindowBackground.Position.y
-        local WindowW, WindowH = Main.WindowBackground.Size.x, Main.WindowBackground.Size.y
+        local ElemX, ElemY = Element.Position.x, Element.Position.y
+        local ElemW, ElemH = Element.Size.x, Element.Size.y
 
-        if MouseX >= WindowX and MouseX <= WindowX + WindowW and MouseY >= WindowY and MouseY <= WindowY + WindowH then
-            return true
-        end
-        return false
+        return MouseX >= ElemX and MouseX <= ElemX + ElemW and MouseY >= ElemY and MouseY <= ElemY + ElemH
+    end
+    
+    function Main:IsHoveringWindow()
+         return Main:IsHovered(Main.WindowBackground)
+    end
+
+    function Main:UpdateElementPositions()
+        local BaseX, BaseY = Main.WindowBackground.Position.x, Main.WindowBackground.Position.y
+        
+        Main.Title.Position = {BaseX + 10, BaseY + 5}
+        Main.TabBackground.Position = {BaseX + 10, BaseY + 25}
+        Main.TabBorder.Position = {Main.TabBackground.Position.x, Main.TabBackground.Position.y}
+        Main.WindowBackground2.Position = {BaseX + 10, BaseY + 50}
+        Main.Window2Border.Position = {Main.WindowBackground2.Position.x, Main.WindowBackground2.Position.y}
+        Main.WindowBorder.Position = {BaseX, BaseY}
+
+        Main:UpdateTabSizes() 
     end
 
     function Main:UpdateTabSizes()
@@ -114,14 +133,12 @@ function Library:Create(Title)
 
         local TotalWidth = Main.TabBackground.Size.x
         local CalculatedTabWidth = TotalWidth / TabCount
-        local MinTabWidth = 50 -- Optional: Set a minimum width
+        local MinTabWidth = 50 
         local TabWidth = math.max(CalculatedTabWidth, MinTabWidth)
-        
-        -- Ensure total width doesn't exceed container if minimum width is applied
-        if TabWidth * TabCount > TotalWidth then
-             TabWidth = TotalWidth / TabCount -- Recalculate if min width pushes total over
-        end
 
+        if TabWidth * TabCount > TotalWidth then
+             TabWidth = TotalWidth / TabCount
+        end
 
         local CurrentX = Main.TabBackground.Position.x
         for i, TabObj in ipairs(Main.Tabs) do
@@ -187,13 +204,15 @@ function Library:Create(Title)
         if #Main.Tabs == 1 then
             Main:SelectTab(TabName)
         else
-            Main:SelectTab(Main.ActiveTab) -- Reselect active tab to ensure color is correct
+            Main:SelectTab(Main.ActiveTab) 
         end
 
         return TabContent
     end
 
     function Main:SelectTab(TabName)
+        if not Main.TabButtons[TabName] then return end 
+
         for _, Tab in ipairs(Main.Tabs) do
             Tab.Button.Color = Colors["Tab Toggle Background"]
             Tab.Content.Visible = false
@@ -206,15 +225,13 @@ function Library:Create(Title)
         end
 
         local SelectedTab = Main.TabButtons[TabName]
-        if SelectedTab then
-            SelectedTab.Button.Color = Colors["Accent"]
-            SelectedTab.Content.Visible = true
-            Main.ActiveTab = TabName
+        SelectedTab.Button.Color = Colors["Accent"]
+        SelectedTab.Content.Visible = true
+        Main.ActiveTab = TabName
 
-            for _, Element in pairs(SelectedTab.Content.Elements) do
-                if Element.Visible ~= nil then
-                    Element.Visible = true
-                end
+        for _, Element in pairs(SelectedTab.Content.Elements) do
+            if Element.Visible ~= nil then
+                Element.Visible = true
             end
         end
     end
@@ -228,14 +245,58 @@ spawn(function()
         local MouseLocation = getmouselocation(MouseService)
         Mouse.X = MouseLocation.x
         Mouse.Y = MouseLocation.y
+        Mouse.Clicked = isleftclicked() 
+        Mouse.Pressed = isleftpressed() 
 
-        if ActiveWindow and ActiveWindow:IsHovered() then
-             print("Hovered")
+        if ActiveWindow then
+            local IsHovering = ActiveWindow:IsHoveringWindow()
+            
+            -- Handle Passthrough
+            set_window_passthrough(not IsHovering)
+
+            -- Define Drag Area (e.g., the title bar area up to the tabs)
+            local DragAreaYMax = ActiveWindow.TabBackground.Position.y
+            local IsOverDragArea = Mouse.X >= ActiveWindow.WindowBackground.Position.x and 
+                                   Mouse.X <= ActiveWindow.WindowBackground.Position.x + ActiveWindow.WindowBackground.Size.x and
+                                   Mouse.Y >= ActiveWindow.WindowBackground.Position.y and 
+                                   Mouse.Y < DragAreaYMax -- Only allow dragging by the top bar
+
+            -- Handle Dragging
+            if Mouse.Clicked and IsOverDragArea and not IsDragging then
+                IsDragging = true
+                DragOffsetX = Mouse.X - ActiveWindow.WindowBackground.Position.x
+                DragOffsetY = Mouse.Y - ActiveWindow.WindowBackground.Position.y
+            elseif Mouse.Pressed and IsDragging then
+                local NewX = Mouse.X - DragOffsetX
+                local NewY = Mouse.Y - DragOffsetY
+                ActiveWindow.WindowBackground.Position = {NewX, NewY}
+                ActiveWindow:UpdateElementPositions()
+            elseif not Mouse.Pressed and IsDragging then
+                 IsDragging = false
+            end
+
+            -- Handle Tab Click
+            if Mouse.Clicked and not IsDragging then 
+                for _, TabObj in ipairs(ActiveWindow.Tabs) do
+                    if ActiveWindow:IsHovered(TabObj.Button) then
+                         ActiveWindow:SelectTab(TabObj.Name)
+                         break 
+                    end
+                end
+            end
+            
+            -- Optional: Print Hovered state (can be removed)
+            -- if IsHovering then
+            --     print("Hovered")
+            -- end
+        else
+             -- Default passthrough state if no window is active
+             set_window_passthrough(true) 
         end
 
         wait()
     end
 end)
 
-print("Version 4")
+print("Library Loaded")
 return Library
