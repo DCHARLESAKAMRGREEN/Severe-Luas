@@ -55,6 +55,9 @@ local function SetVisibilityRecursive(InterfaceCollection, Visible)
          if Interface.SelectedHighlight and Interface.SelectedHighlight.Visible ~= nil then
             Interface.SelectedHighlight.Visible = false
          end
+         if Interface.Text and Interface.Text.Visible ~= nil then
+             Interface.Text.Visible = Visible
+         end
     end
 end
 
@@ -290,22 +293,59 @@ function Library:Create(Title)
         CurrentTabContent.CurrentRightY = InitialY
 
         local function PositionSection(SectionObj, ColumnX, CurrentY)
-            local PlaceholderHeight = 100
+            local TotalElementHeight = 0
+            local ElementSpacing = 5
+            local TitleOffset = 15
+            
+            if SectionObj.Interfaces then
+                for _, Interface in ipairs(SectionObj.Interfaces) do
+                    if Interface.Background and Interface.Background.Size then
+                        TotalElementHeight = TotalElementHeight + Interface.Background.Size.y + ElementSpacing
+                    end
+                end
+            end
+            
+            local SectionHeight = math.max(100, TitleOffset + TotalElementHeight)
+            
             local Background = SectionObj.Background
             local Border = SectionObj.Border
             local Title = SectionObj.Title
 
             Background.Position = {ColumnX, CurrentY}
             Border.Position = {ColumnX, CurrentY}
-            Background.Size = {ColumnWidth, PlaceholderHeight}
-            Border.Size = {ColumnWidth, PlaceholderHeight}
+            Background.Size = {ColumnWidth, SectionHeight}
+            Border.Size = {ColumnWidth, SectionHeight}
 
             if Title then
                 Title.Position = {ColumnX + 5, CurrentY + 3}
                 Title.Visible = SectionObj.Visible
             end
-            return CurrentY + PlaceholderHeight + 5
-        end
+            
+            local CurrentElementY = CurrentY + TitleOffset
+            if SectionObj.Interfaces then
+                for _, Interface in ipairs(SectionObj.Interfaces) do
+                    if Interface.Background then
+                        Interface.Background.Position = {ColumnX + 5, CurrentElementY}
+                        Interface.Border.Position = {ColumnX + 5, CurrentElementY}
+                        
+                        if Interface.Text and Interface.Text.Position then
+                            local TextX = ColumnX + 5 + (Interface.Background.Size.x / 2)
+                            local TextY = CurrentElementY + (Interface.Background.Size.y / 2)
+                            if Interface.Text.TextBounds then
+                                TextY = TextY - (Interface.Text.TextBounds.y / 2)
+                            else
+                                TextY = TextY - 7
+                            end
+                            Interface.Text.Position = {TextX, TextY}
+                        end
+                        
+                        CurrentElementY = CurrentElementY + Interface.Background.Size.y + ElementSpacing
+                    end
+                end
+            end
+            
+            return CurrentY + SectionHeight + 5
+        }
 
         for _, SectionObj in ipairs(CurrentTabContent.LeftSections) do
              if SectionObj.Visible then
@@ -410,6 +450,100 @@ function Library:Create(Title)
                 table.insert(self.LeftSections, SectionObj)
             else
                 table.insert(self.RightSections, SectionObj)
+            end
+
+            function SectionObj:Button(ButtonName, Callback)
+                ButtonName = ButtonName or "Button"
+                Callback = Callback or function() end
+            
+                local ButtonBackground = Drawing.new("Square")
+                ButtonBackground.Color = Colors["Object Background"]
+                ButtonBackground.Filled = true
+                ButtonBackground.Thickness = 1
+                ButtonBackground.Transparency = 1
+                ButtonBackground.Visible = self.Visible and IsVisible
+            
+                local ButtonBorder = Drawing.new("Square")
+                ButtonBorder.Color = Colors["Object Border"]
+                ButtonBorder.Filled = false
+                ButtonBorder.Thickness = 1
+                ButtonBorder.Transparency = 1
+                ButtonBorder.Visible = self.Visible and IsVisible
+            
+                local ButtonText = Drawing.new("Text")
+                ButtonText.Text = ButtonName
+                ButtonText.Size = 13
+                ButtonText.Font = 5
+                ButtonText.Color = Colors["Text"]
+                ButtonText.Outline = true
+                ButtonText.OutlineColor = {0, 0, 0}
+                ButtonText.Transparency = 1
+                ButtonText.Center = true
+                ButtonText.Visible = self.Visible and IsVisible
+            
+                local ButtonObj = {
+                    Type = "Button",
+                    Name = ButtonName,
+                    Background = ButtonBackground,
+                    Border = ButtonBorder,
+                    Text = ButtonText,
+                    Callback = Callback,
+                    Visible = self.Visible and IsVisible,
+                    IsHovered = false,
+                    IsClicked = false
+                }
+            
+                local ButtonHeight = 15
+                local ButtonWidth = self.Background.Size.x - 10
+                
+                ButtonBackground.Size = {ButtonWidth, ButtonHeight}
+                ButtonBorder.Size = {ButtonWidth, ButtonHeight}
+                
+                table.insert(self.Interfaces, ButtonObj)
+                
+                spawn(function()
+                    while true do
+                        if IsVisible and ButtonObj.Visible then
+                            local IsHovered = Main:IsHovered(ButtonBackground)
+                            
+                            if IsHovered and not ButtonObj.IsHovered then
+                                ButtonObj.IsHovered = true
+                                ButtonBorder.Color = Colors["Accent"]
+                            elseif not IsHovered and ButtonObj.IsHovered then
+                                ButtonObj.IsHovered = false
+                                ButtonBorder.Color = Colors["Object Border"]
+                            end
+                            
+                            if IsHovered and Mouse.Clicked and not ButtonObj.IsClicked then
+                                ButtonObj.IsClicked = true
+                                local OriginalColor = ButtonBackground.Color
+                                local OriginalTransparency = ButtonBackground.Transparency
+                                
+                                ButtonBackground.Color = Colors["Tab Selected Background"]
+                                ButtonBackground.Transparency = 0.135
+                                
+                                spawn(function()
+                                    Callback()
+                                end)
+                                
+                                spawn(function()
+                                    wait(0.3)
+                                    if ButtonObj and ButtonBackground then
+                                        ButtonBackground.Color = OriginalColor
+                                        ButtonBackground.Transparency = OriginalTransparency
+                                        ButtonObj.IsClicked = false
+                                    end
+                                end)
+                            elseif not Mouse.Pressed then
+                                ButtonObj.IsClicked = false
+                            end
+                        end
+                        wait()
+                    end
+                end)
+            
+                Main:Sections()
+                return ButtonObj
             end
 
             if IsVisible and Main.ActiveTab == self.Name then
@@ -556,5 +690,5 @@ spawn(function()
     end
 end)
 
-print("V1")
+print("Severe UI Library v1.1 - Button Component Added")
 return Library
