@@ -32,9 +32,11 @@ local DragOffsetY = 0
 local IsVisible = true
 local TogglePressed = false
 local Padding = 5
-local ButtonHeight = 25
+local ButtonHeight = 20 -- Reduced height
 local ElementSpacing = 5
 local TitleHeight = 15
+local SelectedTransparency = 0.135
+local ClickFeedbackDuration = 0.5
 
 local function SetVisibilityRecursive(InterfaceCollection, Visible)
     for _, Interface in pairs(InterfaceCollection) do
@@ -66,10 +68,23 @@ local function SetVisibilityRecursive(InterfaceCollection, Visible)
             Interface.SelectedHighlight.Visible = false
         end
 
-        if Interface.Type == "Button" and Interface.OnClick then
+        if Interface.Type == "Button" then
             if Interface.Background then Interface.Background.Visible = EffectiveVisible end
             if Interface.Border then Interface.Border.Visible = EffectiveVisible end
             if Interface.ButtonText then Interface.ButtonText.Visible = EffectiveVisible end
+            if not EffectiveVisible then
+                 if Interface.IsHovered then
+                      Interface.Border.Color = Colors["ObjectBorder"]
+                      Interface.IsHovered = false
+                 end
+                 if Interface.RevertTime then
+                     Interface.Background.Color = Interface.OriginalColor
+                     Interface.Background.Transparency = Interface.OriginalTransparency
+                     Interface.RevertTime = nil
+                     Interface.OriginalColor = nil
+                     Interface.OriginalTransparency = nil
+                 end
+            end
         end
     end
 end
@@ -106,6 +121,7 @@ function ToggleUI()
 
         if not IsVisible then
             IsDragging = false
+            SetVisibilityRecursive(WindowActive.Tabs, false)
         else
              if Main.ActiveTab then
                 Main:SelectTab(Main.ActiveTab)
@@ -310,6 +326,9 @@ function Library:Create(TitleText)
         CurrentTabContent.CurrentRightY = InitialY
 
         local function UpdateSectionAndInterfaces(SectionObj, ColumnX, CurrentColumnY)
+            local IsTabVisible = IsVisible and Main.ActiveTab == CurrentTabContent.Name
+            local SectionIsEffectivelyVisible = IsTabVisible and SectionObj.Visible
+
             local Background = SectionObj.Background
             local Border = SectionObj.Border
             local Title = SectionObj.Title
@@ -322,7 +341,7 @@ function Library:Create(TitleText)
 
             if Title then
                 Title.Position = {ColumnX + Padding, CurrentColumnY + Padding}
-                Title.Visible = SectionObj.Visible and IsVisible and Main.ActiveTab == CurrentTabContent.Name
+                Title.Visible = SectionIsEffectivelyVisible
             end
 
             local ContentStartY = CurrentColumnY + TitleHeight + Padding
@@ -333,20 +352,20 @@ function Library:Create(TitleText)
                       local ButtonWidth = ColumnWidth - (Padding * 2)
                       Interface.Background.Position = {ColumnX + Padding, InternalY}
                       Interface.Border.Position = {ColumnX + Padding, InternalY}
-                      Interface.ButtonText.Position = {ColumnX + Padding + (ButtonWidth / 2) , InternalY + (ButtonHeight / 2) - (Interface.ButtonText.Size / 1.5)}
+                      Interface.ButtonText.Position = {ColumnX + Padding + (ButtonWidth / 2) , InternalY + (ButtonHeight / 2) - (Interface.ButtonText.Size / 1.75)} -- Adjusted Y centering for new height
                       Interface.Background.Size = {ButtonWidth, ButtonHeight}
                       Interface.Border.Size = {ButtonWidth, ButtonHeight}
 
-                      Interface.Background.Visible = SectionObj.Visible and IsVisible and Main.ActiveTab == CurrentTabContent.Name
-                      Interface.Border.Visible = SectionObj.Visible and IsVisible and Main.ActiveTab == CurrentTabContent.Name
-                      Interface.ButtonText.Visible = SectionObj.Visible and IsVisible and Main.ActiveTab == CurrentTabContent.Name
+                      Interface.Background.Visible = SectionIsEffectivelyVisible
+                      Interface.Border.Visible = SectionIsEffectivelyVisible
+                      Interface.ButtonText.Visible = SectionIsEffectivelyVisible
 
                       InternalY = InternalY + ButtonHeight + ElementSpacing
                  end
             end
 
-            Background.Visible = SectionObj.Visible and IsVisible and Main.ActiveTab == CurrentTabContent.Name
-            Border.Visible = SectionObj.Visible and IsVisible and Main.ActiveTab == CurrentTabContent.Name
+            Background.Visible = SectionIsEffectivelyVisible
+            Border.Visible = SectionIsEffectivelyVisible
 
             return CurrentColumnY + SectionHeight + ElementSpacing
         end
@@ -495,7 +514,11 @@ function Library:Create(TitleText)
                       Border = ButtonBorder,
                       ButtonText = ButtonText,
                       OnClick = OnClick,
-                      Visible = false
+                      Visible = false,
+                      IsHovered = false,
+                      OriginalColor = nil,
+                      OriginalTransparency = nil,
+                      RevertTime = nil
                  }
 
                  table.insert(self.Interfaces, ButtonObj)
@@ -574,12 +597,15 @@ function Library:Create(TitleText)
             return
         end
 
+        local PreviousActiveTab = Main.ActiveTab
+        if PreviousActiveTab and Main.TabContents[PreviousActiveTab] then
+             SetVisibilityRecursive(Main.TabContents[PreviousActiveTab].LeftSections, false)
+             SetVisibilityRecursive(Main.TabContents[PreviousActiveTab].RightSections, false)
+        end
         for _, OtherTab in ipairs(Main.Tabs) do
             OtherTab.SelectedHighlight.Visible = false
-            OtherTab.Content.Visible = false
-            SetVisibilityRecursive(OtherTab.Content.LeftSections, false)
-            SetVisibilityRecursive(OtherTab.Content.RightSections, false)
         end
+
 
         local SelectedTab = Main.TabButtons[TabName]
         SelectedTab.SelectedHighlight.Visible = true
@@ -597,7 +623,9 @@ function Library:Create(TitleText)
 end
 
 spawn(function()
+    local CurrentTick = 0
     while true do
+        CurrentTick = tick()
         local MouseLocation = getmouselocation(MouseService)
         Mouse.X = MouseLocation.x
         Mouse.Y = MouseLocation.y
@@ -638,6 +666,51 @@ spawn(function()
                 IsDragging = false
             end
 
+            local ActiveContent = nil
+            if WindowActive.ActiveTab then
+                ActiveContent = WindowActive.TabContents[WindowActive.ActiveTab]
+            end
+
+            local function ProcessButtonInteractions(SectionList)
+                if not ActiveContent then return end
+                for _, SectionObj in ipairs(SectionList) do
+                    if SectionObj.Visible then
+                        for _, Interface in ipairs(SectionObj.Interfaces) do
+                            if Interface.Type == "Button" and Interface.Visible then
+                                local IsCurrentlyHovered = WindowActive:IsHovered(Interface.Background)
+                                IsHoveringAnyUI = IsHoveringAnyUI or IsCurrentlyHovered
+
+                                if IsCurrentlyHovered then
+                                    if not Interface.IsHovered then
+                                        Interface.Border.Color = Colors["Accent"]
+                                        Interface.IsHovered = true
+                                    end
+                                else
+                                    if Interface.IsHovered then
+                                         Interface.Border.Color = Colors["ObjectBorder"]
+                                         Interface.IsHovered = false
+                                    end
+                                end
+
+                                if Interface.RevertTime and CurrentTick >= Interface.RevertTime then
+                                     Interface.Background.Color = Interface.OriginalColor
+                                     Interface.Background.Transparency = Interface.OriginalTransparency
+                                     Interface.RevertTime = nil
+                                     Interface.OriginalColor = nil
+                                     Interface.OriginalTransparency = nil
+                                end
+                            end
+                        end
+                    end
+                end
+            end
+
+            if ActiveContent then
+                 ProcessButtonInteractions(ActiveContent.LeftSections)
+                 ProcessButtonInteractions(ActiveContent.RightSections)
+            end
+
+
             if Mouse.Clicked then
                 if WindowActive:IsHovered(WindowActive.WindowBackground) and Mouse.Y < DragAreaYMax and not IsDragging then
                      IsDragging = true
@@ -654,14 +727,20 @@ spawn(function()
                         end
                     end
 
-                    if not ClickHandled and WindowActive.ActiveTab then
-                        local ActiveContent = WindowActive.TabContents[WindowActive.ActiveTab]
+                    if not ClickHandled and ActiveContent then
                         local function CheckClicksInSectionList(SectionList)
                              for _, SectionObj in ipairs(SectionList) do
                                  if SectionObj.Visible then
                                      for _, Interface in ipairs(SectionObj.Interfaces) do
                                          if Interface.Type == "Button" and Interface.Visible and WindowActive:IsHovered(Interface.Background) then
                                              if Interface.OnClick then Interface.OnClick() end
+                                             if not Interface.RevertTime then
+                                                  Interface.OriginalColor = Interface.Background.Color
+                                                  Interface.OriginalTransparency = Interface.Background.Transparency
+                                                  Interface.RevertTime = CurrentTick + ClickFeedbackDuration
+                                                  Interface.Background.Color = Colors["TabSelectedBackground"]
+                                                  Interface.Background.Transparency = SelectedTransparency
+                                             end
                                              IsHoveringAnyUI = true
                                              return true
                                          end
@@ -682,5 +761,5 @@ spawn(function()
     end
 end)
 
-print("V1 - Button Added")
+print("V1 - Button Height/Hover/Click Feedback Added")
 return Library
