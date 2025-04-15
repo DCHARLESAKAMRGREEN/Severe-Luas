@@ -16,7 +16,6 @@ local Colors = {
     ["Dropdown Option Background"] = {19, 19, 19}
 }
 
-local Game = Game
 local MouseService = findservice(Game, "MouseService")
 local Mouse = {
     X = 0,
@@ -880,5 +879,5 @@ spawn(function()
     end
 end)
 
-print("V1.5 - Compact Toggle Button Support")
+print("V1.6")
 return Library
