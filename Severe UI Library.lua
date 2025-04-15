@@ -559,8 +559,8 @@ function Library:Create(TitleText)
                 ToggleBorder.Thickness = 1
                 ToggleBorder.Transparency = 1
                 ToggleBorder.Visible = true
-                ToggleBorder.ZIndex = 2
 
+            
                 local ToggleText = Drawing.new("Text")
                 ToggleText.Text = ToggleName or "Toggle"
                 ToggleText.Size = 12
