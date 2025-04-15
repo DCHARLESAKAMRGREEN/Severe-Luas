@@ -55,11 +55,11 @@ local function SetVisibilityRecursive(InterfaceCollection, Visible)
              SetElementVisibility(Interface.ButtonBorder, Visible)
              SetElementVisibility(Interface.ButtonText, Visible)
              Interface.Visible = Visible
-        elseif Interface.Type == "Toggle" then
-             SetElementVisibility(Interface.ToggleBorder, Visible)
-             SetElementVisibility(Interface.ToggleFill, Visible)
-             SetElementVisibility(Interface.ToggleText, Visible)
-             Interface.Visible = Visible
+elseif Interface.Type == "Toggle" then
+    SetElementVisibility(Interface.ToggleBorder, Interface.Visible)
+    SetElementVisibility(Interface.ToggleFill, Interface.Visible and Interface.State)
+    SetElementVisibility(Interface.ToggleText, Interface.Visible)
+    Interface.Visible = Visible
         else
              if Interface.Visible ~= nil then
                  Interface.Visible = Visible
@@ -359,24 +359,19 @@ function Library:Create(TitleText)
                          InterfaceObj.ButtonText.Center = true
 
                          CurrentInternalY = CurrentInternalY + ButtonHeight + Padding
-                     elseif InterfaceObj.Type == "Toggle" then
-                         local ToggleSize = 20
-                         local ToggleX = ColumnX + Padding
-                         local ToggleY = CurrentInternalY
+elseif InterfaceObj.Type == "Toggle" then
+    local ToggleSize = 20
+    local ToggleX = ColumnX + Padding
+    local ToggleY = CurrentInternalY
 
-                         SetElementVisibility(InterfaceObj.ToggleBorder, true)
-                         SetElementVisibility(InterfaceObj.ToggleFill, true)
-                         SetElementVisibility(InterfaceObj.ToggleText, true)
+    InterfaceObj.ToggleBorder.Position = {ToggleX, ToggleY}
+    InterfaceObj.ToggleBorder.Size = {ToggleSize, ToggleSize}
+    InterfaceObj.Update() -- Positions fill
+    
+    local TextYOffset = math.floor((ToggleSize - 12)/2)
+    InterfaceObj.ToggleText.Position = {ToggleX + ToggleSize + 5, ToggleY + TextYOffset}
 
-                         InterfaceObj.ToggleBorder.Position = {ToggleX, ToggleY}
-                         InterfaceObj.ToggleBorder.Size = {ToggleSize, ToggleSize}
-                         InterfaceObj.ToggleFill.Position = {ToggleX + 1, ToggleY + 1}
-                         InterfaceObj.ToggleFill.Size = {ToggleSize - 2, ToggleSize - 2}
-
-                         local TextYOffset = math.floor((ToggleSize - 12) / 2)
-                         InterfaceObj.ToggleText.Position = {ToggleX + ToggleSize + 5, ToggleY + TextYOffset}
-
-                         CurrentInternalY = CurrentInternalY + ToggleSize + Padding
+    CurrentInternalY = CurrentInternalY + ToggleSize + Padding
                      end
                 end
             end
@@ -544,8 +539,9 @@ function Library:Create(TitleText)
 
                 return ButtonObj
             end
-
+            
 function SectionObj:Toggle(ToggleName, DefaultState, Callback)
+    -- Border (always visible)
     local ToggleBorder = Drawing.new("Square")
     ToggleBorder.Color = Colors["ObjectBorder"]
     ToggleBorder.Filled = false
@@ -553,12 +549,15 @@ function SectionObj:Toggle(ToggleName, DefaultState, Callback)
     ToggleBorder.Transparency = 1
     ToggleBorder.Visible = self.Visible
 
+    -- Fill (only visible when enabled)
     local ToggleFill = Drawing.new("Square")
     ToggleFill.Color = Colors["Accent"]
     ToggleFill.Filled = true
     ToggleFill.Transparency = 0.5
     ToggleFill.Visible = false
+    ToggleFill.Thickness = 0
 
+    -- Label text
     local ToggleText = Drawing.new("Text")
     ToggleText.Text = ToggleName or "Toggle"
     ToggleText.Size = 12
@@ -573,13 +572,20 @@ function SectionObj:Toggle(ToggleName, DefaultState, Callback)
     local State = DefaultState or false
     
     local function UpdateToggleVisuals()
+        -- Position fill inside border (1px padding)
+        local borderPos = ToggleBorder.Position
+        local borderSize = ToggleBorder.Size
+        ToggleFill.Position = {borderPos.x + 1, borderPos.y + 1}
+        ToggleFill.Size = {borderSize.x - 2, borderSize.y - 2}
+        
+        -- Update visibility
         ToggleFill.Visible = State
+        
+        -- Handle hover (border always changes color when hovered)
         local IsHovered = WindowActive and WindowActive:IsHovered(ToggleBorder)
-        ToggleBorder.Color = (IsHovered or State) and Colors["Accent"] or Colors["ObjectBorder"]
+        ToggleBorder.Color = IsHovered and Colors["Accent"] or Colors["ObjectBorder"]
     end
     
-    UpdateToggleVisuals()
-
     local ToggleObj = {
         Type = "Toggle",
         Name = ToggleName,
@@ -592,11 +598,9 @@ function SectionObj:Toggle(ToggleName, DefaultState, Callback)
         Update = UpdateToggleVisuals
     }
 
+    -- Initial setup
+    UpdateToggleVisuals()
     table.insert(self.Interfaces, ToggleObj)
-
-    if IsVisible and Main.ActiveTab == TabContent.Name then
-        Main:UpdateLayout()
-    end
 
     return ToggleObj
 end
@@ -862,5 +866,5 @@ spawn(function()
     end
 end)
 
-print'f'
+print'h'
 return Library
