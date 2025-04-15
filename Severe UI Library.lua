@@ -39,6 +39,7 @@ local LayoutConfig = {
     SectionElementPaddingY = 8,
     ToggleHeight = 15,
     CheckboxSize = 12,
+    ButtonHeight = 20,
     MinSectionHeight = 30
 }
 
@@ -59,12 +60,15 @@ local function SetVisibilityRecursive(InterfaceCollection, Visible)
          if Interface.Title and Interface.Title.Visible ~= nil then
              Interface.Title.Visible = Visible
          end
-         if Interface.Remove and Interface.Position then -- Generic check for drawing objects
+         if Interface.Remove and Interface.Position then
              Interface.Visible = Visible
          end
          if Interface.CheckboxSquare and Interface.CheckboxSquare.Visible ~= nil then Interface.CheckboxSquare.Visible = Visible end
          if Interface.CheckboxBorder and Interface.CheckboxBorder.Visible ~= nil then Interface.CheckboxBorder.Visible = Visible end
          if Interface.LabelText and Interface.LabelText.Visible ~= nil then Interface.LabelText.Visible = Visible end
+         if Interface.ButtonBackground and Interface.ButtonBackground.Visible ~= nil then Interface.ButtonBackground.Visible = Visible end
+         if Interface.ButtonBorder and Interface.ButtonBorder.Visible ~= nil then Interface.ButtonBorder.Visible = Visible end
+         if Interface.ButtonText and Interface.ButtonText.Visible ~= nil then Interface.ButtonText.Visible = Visible end
          if Interface.SelectedHighlight and Interface.SelectedHighlight.Visible ~= nil then
             Interface.SelectedHighlight.Visible = false
          end
@@ -315,7 +319,7 @@ function Library:Create(Title)
             for _, Interface in ipairs(SectionObj.Interfaces) do
                  if Interface.Type == "Toggle" then
                     local CheckboxX = ElementStartX
-                    local CheckboxY = CurrentElementY + (LayoutConfig.ToggleHeight - LayoutConfig.CheckboxSize) / 2 -- Center vertically
+                    local CheckboxY = CurrentElementY + (LayoutConfig.ToggleHeight - LayoutConfig.CheckboxSize) / 2
 
                     Interface.CheckboxBorder.Position = {CheckboxX, CheckboxY}
                     Interface.CheckboxSquare.Position = {CheckboxX + 1, CheckboxY + 1}
@@ -327,11 +331,28 @@ function Library:Create(Title)
 
                     RequiredHeight = RequiredHeight + LayoutConfig.ToggleHeight + LayoutConfig.SectionElementPaddingY
                     CurrentElementY = CurrentElementY + LayoutConfig.ToggleHeight + LayoutConfig.SectionElementPaddingY
+
+                 elseif Interface.Type == "Button" then
+                    local ButtonWidth = ColumnWidth - (LayoutConfig.SectionElementPaddingX * 2)
+                    local ButtonX = ElementStartX
+                    local ButtonY = CurrentElementY
+
+                    Interface.ButtonBackground.Position = {ButtonX, ButtonY}
+                    Interface.ButtonBackground.Size = {ButtonWidth, LayoutConfig.ButtonHeight}
+                    Interface.ButtonBorder.Position = {ButtonX, ButtonY}
+                    Interface.ButtonBorder.Size = {ButtonWidth, LayoutConfig.ButtonHeight}
+                    Interface.ButtonText.Position = {ButtonX + ButtonWidth / 2, ButtonY + LayoutConfig.ButtonHeight / 2 - (Interface.ButtonText.TextBounds and Interface.ButtonText.TextBounds.y / 2 or 7)}
+
+                    Interface.ButtonBackground.Visible = SectionObj.Visible
+                    Interface.ButtonBorder.Visible = SectionObj.Visible
+                    Interface.ButtonText.Visible = SectionObj.Visible
+
+                    RequiredHeight = RequiredHeight + LayoutConfig.ButtonHeight + LayoutConfig.SectionElementPaddingY
+                    CurrentElementY = CurrentElementY + LayoutConfig.ButtonHeight + LayoutConfig.SectionElementPaddingY
                  end
-                 -- Add layout logic for other interface types here
             end
 
-            RequiredHeight = RequiredHeight + LayoutConfig.SectionPaddingY -- Bottom padding
+            RequiredHeight = RequiredHeight + LayoutConfig.SectionPaddingY
             local FinalHeight = math.max(LayoutConfig.MinSectionHeight, RequiredHeight)
 
             SectionObj.Background.Position = {ColumnX, CurrentY}
@@ -339,7 +360,7 @@ function Library:Create(Title)
             SectionObj.Background.Size = {ColumnWidth, FinalHeight}
             SectionObj.Border.Size = {ColumnWidth, FinalHeight}
 
-            return CurrentY + FinalHeight + 5 -- Return Y pos for next section
+            return CurrentY + FinalHeight + 5
         end
 
         for _, SectionObj in ipairs(CurrentTabContent.LeftSections) do
@@ -492,6 +513,55 @@ function Library:Create(Title)
                 return ToggleObj
             end
 
+            function SectionObj:Button(ButtonName, ButtonOptions)
+                ButtonOptions = ButtonOptions or {}
+                local CallbackFunc = ButtonOptions.Callback
+
+                local ButtonBackground = Drawing.new("Square")
+                ButtonBackground.Size = {0, LayoutConfig.ButtonHeight}
+                ButtonBackground.Color = Colors["Object Background"]
+                ButtonBackground.Filled = true
+                ButtonBackground.Visible = false
+
+                local ButtonBorder = Drawing.new("Square")
+                ButtonBorder.Size = {0, LayoutConfig.ButtonHeight}
+                ButtonBorder.Color = Colors["Object Border"]
+                ButtonBorder.Filled = false
+                ButtonBorder.Thickness = 1
+                ButtonBorder.Visible = false
+
+                local ButtonText = Drawing.new("Text")
+                ButtonText.Text = ButtonName or "Button"
+                ButtonText.Size = 14
+                ButtonText.Font = 0
+                ButtonText.Color = Colors["Text"]
+                ButtonText.Outline = false
+                ButtonText.Center = true
+                ButtonText.Visible = false
+
+                local ButtonObj = {
+                    Type = "Button",
+                    Name = ButtonName,
+                    ButtonBackground = ButtonBackground,
+                    ButtonBorder = ButtonBorder,
+                    ButtonText = ButtonText,
+                    Callback = CallbackFunc,
+                    Visible = false
+                }
+
+                table.insert(self.Interfaces, ButtonObj)
+
+                if IsVisible and WindowActive and WindowActive.ActiveTab == TabContent.Name then
+                    SetInitialVisibility(ButtonBackground)
+                    SetInitialVisibility(ButtonBorder)
+                    SetInitialVisibility(ButtonText)
+                    ButtonObj.Visible = true
+                    WindowActive:Sections()
+                end
+
+                return ButtonObj
+            end
+
             if Side == "Left" then
                 table.insert(self.LeftSections, SectionObj)
             else
@@ -598,7 +668,7 @@ spawn(function()
                 IsHovered = true
              end
 
-             local DragAreaYMax = WindowActive.TabBackground.Position.y -- Define here for use in drag/click checks
+             local DragAreaYMax = WindowActive.TabBackground.Position.y
 
              if not IsHovered then
                  for _, TabObj in ipairs(WindowActive.Tabs) do
@@ -609,7 +679,6 @@ spawn(function()
                  end
              end
 
-             -- Check for hover over active elements (only toggles for now)
              if not IsHovered and WindowActive.ActiveTab then
                  local ActiveContent = WindowActive.TabContents[WindowActive.ActiveTab]
                  local function CheckSectionInterfacesHover(Sections)
@@ -618,8 +687,9 @@ spawn(function()
                              for _, Interface in ipairs(SectionObj.Interfaces) do
                                  if Interface.Type == "Toggle" and Interface.Visible and (WindowActive:IsHovered(Interface.CheckboxBorder) or WindowActive:IsHovered(Interface.LabelText)) then
                                      return true
+                                 elseif Interface.Type == "Button" and Interface.Visible and WindowActive:IsHovered(Interface.ButtonBackground) then
+                                     return true
                                  end
-                                 -- Add checks for other interface types here
                              end
                          end
                      end
@@ -650,7 +720,7 @@ spawn(function()
 
             if Mouse.Clicked and not IsDragging then
                  local ClickHandled = false
-                 -- Check Tabs First
+
                  if IsHovered and Mouse.Y < DragAreaYMax and Mouse.Y >= WindowActive.TabBackground.Position.y then
                      for _, TabObj in ipairs(WindowActive.Tabs) do
                          if WindowActive:IsHovered(TabObj.Button) then
@@ -661,10 +731,9 @@ spawn(function()
                      end
                  end
 
-                 -- Check Toggles if click wasn't handled by tabs
                  if not ClickHandled and WindowActive.ActiveTab then
                     local ActiveContent = WindowActive.TabContents[WindowActive.ActiveTab]
-                    local function HandleToggleClick(Sections)
+                    local function HandleInterfaceClick(Sections)
                         for _, SectionObj in ipairs(Sections) do
                             if SectionObj.Visible then
                                 for _, Interface in ipairs(SectionObj.Interfaces) do
@@ -674,14 +743,19 @@ spawn(function()
                                         if Interface.Callback then
                                              Interface.Callback(Interface.Toggled)
                                         end
-                                        return true -- Click handled
+                                        return true
+                                    elseif Interface.Type == "Button" and Interface.Visible and WindowActive:IsHovered(Interface.ButtonBackground) then
+                                        if Interface.Callback then
+                                             Interface.Callback()
+                                        end
+                                        return true
                                     end
                                 end
                             end
                         end
                         return false
                     end
-                    if HandleToggleClick(ActiveContent.LeftSections) or HandleToggleClick(ActiveContent.RightSections) then
+                    if HandleInterfaceClick(ActiveContent.LeftSections) or HandleInterfaceClick(ActiveContent.RightSections) then
                         ClickHandled = true
                     end
                  end
@@ -691,5 +765,5 @@ spawn(function()
     end
 end)
 
-print("V2")
+PRINT"V1")
 return Library
