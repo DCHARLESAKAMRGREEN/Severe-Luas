@@ -88,7 +88,6 @@ function ToggleUI()
 
         if not IsVisible then
              IsDragging = false
-             set_window_passthrough(true)
         else
             Main:SelectTab(Main.ActiveTab)
         end
@@ -526,14 +525,9 @@ spawn(function()
             local WindowSize = WindowActive.WindowBackground.Size
             local WindowX = WindowPos.x
             local WindowY = WindowPos.y
-
             local DragAreaYMax = WindowActive.TabBackground.Position.y
-            local IsHoveredDragArea = Mouse.X >= WindowX and
-                                  Mouse.X <= WindowX + WindowSize.x and
-                                  Mouse.Y >= WindowY and
-                                  Mouse.Y < DragAreaYMax
 
-            if Mouse.Clicked and IsHoveredDragArea and not IsDragging then
+            if Mouse.Clicked and IsHovered and Mouse.Y < DragAreaYMax and not IsDragging then
                 IsDragging = true
                 DragOffsetX = Mouse.X - WindowX
                 DragOffsetY = Mouse.Y - WindowY
@@ -547,7 +541,7 @@ spawn(function()
             end
 
             if Mouse.Clicked and not IsDragging then
-                 if IsHovered and not IsHoveredDragArea then
+                 if IsHovered and Mouse.Y >= DragAreaYMax then
                      for _, TabObj in ipairs(WindowActive.Tabs) do
                          if WindowActive:IsHovered(TabObj.Button) then
                              WindowActive:SelectTab(TabObj.Name)
@@ -558,15 +552,9 @@ spawn(function()
             end
         end
 
-        if IsHovered then
-            set_window_passthrough(false)
-        else
-            set_window_passthrough(true)
-        end
-
         wait()
     end
 end)
 
-print("V2")
+print("V1")
 return Library
