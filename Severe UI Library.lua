@@ -104,7 +104,16 @@ function Library:Create(Title)
     Main.TabButtons = {}
     Main.TabContents = {}
     Main.ActiveTab = nil
-    Main.TabWidth = 150
+    Main.MaxTabWidth = 120
+    Main.MinTabWidth = 80
+
+    function Main:CalculateTabWidth()
+        local availableWidth = Main.TabBackground.Size.x
+        local tabCount = #Main.Tabs
+        if tabCount == 0 then return Main.MaxTabWidth end
+        local calculatedWidth = math.floor(availableWidth / tabCount)
+        return math.clamp(calculatedWidth, Main.MinTabWidth, Main.MaxTabWidth)
+    end
 
     function Main:IsHovered()
         local MouseX, MouseY = Mouse.X, Mouse.Y
@@ -123,11 +132,16 @@ function Library:Create(Title)
             TabName = "Tab " .. (#Main.Tabs + 1)
         end
         
-        local TabCount = #Main.Tabs
-        local TabX = Main.TabBackground.Position.x + (TabCount * Main.TabWidth)
+        local TabWidth = Main:CalculateTabWidth()
+        local TabX = Main.TabBackground.Position.x
+        
+        if #Main.Tabs > 0 then
+            local LastTab = Main.Tabs[#Main.Tabs]
+            TabX = LastTab.Button.Position.x + LastTab.Button.Size.x
+        end
         
         local TabButton = Drawing.new("Square")
-        TabButton.Size = {Main.TabWidth, Main.TabBackground.Size.y}
+        TabButton.Size = {TabWidth, Main.TabBackground.Size.y}
         TabButton.Position = {TabX, Main.TabBackground.Position.y}
         TabButton.Color = Colors["Tab Toggle Background"]
         TabButton.Filled = true
@@ -136,7 +150,7 @@ function Library:Create(Title)
         TabButton.Visible = true
         
         local TabButtonBorder = Drawing.new("Square")
-        TabButtonBorder.Size = {Main.TabWidth, Main.TabBackground.Size.y}
+        TabButtonBorder.Size = {TabWidth, Main.TabBackground.Size.y}
         TabButtonBorder.Position = {TabX, Main.TabBackground.Position.y}
         TabButtonBorder.Color = Colors["Tab Border"]
         TabButtonBorder.Filled = false
@@ -151,7 +165,7 @@ function Library:Create(Title)
         TabButtonText.Color = Colors["Text"]
         TabButtonText.Outline = true
         TabButtonText.OutlineColor = {0, 0, 0}
-        TabButtonText.Position = {TabX + (Main.TabWidth / 2), Main.TabBackground.Position.y + (Main.TabBackground.Size.y / 2) - 7}
+        TabButtonText.Position = {TabX + (TabWidth / 2), Main.TabBackground.Position.y + (Main.TabBackground.Size.y / 2) - 7}
         TabButtonText.Transparency = 1
         TabButtonText.Visible = true
         TabButtonText.Center = true
