@@ -507,4 +507,5 @@ spawn(function()
     end
 end)
 
+print("Severes UI Library Initalized")
 return Library
