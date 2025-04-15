@@ -31,19 +31,22 @@ local DragOffsetY = 0
 local IsVisible = true
 local TogglePressed = false
 
-local function SetElementVisibilityRecursive(Elements, Visible)
+local function SetVisibility(Elements, Visible)
     for _, Element in pairs(Elements) do
         if Element.Visible ~= nil then
              Element.Visible = Visible
         end
         if Element.Elements then
-            SetElementVisibilityRecursive(Element.Elements, Visible)
+            SetVisibility(Element.Elements, Visible)
         end
          if Element.Background and Element.Background.Visible ~= nil then
              Element.Background.Visible = Visible
          end
          if Element.Border and Element.Border.Visible ~= nil then
              Element.Border.Visible = Visible
+         end
+         if Element.Title and Element.Title.Visible ~= nil then
+             Element.Title.Visible = Visible
          end
          if Element.Remove and Element.Position then
              Element.Visible = Visible
@@ -71,9 +74,9 @@ function ToggleUI()
              TabObj.ButtonText.Visible = IsVisible
 
              local IsActiveTab = TabObj.Name == Main.ActiveTab
-             SetElementVisibilityRecursive(TabObj.Content.LeftSections, IsVisible and IsActiveTab)
-             SetElementVisibilityRecursive(TabObj.Content.RightSections, IsVisible and IsActiveTab)
-             SetElementVisibilityRecursive(TabObj.Content.Elements, IsVisible and IsActiveTab)
+             SetVisibility(TabObj.Content.LeftSections, IsVisible and IsActiveTab)
+             SetVisibility(TabObj.Content.RightSections, IsVisible and IsActiveTab)
+             SetVisibility(TabObj.Content.Elements, IsVisible and IsActiveTab)
         end
 
         if not IsVisible then
@@ -195,7 +198,6 @@ function Library:Create(Title)
     function Main:UpdateElementPositions()
         local BasePos = Main.WindowBackground.Position
         local BaseX, BaseY = BasePos.x, BasePos.y
-        local BaseSize = Main.WindowBackground.Size
 
         Main.Title.Position = {BaseX + 10, BaseY + 5}
         Main.TabBackground.Position = {BaseX + 10, BaseY + 25}
@@ -266,6 +268,10 @@ function Library:Create(Title)
             SectionObj.Border.Position = {ColumnX, CurrentY}
             SectionObj.Background.Size = {ColumnWidth, PlaceholderHeight}
             SectionObj.Border.Size = {ColumnWidth, PlaceholderHeight}
+            if SectionObj.Title then
+                SectionObj.Title.Position = {ColumnX + 5, CurrentY + 3}
+                SectionObj.Title.Visible = SectionObj.Visible
+            end
             return CurrentY + PlaceholderHeight + 5
         end
 
@@ -325,6 +331,7 @@ function Library:Create(Title)
         function TabContent:Section(SectionName, Options)
             Options = Options or {}
             local Side = Options.Side or "Left"
+            SectionName = SectionName or "Section"
 
             local SectionBackground = Drawing.new("Square")
             SectionBackground.Color = Colors["Section Background"]
@@ -340,11 +347,23 @@ function Library:Create(Title)
             SectionBorder.Transparency = 1
             SectionBorder.Visible = false
 
+            local SectionTitle = Drawing.new("Text")
+            SectionTitle.Text = SectionName
+            SectionTitle.Size = 14
+            SectionTitle.Font = 5
+            SectionTitle.Color = Colors["Text"]
+            SectionTitle.Outline = true
+            SectionTitle.OutlineColor = {0, 0, 0}
+            SectionTitle.Transparency = 1
+            SectionTitle.Center = false
+            SectionTitle.Visible = false
+
             local SectionObj = {
-                Name = SectionName or "Section",
+                Name = SectionName,
                 Side = Side,
                 Background = SectionBackground,
                 Border = SectionBorder,
+                Title = SectionTitle,
                 Elements = {},
                 Visible = false
             }
@@ -359,6 +378,7 @@ function Library:Create(Title)
                  SectionObj.Visible = true
                  SectionBackground.Visible = true
                  SectionBorder.Visible = true
+                 SectionTitle.Visible = true
                  Main:UpdateSectionPositions()
             end
 
@@ -402,20 +422,20 @@ function Library:Create(Title)
             OtherTab.Button.Color = Colors["Tab Toggle Background"]
             OtherTab.Button.Transparency = 1
             OtherTab.Content.Visible = false
-            SetElementVisibilityRecursive(OtherTab.Content.LeftSections, false)
-            SetElementVisibilityRecursive(OtherTab.Content.RightSections, false)
-            SetElementVisibilityRecursive(OtherTab.Content.Elements, false)
+            SetVisibility(OtherTab.Content.LeftSections, false)
+            SetVisibility(OtherTab.Content.RightSections, false)
+            SetVisibility(OtherTab.Content.Elements, false)
         end
 
         local SelectedTab = Main.TabButtons[TabName]
         SelectedTab.Button.Color = Colors["Tab Selected Background"]
-        SelectedTab.Button.Transparency = 0.3
+        SelectedTab.Button.Transparency = 0.15
         SelectedTab.Content.Visible = true
         Main.ActiveTab = TabName
 
-        SetElementVisibilityRecursive(SelectedTab.Content.LeftSections, true)
-        SetElementVisibilityRecursive(SelectedTab.Content.RightSections, true)
-        SetElementVisibilityRecursive(SelectedTab.Content.Elements, true)
+        SetVisibility(SelectedTab.Content.LeftSections, true)
+        SetVisibility(SelectedTab.Content.RightSections, true)
+        SetVisibility(SelectedTab.Content.Elements, true)
 
         Main:UpdateSectionPositions()
     end
@@ -487,5 +507,4 @@ spawn(function()
     end
 end)
 
-print("Loaded Library")
 return Library
