@@ -541,67 +541,75 @@ function Library:Create(TitleText)
                 return ButtonObj
             end
 
-            function SectionObj:Toggle(ToggleName, DefaultState, Callback)
-                local ToggleSize = 20
-                local ToggleBackground = Drawing.New("Square")
-                ToggleBackground.Color = Colors.Accent
-                ToggleBackground.Filled = true
-                ToggleBackground.Thickness = 1
-                ToggleBackground.Transparency = 1
-                ToggleBackground.Visible = self.Visible
+function SectionObj:Toggle(ToggleName, DefaultState, Callback)
+    local ToggleSize = 20
+    local ToggleBackground = Drawing.new("Square")
+    ToggleBackground.Color = Colors["Accent"]
+    ToggleBackground.Filled = false
+    ToggleBackground.Thickness = 1
+    ToggleBackground.Transparency = 1
+    ToggleBackground.Visible = self.Visible
 
-                local ToggleBorder = Drawing.New("Square")
-                ToggleBorder.Color = Colors.ObjectBorder
-                ToggleBorder.Filled = false
-                ToggleBorder.Thickness = 1
-                ToggleBorder.Transparency = 1
-                ToggleBorder.Visible = false
-                ToggleBorder.Visible = self.Visible
+    local ToggleBorder = Drawing.new("Square")
+    ToggleBorder.Color = Colors["ObjectBorder"]
+    ToggleBorder.Filled = false
+    ToggleBorder.Thickness = 1
+    ToggleBorder.Transparency = 1
+    ToggleBorder.Visible = false
 
-                local ToggleText = Drawing.New("Text")
-                ToggleText.Text = ToggleName or "Toggle"
-                ToggleText.Size = 12
-                ToggleText.Font = 5
-                ToggleText.Color = Colors.Text
-                ToggleText.Outline = true
-                ToggleText.OutlineColor = {0, 0, 0}
-                ToggleText.Transparency = 1
-                ToggleText.Center = false
-                ToggleText.Visible = self.Visible
+    local ToggleText = Drawing.new("Text")
+    ToggleText.Text = ToggleName or "Toggle"
+    ToggleText.Size = 12
+    ToggleText.Font = 5
+    ToggleText.Color = Colors["Text"]
+    ToggleText.Outline = true
+    ToggleText.OutlineColor = {0, 0, 0}
+    ToggleText.Transparency = 1
+    ToggleText.Center = false
+    ToggleText.Visible = self.Visible
 
-                local State = DefaultState or false
-                
-                local function UpdateToggleVisuals()
-                    ToggleBackground.Transparency = State and 0.5 or 1
-                    ToggleBorder.Color = State and Colors.Accent or Colors.ObjectBorder
-                    ToggleBorder.Visible = State or (WindowActive and WindowActive:IsHovered(ToggleBackground))
-                end
-                
-                UpdateToggleVisuals()
+    local State = DefaultState or false
 
-                local ToggleObj = {
-                    Type = "Toggle",
-                    Name = ToggleName,
-                    Callback = Callback,
-                    ToggleBackground = ToggleBackground,
-                    ToggleBorder = ToggleBorder,
-                    ToggleText = ToggleText,
-                    DefaultBorderColor = Colors.ObjectBorder,
-                    OriginalBackgroundColor = Colors.Accent,
-                    OriginalBackgroundTransparency = 0.5,
-                    Visible = self.Visible,
-                    State = State,
-                    Update = UpdateToggleVisuals
-                }
+    local function UpdateToggleVisuals()
+        local IsHovered = WindowActive and WindowActive:IsHovered(ToggleBackground)
 
-                table.insert(self.Interfaces, ToggleObj)
+        if State then
+            ToggleBackground.Filled = true
+            ToggleBackground.Transparency = 0.5
+            ToggleBorder.Visible = false
+        else
+            ToggleBackground.Filled = false
+            ToggleBackground.Transparency = 1
+            ToggleBorder.Visible = IsHovered
+            ToggleBorder.Color = IsHovered and Colors["Accent"] or Colors["ObjectBorder"]
+        end
+    end
 
-                if IsVisible and Main.ActiveTab == TabContent.Name then
-                    Main:UpdateLayout()
-                end
+    UpdateToggleVisuals()
 
-                return ToggleObj
-            end
+    local ToggleObj = {
+        Type = "Toggle",
+        Name = ToggleName,
+        Callback = Callback,
+        ToggleBackground = ToggleBackground,
+        ToggleBorder = ToggleBorder,
+        ToggleText = ToggleText,
+        DefaultBorderColor = Colors["ObjectBorder"],
+        OriginalBackgroundColor = Colors["Accent"],
+        OriginalBackgroundTransparency = 0.5,
+        Visible = self.Visible,
+        State = State,
+        Update = UpdateToggleVisuals
+    }
+
+    table.insert(self.Interfaces, ToggleObj)
+
+    if IsVisible and Main.ActiveTab == TabContent.Name then
+        Main:UpdateLayout()
+    end
+
+    return ToggleObj
+end
 
             if Side == "Left" then
                 table.insert(self.LeftSections, SectionObj)
@@ -872,5 +880,5 @@ Spawn(function()
     end
 end)
 
-Print("V2.1")
+Print("V2.2")
 return Library
