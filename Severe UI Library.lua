@@ -16,7 +16,6 @@ local Colors = {
     ["DropdownOptionBackground"] = {19, 19, 19}
 }
 
-local Game = Game
 local MouseService = findservice(Game, "MouseService")
 local Mouse = {
     X = 0,
@@ -335,7 +334,7 @@ function Library:Create(TitleText)
             if SectionObj.Interfaces then
                 for _, InterfaceObj in ipairs(SectionObj.Interfaces) do
                      if InterfaceObj.Type == "Button" then
-                         local ButtonHeight = 17
+                         local ButtonHeight = 20
                          local ButtonWidth = Width - (Padding * 2)
                          local ButtonX = ColumnX + Padding
                          local ButtonY = CurrentInternalY
@@ -883,5 +882,5 @@ spawn(function()
     end
 end)
 
-print("V1.6 - Fixed Toggle Button Filling")
+print("V1.7")
 return Library
