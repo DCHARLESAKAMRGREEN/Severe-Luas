@@ -463,7 +463,7 @@ function Library:Create(TitleText)
                 ButtonBorder.Visible = self.Visible
                 local ButtonText = Drawing.new("Text")
                 ButtonText.Text = ButtonName or "Button"
-                ButtonText.Size = 12
+                ButtonText.Size = 14
                 ButtonText.Font = 5
                 ButtonText.Color = Colors["Text"]
                 ButtonText.Outline = true
