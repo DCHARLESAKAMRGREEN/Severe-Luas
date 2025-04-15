@@ -104,7 +104,7 @@ function Library:Create(Title)
     Main.TabButtons = {}
     Main.TabContents = {}
     Main.ActiveTab = nil
-    Main.TabWidth = 500
+    Main.TabWidth = 150
 
     function Main:IsHovered()
         local MouseX, MouseY = Mouse.X, Mouse.Y
