@@ -35,7 +35,6 @@ function ToggleUI()
     if ActiveWindow then
         local Main = ActiveWindow
         
-        -- Toggle main window elements
         Main.WindowBackground.Visible = IsVisible
         Main.Title.Visible = IsVisible
         Main.TabBackground.Visible = IsVisible
@@ -44,7 +43,6 @@ function ToggleUI()
         Main.Window2Border.Visible = IsVisible
         Main.WindowBorder.Visible = IsVisible
 
-        -- Toggle all tab buttons/text
         for _, TabObj in ipairs(Main.Tabs) do
              TabObj.Button.Visible = IsVisible
              TabObj.ButtonBorder.Visible = IsVisible
@@ -52,7 +50,6 @@ function ToggleUI()
         end
 
         if not IsVisible then
-             -- Explicitly hide all elements within all tabs when UI is hidden
              for _, TabContent in pairs(Main.TabContents) do
                  for _, Element in pairs(TabContent.Elements) do
                      if Element.Visible ~= nil then
@@ -60,10 +57,8 @@ function ToggleUI()
                      end
                  end
              end
-             -- Stop dragging if UI is hidden
              IsDragging = false 
         else
-            -- If becoming visible, re-select the active tab to show its content
             Main:SelectTab(Main.ActiveTab) 
         end
     end
@@ -73,7 +68,6 @@ end
 function Library:Create(Title)
     local Main = {}
     
-    -- Helper to set initial visibility
     local function SetInitialVisibility(Element)
         if Element and Element.Visible ~= nil then
             Element.Visible = IsVisible
@@ -152,7 +146,7 @@ function Library:Create(Title)
     Main.ActiveTab = nil
 
     function Main:IsHovered(Element)
-        if not IsVisible or not Element or not Element.Visible then return false end -- Cannot hover invisible elements
+        if not IsVisible or not Element or not Element.Visible then return false end 
         local MouseX, MouseY = Mouse.X, Mouse.Y
         local ElemX, ElemY = Element.Position.x, Element.Position.y
         local ElemW, ElemH = Element.Size.x, Element.Size.y
@@ -235,7 +229,7 @@ function Library:Create(Title)
         local TabContent = {
             Name = TabName,
             Elements = {},
-            Visible = false -- Content starts hidden until selected
+            Visible = false 
         }
 
         local TabObj = {
@@ -250,18 +244,15 @@ function Library:Create(Title)
         Main.TabButtons[TabName] = TabObj
         Main.TabContents[TabName] = TabContent
 
-        Main:UpdateTabSizes() -- Recalculates positions/sizes including new tab
+        Main:UpdateTabSizes() 
 
-        -- Set visibility correctly based on current state
         if IsVisible then
             if #Main.Tabs == 1 then
-                Main:SelectTab(TabName) -- Select if it's the first tab and UI is visible
+                Main:SelectTab(TabName) 
             else
-                 -- Ensure only the active tab's content is visible
                  Main:SelectTab(Main.ActiveTab) 
             end
         else 
-             -- Ensure new tab elements are hidden if UI is globally hidden
              TabButton.Visible = false
              TabButtonBorder.Visible = false
              TabButtonText.Visible = false
@@ -273,11 +264,11 @@ function Library:Create(Title)
 
     function Main:SelectTab(TabName)
         if not Main.TabButtons[TabName] then return end 
-        if not IsVisible then return end -- Don't change selection if UI is hidden
+        if not IsVisible then return end 
 
         for _, Tab in ipairs(Main.Tabs) do
-            Tab.Button.Color = Colors["Tab Toggle Background"] -- Keep button color logic
-            Tab.Content.Visible = false -- Hide all content first
+            Tab.Button.Color = Colors["Tab Toggle Background"] 
+            Tab.Content.Visible = false 
 
             for _, Element in pairs(Tab.Content.Elements) do
                 if Element.Visible ~= nil then
@@ -287,11 +278,10 @@ function Library:Create(Title)
         end
 
         local SelectedTab = Main.TabButtons[TabName]
-        SelectedTab.Button.Color = Colors["Accent"] -- Highlight selected tab button
-        SelectedTab.Content.Visible = true -- Show selected content container
+        SelectedTab.Button.Color = Colors["Accent"] 
+        SelectedTab.Content.Visible = true 
         Main.ActiveTab = TabName
 
-        -- Make elements within the selected tab visible
         for _, Element in pairs(SelectedTab.Content.Elements) do
             if Element.Visible ~= nil then
                 Element.Visible = true
@@ -300,43 +290,46 @@ function Library:Create(Title)
     end
 
     ActiveWindow = Main
-    -- Ensure initial state respects IsVisible
     if not IsVisible then
-        ToggleUI() -- Call toggle once to ensure all elements are correctly hidden if starting hidden
-        IsVisible = false -- ToggleUI flips it, so set it back
+        ToggleUI() 
+        IsVisible = false 
     end
     return Main
 end
 
 spawn(function()
     while true do
-        -- Always update mouse state and check for toggle key
         local MouseLocation = getmouselocation(MouseService)
         Mouse.X = MouseLocation.x
         Mouse.Y = MouseLocation.y
         Mouse.Clicked = isleftclicked() 
         Mouse.Pressed = isleftpressed() 
         
-        local Keys = getpressedkeys() -- Assuming returns a table like { ['P'] = true }
-        local IsPDown = Keys and Keys['P'] -- Check if 'P' key exists and is true
+        local Keys = getpressedkeys() 
+        local IsPDown = false
+        if Keys then 
+            for _, KeyCode in ipairs(Keys) do 
+                if KeyCode == 'P' then 
+                    IsPDown = true
+                    break 
+                end
+            end
+        end
 
         if IsPDown and not WasPDown then
             ToggleUI()
         end
-        WasPDown = IsPDown -- Update state for next frame
+        WasPDown = IsPDown 
 
-        -- Only process UI interactions if visible
         if IsVisible and ActiveWindow then
-            local IsHovering = ActiveWindow:IsHoveringWindow() -- Check hover only if visible
+            local IsHovering = ActiveWindow:IsHoveringWindow() 
 
-            -- Define Drag Area (e.g., the title bar area up to the tabs)
             local DragAreaYMax = ActiveWindow.TabBackground.Position.y
             local IsOverDragArea = Mouse.X >= ActiveWindow.WindowBackground.Position.x and 
                                    Mouse.X <= ActiveWindow.WindowBackground.Position.x + ActiveWindow.WindowBackground.Size.x and
                                    Mouse.Y >= ActiveWindow.WindowBackground.Position.y and 
-                                   Mouse.Y < DragAreaYMax -- Only allow dragging by the top bar
+                                   Mouse.Y < DragAreaYMax 
 
-            -- Handle Dragging
             if Mouse.Clicked and IsOverDragArea and not IsDragging then
                 IsDragging = true
                 DragOffsetX = Mouse.X - ActiveWindow.WindowBackground.Position.x
@@ -350,21 +343,19 @@ spawn(function()
                  IsDragging = false
             end
 
-            -- Handle Tab Click
             if Mouse.Clicked and not IsDragging then 
                 for _, TabObj in ipairs(ActiveWindow.Tabs) do
-                    -- Use the IsHovered check which respects visibility
                     if ActiveWindow:IsHovered(TabObj.Button) then 
                          ActiveWindow:SelectTab(TabObj.Name)
                          break 
                     end
                 end
             end
-        end -- End of IsVisible block
+        end 
 
         wait()
     end
 end)
 
-print("Library Loaded V1")
+print("Loaded Library V2")
 return Library
