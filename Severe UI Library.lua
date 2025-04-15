@@ -11,7 +11,8 @@ local Colors = {
     ["Disabled Text"] = {110, 110, 110},
     ["Object Background"] = {25, 25, 25},
     ["Object Border"] = {35, 35, 35},
-    ["Dropdown Option Background"] = {19, 19, 19}
+    ["Dropdown Option Background"] = {19, 19, 19},
+    ["Cursor"] = {255, 255, 255} -- Added Cursor color
 }
 
 local MouseService = findservice(Game, "MouseService")
@@ -31,26 +32,39 @@ local IsVisible = true
 local TogglePressed = false
 local SectionPadding = 10
 local SectionMiddlePadding = 10
+local CustomCursor = nil -- Placeholder for the cursor drawing object
 
 local function SetElementVisibilityRecursive(Elements, Visible)
     for _, Element in pairs(Elements) do
         if Element.Visible ~= nil then
              Element.Visible = Visible
         end
+        -- Handle nested elements if structure allows
         if Element.Elements then
             SetElementVisibilityRecursive(Element.Elements, Visible)
         end
+         -- Handle elements like Sections that have Background/Border
          if Element.Background and Element.Background.Visible ~= nil then
              Element.Background.Visible = Visible
          end
          if Element.Border and Element.Border.Visible ~= nil then
              Element.Border.Visible = Visible
          end
+         -- Handle simple drawing objects directly in Elements list
+         if Element.Remove and Element.Position then -- Basic check if it's a drawing object
+             Element.Visible = Visible
+         end
     end
 end
 
 function ToggleUI()
     IsVisible = not IsVisible
+    setmouseiconenabled(MouseService, not IsVisible) -- Hide Roblox cursor when UI is visible
+
+    if CustomCursor then
+        CustomCursor.Visible = IsVisible -- Show custom cursor when UI is visible
+    end
+
     if ActiveWindow then
         local Main = ActiveWindow
 
@@ -70,13 +84,13 @@ function ToggleUI()
              local IsActiveTab = TabObj.Name == Main.ActiveTab
              SetElementVisibilityRecursive(TabObj.Content.LeftSections, IsVisible and IsActiveTab)
              SetElementVisibilityRecursive(TabObj.Content.RightSections, IsVisible and IsActiveTab)
-             SetElementVisibilityRecursive(TabObj.Content.Elements, IsVisible and IsActiveTab) -- Handle elements not in sections
+             SetElementVisibilityRecursive(TabObj.Content.Elements, IsVisible and IsActiveTab)
         end
 
         if not IsVisible then
              IsDragging = false
         else
-            Main:SelectTab(Main.ActiveTab)
+            Main:SelectTab(Main.ActiveTab) -- Ensure correct tab elements are visible upon showing
         end
     end
 end
@@ -90,6 +104,15 @@ function Library:Create(Title)
             Element.Visible = IsVisible
         end
     end
+
+    -- Create Custom Cursor
+    CustomCursor = Drawing.new("Triangle")
+    CustomCursor.Color = Colors["Cursor"]
+    CustomCursor.Filled = true
+    CustomCursor.Thickness = 1
+    CustomCursor.Transparency = 1
+    CustomCursor.Visible = IsVisible -- Initial visibility based on IsVisible state
+    setmouseiconenabled(MouseService, not IsVisible) -- Set initial Roblox cursor state
 
     Main.WindowBackground = Drawing.new("Square")
     Main.WindowBackground.Size = {650, 750}
@@ -165,10 +188,21 @@ function Library:Create(Title)
     function Main:IsHovered(Element)
         if not IsVisible or not Element or not Element.Visible then return false end
         local MouseX, MouseY = Mouse.X, Mouse.Y
-        local ElemX, ElemY = Element.Position.x, Element.Position.y
-        local ElemW, ElemH = Element.Size.x, Element.Size.y
-
-        return MouseX >= ElemX and MouseX <= ElemX + ElemW and MouseY >= ElemY and MouseY <= ElemY + ElemH
+        -- Check based on element type (Square/Text have different properties)
+        if Element.Size and Element.Position then -- Assume Square-like
+             local ElemX, ElemY = Element.Position.x, Element.Position.y
+             local ElemW, ElemH = Element.Size.x, Element.Size.y
+             return MouseX >= ElemX and MouseX <= ElemX + ElemW and MouseY >= ElemY and MouseY <= ElemY + ElemH
+        elseif Element.TextBounds and Element.Position then -- Assume Text-like
+             local ElemX, ElemY = Element.Position.x, Element.Position.y
+             local ElemW, ElemH = Element.TextBounds.x, Element.TextBounds.y -- Use TextBounds for hover check
+             -- Adjust for center alignment if necessary
+             if Element.Center then
+                 ElemX = ElemX - ElemW / 2
+             end
+             return MouseX >= ElemX and MouseX <= ElemX + ElemW and MouseY >= ElemY and MouseY <= ElemY + ElemH
+        end
+        return false
     end
 
     function Main:IsHoveringWindow()
@@ -209,7 +243,7 @@ function Library:Create(Title)
             TabObj.Button.Position = {CurrentX, Main.TabBackground.Position.y}
             TabObj.ButtonBorder.Size = {TabWidth, Main.TabBackground.Size.y}
             TabObj.ButtonBorder.Position = {CurrentX, Main.TabBackground.Position.y}
-            TabObj.ButtonText.Position = {CurrentX + (TabWidth / 2), Main.TabBackground.Position.y + (Main.TabBackground.Size.y / 2) - 7}
+            TabObj.ButtonText.Position = {CurrentX + (TabWidth / 2), Main.TabBackground.Position.y + (Main.TabBackground.Size.y / 2) - (TabObj.ButtonText.TextBounds.y / 2)} -- Center vertically using TextBounds
             CurrentX = CurrentX + TabWidth
         end
     end
@@ -233,20 +267,26 @@ function Library:Create(Title)
         CurrentTabContent.CurrentRightY = InitialY
 
         local function PositionSection(SectionObj, ColumnX, CurrentY)
-            local PlaceholderHeight = 100 -- Replace with dynamic height calculation later
+            -- TODO: Implement dynamic height calculation based on SectionObj.Elements
+            local PlaceholderHeight = 100
             SectionObj.Background.Position = {ColumnX, CurrentY}
             SectionObj.Border.Position = {ColumnX, CurrentY}
             SectionObj.Background.Size = {ColumnWidth, PlaceholderHeight}
             SectionObj.Border.Size = {ColumnWidth, PlaceholderHeight}
+            -- Update positions of elements within the section here
             return CurrentY + PlaceholderHeight + SectionPadding
         end
 
         for _, SectionObj in ipairs(CurrentTabContent.LeftSections) do
-            CurrentTabContent.CurrentLeftY = PositionSection(SectionObj, LeftColumnX, CurrentTabContent.CurrentLeftY)
+             if SectionObj.Visible then -- Only update visible sections
+                CurrentTabContent.CurrentLeftY = PositionSection(SectionObj, LeftColumnX, CurrentTabContent.CurrentLeftY)
+             end
         end
 
         for _, SectionObj in ipairs(CurrentTabContent.RightSections) do
-            CurrentTabContent.CurrentRightY = PositionSection(SectionObj, RightColumnX, CurrentTabContent.CurrentRightY)
+            if SectionObj.Visible then -- Only update visible sections
+                CurrentTabContent.CurrentRightY = PositionSection(SectionObj, RightColumnX, CurrentTabContent.CurrentRightY)
+            end
         end
     end
 
@@ -282,7 +322,7 @@ function Library:Create(Title)
 
         local TabContent = {
             Name = TabName,
-            Elements = {}, -- Elements directly in tab, not in sections
+            Elements = {},
             LeftSections = {},
             RightSections = {},
             CurrentLeftY = 0,
@@ -292,21 +332,21 @@ function Library:Create(Title)
 
         function TabContent:Section(SectionName, Options)
             Options = Options or {}
-            local Side = Options.Side or "Left" -- Default to Left
+            local Side = Options.Side or "Left"
 
             local SectionBackground = Drawing.new("Square")
             SectionBackground.Color = Colors["Section Background"]
             SectionBackground.Filled = true
             SectionBackground.Thickness = 1
             SectionBackground.Transparency = 1
-            SectionBackground.Visible = false -- Initially hidden
+            SectionBackground.Visible = false
 
             local SectionBorder = Drawing.new("Square")
             SectionBorder.Color = Colors["Section Border"]
             SectionBorder.Filled = false
             SectionBorder.Thickness = 1
             SectionBorder.Transparency = 1
-            SectionBorder.Visible = false -- Initially hidden
+            SectionBorder.Visible = false
 
             local SectionObj = {
                 Name = SectionName or "Section",
@@ -319,7 +359,7 @@ function Library:Create(Title)
 
             if Side == "Left" then
                 table.insert(self.LeftSections, SectionObj)
-            else -- Assume Right
+            else
                 table.insert(self.RightSections, SectionObj)
             end
 
@@ -351,7 +391,7 @@ function Library:Create(Title)
             if #Main.Tabs == 1 then
                 Main:SelectTab(TabName)
             else
-                 Main:SelectTab(Main.ActiveTab) -- Reselect current to apply visibility
+                 Main:SelectTab(Main.ActiveTab)
             end
         else
              TabButton.Visible = false
@@ -366,7 +406,6 @@ function Library:Create(Title)
         if not Main.TabButtons[TabName] then return end
         if not IsVisible then return end
 
-        -- Hide all elements from all tabs first
         for _, OtherTab in ipairs(Main.Tabs) do
             OtherTab.Button.Color = Colors["Tab Toggle Background"]
             OtherTab.Content.Visible = false
@@ -375,7 +414,6 @@ function Library:Create(Title)
             SetElementVisibilityRecursive(OtherTab.Content.Elements, false)
         end
 
-        -- Show elements for the selected tab
         local SelectedTab = Main.TabButtons[TabName]
         SelectedTab.Button.Color = Colors["Accent"]
         SelectedTab.Content.Visible = true
@@ -385,14 +423,11 @@ function Library:Create(Title)
         SetElementVisibilityRecursive(SelectedTab.Content.RightSections, true)
         SetElementVisibilityRecursive(SelectedTab.Content.Elements, true)
 
-        Main:UpdateSectionPositions() -- Recalculate layout for the now active tab
+        Main:UpdateSectionPositions()
     end
 
     ActiveWindow = Main
-    if not IsVisible then
-        ToggleUI()
-        IsVisible = false
-    end
+    -- Initial visibility setup is handled by SetInitialVisibility and cursor creation logic now
     return Main
 end
 
@@ -408,7 +443,7 @@ spawn(function()
         local IsTogglePressed = false
         if Keys then
             for _, k in ipairs(Keys) do
-                if k == 'P' then -- Assuming 'P' is still the toggle key
+                if k == 'P' then
                     IsTogglePressed = true
                     break
                 end
@@ -420,41 +455,54 @@ spawn(function()
         end
         TogglePressed = IsTogglePressed
 
-        if IsVisible and ActiveWindow then
-            local IsHovering = ActiveWindow:IsHoveringWindow()
-
-            local DragAreaYMax = ActiveWindow.TabBackground.Position.y
-            local IsHoveredDragArea = Mouse.X >= ActiveWindow.WindowBackground.Position.x and
-                                  Mouse.X <= ActiveWindow.WindowBackground.Position.x + ActiveWindow.WindowBackground.Size.x and
-                                  Mouse.Y >= ActiveWindow.WindowBackground.Position.y and
-                                  Mouse.Y < DragAreaYMax
-
-            if Mouse.Clicked and IsHoveredDragArea and not IsDragging then
-                IsDragging = true
-                DragOffsetX = Mouse.X - ActiveWindow.WindowBackground.Position.x
-                DragOffsetY = Mouse.Y - ActiveWindow.WindowBackground.Position.y
-            elseif Mouse.Pressed and IsDragging then
-                local NewX = Mouse.X - DragOffsetX
-                local NewY = Mouse.Y - DragOffsetY
-                ActiveWindow.WindowBackground.Position = {NewX, NewY}
-                ActiveWindow:UpdateElementPositions() -- Update all child elements during drag
-            elseif not Mouse.Pressed and IsDragging then
-                 IsDragging = false
+        if IsVisible then
+            -- Update Custom Cursor Position
+            if CustomCursor then
+                local CursorX, CursorY = Mouse.X, Mouse.Y
+                -- Define triangle points relative to CursorX, CursorY for up-left pointing shape
+                CustomCursor.PointA = { CursorX, CursorY } -- Tip
+                CustomCursor.PointB = { CursorX + 6, CursorY + 14 } -- Bottom Left relative to Tip
+                CustomCursor.PointC = { CursorX + 14, CursorY + 6 } -- Bottom Right relative to Tip
+                CustomCursor.Visible = true -- Ensure visible if UI is active
             end
 
-            if Mouse.Clicked and not IsDragging then
-                for _, TabObj in ipairs(ActiveWindow.Tabs) do
-                    if ActiveWindow:IsHovered(TabObj.Button) then
-                        ActiveWindow:SelectTab(TabObj.Name)
-                        break
+            if ActiveWindow then
+                local DragAreaYMax = ActiveWindow.TabBackground.Position.y
+                local IsHoveredDragArea = Mouse.X >= ActiveWindow.WindowBackground.Position.x and
+                                      Mouse.X <= ActiveWindow.WindowBackground.Position.x + ActiveWindow.WindowBackground.Size.x and
+                                      Mouse.Y >= ActiveWindow.WindowBackground.Position.y and
+                                      Mouse.Y < DragAreaYMax
+
+                if Mouse.Clicked and IsHoveredDragArea and not IsDragging then
+                    IsDragging = true
+                    DragOffsetX = Mouse.X - ActiveWindow.WindowBackground.Position.x
+                    DragOffsetY = Mouse.Y - ActiveWindow.WindowBackground.Position.y
+                elseif Mouse.Pressed and IsDragging then
+                    local NewX = Mouse.X - DragOffsetX
+                    local NewY = Mouse.Y - DragOffsetY
+                    ActiveWindow.WindowBackground.Position = {NewX, NewY}
+                    ActiveWindow:UpdateElementPositions()
+                elseif not Mouse.Pressed and IsDragging then
+                     IsDragging = false
+                end
+
+                if Mouse.Clicked and not IsDragging then
+                    for _, TabObj in ipairs(ActiveWindow.Tabs) do
+                        if ActiveWindow:IsHovered(TabObj.Button) then
+                            ActiveWindow:SelectTab(TabObj.Name)
+                            break
+                        end
                     end
+                    -- Add hover/click checks for other elements (buttons, toggles, etc.) here
                 end
             end
+        elseif CustomCursor then
+            CustomCursor.Visible = false -- Hide custom cursor if UI is not active
         end
 
         wait()
     end
 end)
 
-print("Loaded Library V4")
+print("Library Loaded V5")
 return Library
