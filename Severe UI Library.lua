@@ -211,14 +211,15 @@ function Library:Create(TitleText)
             return MouseX >= InterfaceX and MouseX <= InterfaceX + InterfaceW and MouseY >= InterfaceY and MouseY <= InterfaceY + InterfaceH
         elseif Interface.TextBounds then
              local InterfaceBounds = Interface.TextBounds
-             local InterfaceW, InterfaceH = InterfaceBounds.x, InterfaceBounds.y
-             if Interface.Center then
-                 InterfaceX = InterfaceX - InterfaceW / 2
-             else
-                -- Adjust Y pos slightly for better hover feel on non-centered text
-                 InterfaceY = InterfaceY - InterfaceH / 4
+             if type(InterfaceBounds) == "table" and InterfaceBounds.x and InterfaceBounds.y then
+                 local InterfaceW, InterfaceH = InterfaceBounds.x, InterfaceBounds.y
+                 if Interface.Center then
+                     InterfaceX = InterfaceX - InterfaceW / 2
+                 else
+                     InterfaceY = InterfaceY - InterfaceH / 4
+                 end
+                 return MouseX >= InterfaceX and MouseX <= InterfaceX + InterfaceW and MouseY >= InterfaceY and MouseY <= InterfaceY + InterfaceH
              end
-             return MouseX >= InterfaceX and MouseX <= InterfaceX + InterfaceW and MouseY >= InterfaceY and MouseY <= InterfaceY + InterfaceH
         end
         return false
     end
@@ -378,11 +379,12 @@ function Library:Create(TitleText)
 
                          local TextX = ToggleX + BoxSize + BoxTextPadding
                          local TextYOffset = 0
+                         local TextHeight = 12 -- Fallback text height
                          if InterfaceObj.Text.TextBounds then
-                            TextYOffset = math.floor((BoxSize - InterfaceObj.Text.TextBounds.y) / 2)
-                         else
-                            TextYOffset = 0 -- Approximation if no bounds
+                            TextHeight = InterfaceObj.Text.TextBounds.y
                          end
+                         TextYOffset = math.floor((BoxSize - TextHeight) / 2)
+
                          InterfaceObj.Text.Position = {TextX, ToggleY + TextYOffset}
                          InterfaceObj.Text.Center = false
 
@@ -557,7 +559,7 @@ function Library:Create(TitleText)
             end
 
             function SectionObj:Toggle(ToggleName, Callback)
-                 local BoxSize = 12
+                 local BoxSize = 16 -- Increased Box Size
                  local ToggleBoxBackground = Drawing.new("Square")
                  ToggleBoxBackground.Size = {BoxSize, BoxSize}
                  ToggleBoxBackground.Color = Colors["Object Background"]
@@ -828,5 +830,5 @@ spawn(function()
     end
 end)
 
-print("V1.4 - Added Toggle Element")
+print("V1.5 - Error Fix, Bigger Toggle")
 return Library
