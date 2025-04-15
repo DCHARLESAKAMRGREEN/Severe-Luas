@@ -19,9 +19,7 @@ local Library = {}
 function Library:Create(Title)
     local Main = {}
     
-    -- Get MouseService
-    local Game = Game()
-    local MouseService = findservice(Game, "UserInputService")
+    local MouseService = findservice(Game, "MouseService")
     
     -- Window background
     Main.WindowBackground = Drawing.new("Square")
