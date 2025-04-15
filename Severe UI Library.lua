@@ -12,8 +12,7 @@ local Colors = {
     ["Disabled Text"] = {110, 110, 110},
     ["Object Background"] = {25, 25, 25},
     ["Object Border"] = {35, 35, 35},
-    ["Dropdown Option Background"] = {19, 19, 19},
-    ["Cursor"] = {255, 255, 255}
+    ["Dropdown Option Background"] = {19, 19, 19}
 }
 
 local MouseService = findservice(Game, "MouseService")
@@ -31,9 +30,6 @@ local DragOffsetX = 0
 local DragOffsetY = 0
 local IsVisible = true
 local TogglePressed = false
-local SectionPadding = 10
-local SectionMiddlePadding = 10
-local CustomCursor = nil
 
 local function SetElementVisibilityRecursive(Elements, Visible)
     for _, Element in pairs(Elements) do
@@ -58,10 +54,6 @@ end
 function ToggleUI()
     IsVisible = not IsVisible
     setmouseiconenabled(MouseService, not IsVisible)
-
-    if CustomCursor then
-        CustomCursor.Visible = IsVisible
-    end
 
     if ActiveWindow then
         local Main = ActiveWindow
@@ -103,12 +95,6 @@ function Library:Create(Title)
         end
     end
 
-    CustomCursor = Drawing.new("Triangle")
-    CustomCursor.Color = Colors["Cursor"]
-    CustomCursor.Filled = true
-    CustomCursor.Thickness = 1
-    CustomCursor.Transparency = 1
-    CustomCursor.Visible = IsVisible
     setmouseiconenabled(MouseService, not IsVisible)
 
     Main.WindowBackground = Drawing.new("Square")
@@ -195,8 +181,6 @@ function Library:Create(Title)
              if Element.Center then
                  ElemX = ElemX - ElemW / 2
              end
-             -- Adjust Y pos for centering text if needed, though TextBounds should account for height
-             -- ElemY = ElemY - ElemH / 2 -- May not be needed depending on how Position is set
              return MouseX >= ElemX and MouseX <= ElemX + ElemW and MouseY >= ElemY and MouseY <= ElemY + ElemH
         end
         return false
@@ -240,9 +224,9 @@ function Library:Create(Title)
             TabObj.Button.Position = {CurrentX, Main.TabBackground.Position.y}
             TabObj.ButtonBorder.Size = {TabWidth, Main.TabBackground.Size.y}
             TabObj.ButtonBorder.Position = {CurrentX, Main.TabBackground.Position.y}
-            if TabObj.ButtonText.TextBounds then -- Check if TextBounds exists
+            if TabObj.ButtonText.TextBounds then
                  TabObj.ButtonText.Position = {CurrentX + (TabWidth / 2), Main.TabBackground.Position.y + (Main.TabBackground.Size.y / 2) - (TabObj.ButtonText.TextBounds.y / 2)}
-            else -- Fallback if TextBounds isn't ready immediately
+            else
                  TabObj.ButtonText.Position = {CurrentX + (TabWidth / 2), Main.TabBackground.Position.y + (Main.TabBackground.Size.y / 2) - 7}
             end
             CurrentX = CurrentX + TabWidth
@@ -254,15 +238,15 @@ function Library:Create(Title)
 
         local CurrentTabContent = Main.TabContents[Main.ActiveTab]
         local ParentWidth = Main.WindowBackground2.Size.x
-        local AvailableWidth = ParentWidth - (SectionPadding * 2) - SectionMiddlePadding
+        local AvailableWidth = ParentWidth - (5 * 2) - 5 -- SidePadding*2 + MiddlePadding
         local ColumnWidth = AvailableWidth / 2
 
         local BaseX = Main.WindowBackground2.Position.x
         local BaseY = Main.WindowBackground2.Position.y
 
-        local LeftColumnX = BaseX + SectionPadding
-        local RightColumnX = LeftColumnX + ColumnWidth + SectionMiddlePadding
-        local InitialY = BaseY + SectionPadding
+        local LeftColumnX = BaseX + 5 -- SidePadding
+        local RightColumnX = LeftColumnX + ColumnWidth + 5 -- MiddlePadding
+        local InitialY = BaseY + 5 -- TopPadding
 
         CurrentTabContent.CurrentLeftY = InitialY
         CurrentTabContent.CurrentRightY = InitialY
@@ -273,7 +257,7 @@ function Library:Create(Title)
             SectionObj.Border.Position = {ColumnX, CurrentY}
             SectionObj.Background.Size = {ColumnWidth, PlaceholderHeight}
             SectionObj.Border.Size = {ColumnWidth, PlaceholderHeight}
-            return CurrentY + PlaceholderHeight + SectionPadding
+            return CurrentY + PlaceholderHeight + 5 -- BottomPadding
         end
 
         for _, SectionObj in ipairs(CurrentTabContent.LeftSections) do
@@ -407,7 +391,7 @@ function Library:Create(Title)
 
         for _, OtherTab in ipairs(Main.Tabs) do
             OtherTab.Button.Color = Colors["Tab Toggle Background"]
-            OtherTab.Button.Transparency = 1 -- Reset transparency for non-selected tabs
+            OtherTab.Button.Transparency = 1
             OtherTab.Content.Visible = false
             SetElementVisibilityRecursive(OtherTab.Content.LeftSections, false)
             SetElementVisibilityRecursive(OtherTab.Content.RightSections, false)
@@ -416,7 +400,7 @@ function Library:Create(Title)
 
         local SelectedTab = Main.TabButtons[TabName]
         SelectedTab.Button.Color = Colors["Tab Selected Background"]
-        SelectedTab.Button.Transparency = 0.6 -- Set transparency for selected tab (0.4 as requested)
+        SelectedTab.Button.Transparency = 0.9 -- 0.1 Alpha = 0.9 Transparency
         SelectedTab.Content.Visible = true
         Main.ActiveTab = TabName
 
@@ -485,21 +469,10 @@ spawn(function()
                     end
                 end
             end
-
-            if CustomCursor then
-                local CursorX, CursorY = Mouse.X, Mouse.Y
-                CustomCursor.PointA = { CursorX, CursorY }
-                CustomCursor.PointB = { CursorX + 5, CursorY + 13 }
-                CustomCursor.PointC = { CursorX + 13, CursorY + 5 }
-                CustomCursor.Visible = true
-            end
-        elseif CustomCursor then
-            CustomCursor.Visible = false
         end
 
         wait()
     end
 end)
 
-print("V6")
 return Library
