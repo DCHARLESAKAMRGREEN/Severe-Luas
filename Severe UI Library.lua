@@ -549,9 +549,9 @@ function SectionObj:Toggle(ToggleName, DefaultState, Callback)
     local ToggleSize = 20
     local ToggleBackground = Drawing.new("Square")
     ToggleBackground.Color = Colors["Accent"]
-    ToggleBackground.Filled = true -- Always filled, we control visibility
+    ToggleBackground.Filled = true
     ToggleBackground.Thickness = 1
-    ToggleBackground.Transparency = 1 -- Start transparent
+    ToggleBackground.Transparency = 1 -- Start fully transparent (invisible)
     ToggleBackground.Visible = self.Visible
 
     local ToggleBorder = Drawing.new("Square")
@@ -559,7 +559,7 @@ function SectionObj:Toggle(ToggleName, DefaultState, Callback)
     ToggleBorder.Filled = false
     ToggleBorder.Thickness = 1
     ToggleBorder.Transparency = 1
-    ToggleBorder.Visible = true
+    ToggleBorder.Visible = self.Visible
 
     local ToggleText = Drawing.new("Text")
     ToggleText.Text = ToggleName or "Toggle"
@@ -579,16 +579,14 @@ function SectionObj:Toggle(ToggleName, DefaultState, Callback)
             -- When enabled: show filled background
             ToggleBackground.Transparency = 0.5
             ToggleBorder.Color = Colors["Accent"]
+            ToggleBorder.Visible = true
         else
-            -- When disabled: hide fill
+            -- When disabled: hide fill completely
             ToggleBackground.Transparency = 1
-            ToggleBorder.Color = Colors["ObjectBorder"]
-        end
-        
-        -- Hover effect only when disabled
-        local IsHovered = WindowActive and WindowActive:IsHovered(ToggleBackground)
-        if not State then
+            -- Only show border when hovered
+            local IsHovered = WindowActive and WindowActive:IsHovered(ToggleBackground)
             ToggleBorder.Color = IsHovered and Colors["Accent"] or Colors["ObjectBorder"]
+            ToggleBorder.Visible = IsHovered
         end
     end
     
@@ -860,14 +858,36 @@ spawn(function()
                                          if IsCurrentlyHovered then
                                              IsMouseOverUI = true
                                              HoveredButton = InterfaceObj
+                                             
+                                             -- Only show accent border when hovered if toggle is disabled
                                              if not InterfaceObj.State then
                                                  InterfaceObj.ToggleBorder.Color = Colors["Accent"]
+                                                 InterfaceObj.ToggleBorder.Visible = true
+                                             end
+                                             
+                                             -- Handle click
+                                             if Mouse.Clicked then
+                                                 InterfaceObj.State = not InterfaceObj.State
+                                                 InterfaceObj.Update()
+                                                 
+                                                 if InterfaceObj.Callback then
+                                                     spawn(function()
+                                                         InterfaceObj.Callback(InterfaceObj.State)
+                                                     end)
+                                                 end
+                                                 UIClickHandled = true
                                              end
                                          else
+                                             -- Update visuals based on state when not hovered
                                              if InterfaceObj.State then
+                                                 -- Enabled state - always show accent border
                                                  InterfaceObj.ToggleBorder.Color = Colors["Accent"]
+                                                 InterfaceObj.ToggleBorder.Visible = true
+                                                 InterfaceObj.ToggleBackground.Transparency = 0.5
                                              else
-                                                 InterfaceObj.ToggleBorder.Color = Colors["ObjectBorder"]
+                                                 -- Disabled state - hide border when not hovered
+                                                 InterfaceObj.ToggleBorder.Visible = false
+                                                 InterfaceObj.ToggleBackground.Transparency = 1
                                              end
                                          end
                                      end
@@ -885,5 +905,5 @@ spawn(function()
     end
 end)
 
-print("V1.9")
+print("V2")
 return Library
