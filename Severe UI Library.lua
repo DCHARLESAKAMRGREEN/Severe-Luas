@@ -548,7 +548,7 @@ function Library:Create(TitleText)
             function SectionObj:Toggle(ToggleName, DefaultState, Callback)
                 local ToggleBackground = Drawing.new("Square")
                 ToggleBackground.Color = Colors["Accent"]
-                ToggleBackground.Filled = false
+                ToggleBackground.Filled = true
                 ToggleBackground.Thickness = 1
                 ToggleBackground.Transparency = 1
                 ToggleBackground.Visible = self.Visible
@@ -882,5 +882,5 @@ spawn(function()
     end
 end)
 
-print("V1.7 - Fixed Toggle Button Filling")
+print("V1.8 - Proper Toggle Button Filling")
 return Library
