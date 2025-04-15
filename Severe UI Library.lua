@@ -334,7 +334,7 @@ function Library:Create(TitleText)
             if SectionObj.Interfaces then
                 for _, InterfaceObj in ipairs(SectionObj.Interfaces) do
                      if InterfaceObj.Type == "Button" then
-                         local ButtonHeight = 15
+                         local ButtonHeight = 17
                          local ButtonWidth = Width - (Padding * 2)
                          local ButtonX = ColumnX + Padding
                          local ButtonY = CurrentInternalY
