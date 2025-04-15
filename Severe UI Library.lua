@@ -1,19 +1,19 @@
 local Colors = {
     ["Accent"] = {67, 12, 122},
-    ["WindowBackground"] = {40, 40, 40},
-    ["WindowBackground2"] = {30, 30, 30},
-    ["WindowBorder"] = {45, 45, 45},
-    ["TabBackground"] = {20, 20, 20},
-    ["TabBorder"] = {45, 45, 45},
-    ["TabToggleBackground"] = {28, 28, 28},
-    ["TabSelectedBackground"] = {255, 255, 255},
-    ["SectionBackground"] = {18, 18, 18},
-    ["SectionBorder"] = {35, 35, 35},
+    ["Window Background"] = {40, 40, 40},
+    ["Window Background 2"] = {30, 30, 30},
+    ["Window Border"] = {45, 45, 45},
+    ["Tab Background"] = {20, 20, 20},
+    ["Tab Border"] = {45, 45, 45},
+    ["Tab Toggle Background"] = {28, 28, 28},
+    ["Tab Selected Background"] = {255, 255, 255},
+    ["Section Background"] = {18, 18, 18},
+    ["Section Border"] = {35, 35, 35},
     ["Text"] = {200, 200, 200},
-    ["DisabledText"] = {110, 110, 110},
-    ["ObjectBackground"] = {25, 25, 25},
-    ["ObjectBorder"] = {35, 35, 35},
-    ["DropdownOptionBackground"] = {19, 19, 19}
+    ["Disabled Text"] = {110, 110, 110},
+    ["Object Background"] = {25, 25, 25},
+    ["Object Border"] = {35, 35, 35},
+    ["Dropdown Option Background"] = {19, 19, 19}
 }
 
 local Game = Game
@@ -55,11 +55,11 @@ local function SetVisibilityRecursive(InterfaceCollection, Visible)
              SetElementVisibility(Interface.ButtonBorder, Visible)
              SetElementVisibility(Interface.ButtonText, Visible)
              Interface.Visible = Visible
-elseif Interface.Type == "Toggle" then
-    SetElementVisibility(Interface.ToggleBorder, Interface.Visible)
-    SetElementVisibility(Interface.ToggleFill, Interface.Visible and Interface.State)
-    SetElementVisibility(Interface.ToggleText, Interface.Visible)
-    Interface.Visible = Visible
+        elseif Interface.Type == "Toggle" then
+             SetElementVisibility(Interface.Box, Visible)
+             SetElementVisibility(Interface.Border, Visible)
+             SetElementVisibility(Interface.Text, Visible)
+             Interface.Visible = Visible
         else
              if Interface.Visible ~= nil then
                  Interface.Visible = Visible
@@ -131,7 +131,7 @@ function Library:Create(TitleText)
     Main.WindowBackground = Drawing.new("Square")
     Main.WindowBackground.Size = {650, 750}
     Main.WindowBackground.Position = {350, 100}
-    Main.WindowBackground.Color = Colors["WindowBackground"]
+    Main.WindowBackground.Color = Colors["Window Background"]
     Main.WindowBackground.Filled = true
     Main.WindowBackground.Thickness = 1
     Main.WindowBackground.Transparency = 1
@@ -152,7 +152,7 @@ function Library:Create(TitleText)
     Main.TabBackground = Drawing.new("Square")
     Main.TabBackground.Position = {Main.WindowBackground.Position.x + 10, Main.WindowBackground.Position.y + 25}
     Main.TabBackground.Size = {Main.WindowBackground.Size.x - 20, 25}
-    Main.TabBackground.Color = Colors["TabBackground"]
+    Main.TabBackground.Color = Colors["Tab Background"]
     Main.TabBackground.Filled = true
     Main.TabBackground.Thickness = 1
     Main.TabBackground.Transparency = 1
@@ -161,7 +161,7 @@ function Library:Create(TitleText)
     Main.TabBorder = Drawing.new("Square")
     Main.TabBorder.Position = {Main.TabBackground.Position.x, Main.TabBackground.Position.y}
     Main.TabBorder.Size = {Main.TabBackground.Size.x, Main.TabBackground.Size.y}
-    Main.TabBorder.Color = Colors["TabBorder"]
+    Main.TabBorder.Color = Colors["Tab Border"]
     Main.TabBorder.Filled = false
     Main.TabBorder.Thickness = 1
     Main.TabBorder.Transparency = 1
@@ -170,7 +170,7 @@ function Library:Create(TitleText)
     Main.WindowBackground2 = Drawing.new("Square")
     Main.WindowBackground2.Position = {Main.WindowBackground.Position.x + 10, Main.WindowBackground.Position.y + 50}
     Main.WindowBackground2.Size = {Main.WindowBackground.Size.x - 20, Main.WindowBackground.Size.y - 60}
-    Main.WindowBackground2.Color = Colors["WindowBackground2"]
+    Main.WindowBackground2.Color = Colors["Window Background 2"]
     Main.WindowBackground2.Filled = true
     Main.WindowBackground2.Thickness = 1
     Main.WindowBackground2.Transparency = 1
@@ -179,7 +179,7 @@ function Library:Create(TitleText)
     Main.Window2Border = Drawing.new("Square")
     Main.Window2Border.Position = {Main.WindowBackground2.Position.x, Main.WindowBackground2.Position.y}
     Main.Window2Border.Size = {Main.WindowBackground2.Size.x, Main.WindowBackground2.Size.y}
-    Main.Window2Border.Color = Colors["WindowBorder"]
+    Main.Window2Border.Color = Colors["Window Border"]
     Main.Window2Border.Filled = false
     Main.Window2Border.Thickness = 1
     Main.Window2Border.Transparency = 1
@@ -359,19 +359,26 @@ function Library:Create(TitleText)
                          InterfaceObj.ButtonText.Center = true
 
                          CurrentInternalY = CurrentInternalY + ButtonHeight + Padding
-elseif InterfaceObj.Type == "Toggle" then
-    local ToggleSize = 20
-    local ToggleX = ColumnX + Padding
-    local ToggleY = CurrentInternalY
+                     elseif InterfaceObj.Type == "Toggle" then
+                         local ToggleHeight = 20
+                         local ToggleWidth = 20
+                         local TextWidth = Width - ToggleWidth - (Padding * 3)
+                         local ToggleX = ColumnX + Padding
+                         local ToggleY = CurrentInternalY
 
-    InterfaceObj.ToggleBorder.Position = {ToggleX, ToggleY}
-    InterfaceObj.ToggleBorder.Size = {ToggleSize, ToggleSize}
-    InterfaceObj.Update() -- Positions fill
-    
-    local TextYOffset = math.floor((ToggleSize - 12)/2)
-    InterfaceObj.ToggleText.Position = {ToggleX + ToggleSize + 5, ToggleY + TextYOffset}
+                         SetElementVisibility(InterfaceObj.Box, true)
+                         SetElementVisibility(InterfaceObj.Border, true)
+                         SetElementVisibility(InterfaceObj.Text, true)
 
-    CurrentInternalY = CurrentInternalY + ToggleSize + Padding
+                         InterfaceObj.Box.Position = {ToggleX, ToggleY}
+                         InterfaceObj.Box.Size = {ToggleWidth, ToggleHeight}
+                         InterfaceObj.Border.Position = {ToggleX, ToggleY}
+                         InterfaceObj.Border.Size = {ToggleWidth, ToggleHeight}
+
+                         InterfaceObj.Text.Position = {ToggleX + ToggleWidth + Padding, ToggleY + 3}
+                         InterfaceObj.Text.Center = false
+
+                         CurrentInternalY = CurrentInternalY + ToggleHeight + Padding
                      end
                 end
             end
@@ -413,14 +420,14 @@ elseif InterfaceObj.Type == "Toggle" then
         end
 
         local TabButton = Drawing.new("Square")
-        TabButton.Color = Colors["TabToggleBackground"]
+        TabButton.Color = Colors["Tab Toggle Background"]
         TabButton.Filled = true
         TabButton.Thickness = 1
         TabButton.Transparency = 1
         SetInitialVisibility(TabButton)
 
         local TabButtonBorder = Drawing.new("Square")
-        TabButtonBorder.Color = Colors["TabBorder"]
+        TabButtonBorder.Color = Colors["Tab Border"]
         TabButtonBorder.Filled = false
         TabButtonBorder.Thickness = 1
         TabButtonBorder.Transparency = 1
@@ -438,7 +445,7 @@ elseif InterfaceObj.Type == "Toggle" then
         SetInitialVisibility(TabButtonText)
 
         local SelectedHighlight = Drawing.new("Square")
-        SelectedHighlight.Color = Colors["TabSelectedBackground"]
+        SelectedHighlight.Color = Colors["Tab Selected Background"]
         SelectedHighlight.Transparency = 0.135
         SelectedHighlight.Filled = true
         SelectedHighlight.Visible = false
@@ -456,14 +463,14 @@ elseif InterfaceObj.Type == "Toggle" then
             SectionName = SectionName or "Section"
 
             local SectionBackground = Drawing.new("Square")
-            SectionBackground.Color = Colors["SectionBackground"]
+            SectionBackground.Color = Colors["Section Background"]
             SectionBackground.Filled = true
             SectionBackground.Thickness = 1
             SectionBackground.Transparency = 1
             SectionBackground.Visible = false
 
             local SectionBorder = Drawing.new("Square")
-            SectionBorder.Color = Colors["SectionBorder"]
+            SectionBorder.Color = Colors["Section Border"]
             SectionBorder.Filled = false
             SectionBorder.Thickness = 1
             SectionBorder.Transparency = 1
@@ -494,14 +501,14 @@ elseif InterfaceObj.Type == "Toggle" then
 
             function SectionObj:Button(ButtonName, Callback)
                 local ButtonBackground = Drawing.new("Square")
-                ButtonBackground.Color = Colors["ObjectBackground"]
+                ButtonBackground.Color = Colors["Object Background"]
                 ButtonBackground.Filled = true
                 ButtonBackground.Thickness = 1
                 ButtonBackground.Transparency = 1
                 ButtonBackground.Visible = self.Visible
 
                 local ButtonBorder = Drawing.new("Square")
-                ButtonBorder.Color = Colors["ObjectBorder"]
+                ButtonBorder.Color = Colors["Object Border"]
                 ButtonBorder.Filled = false
                 ButtonBorder.Thickness = 1
                 ButtonBorder.Transparency = 1
@@ -525,8 +532,8 @@ elseif InterfaceObj.Type == "Toggle" then
                     ButtonBackground = ButtonBackground,
                     ButtonBorder = ButtonBorder,
                     ButtonText = ButtonText,
-                    DefaultBorderColor = Colors["ObjectBorder"],
-                    OriginalBackgroundColor = Colors["ObjectBackground"],
+                    DefaultBorderColor = Colors["Object Border"],
+                    OriginalBackgroundColor = Colors["Object Background"],
                     OriginalBackgroundTransparency = 1,
                     Visible = self.Visible
                 }
@@ -539,71 +546,67 @@ elseif InterfaceObj.Type == "Toggle" then
 
                 return ButtonObj
             end
-            
-function SectionObj:Toggle(ToggleName, DefaultState, Callback)
-    -- Border (always visible)
-    local ToggleBorder = Drawing.new("Square")
-    ToggleBorder.Color = Colors["ObjectBorder"]
-    ToggleBorder.Filled = false
-    ToggleBorder.Thickness = 1
-    ToggleBorder.Transparency = 1
-    ToggleBorder.Visible = self.Visible
 
-    -- Fill (only visible when enabled)
-    local ToggleFill = Drawing.new("Square")
-    ToggleFill.Color = Colors["Accent"]
-    ToggleFill.Filled = true
-    ToggleFill.Transparency = 0.5
-    ToggleFill.Visible = false
-    ToggleFill.Thickness = 0
+            function SectionObj:Toggle(ToggleName, DefaultState, Callback)
+                local ToggleBox = Drawing.new("Square")
+                ToggleBox.Size = {20, 20}
+                ToggleBox.Filled = true
+                ToggleBox.Thickness = 1
+                ToggleBox.Transparency = 1
+                ToggleBox.Visible = self.Visible
+                ToggleBox.Color = DefaultState and Colors["Accent"] or Colors["Object Background"]
 
-    -- Label text
-    local ToggleText = Drawing.new("Text")
-    ToggleText.Text = ToggleName or "Toggle"
-    ToggleText.Size = 12
-    ToggleText.Font = 5
-    ToggleText.Color = Colors["Text"]
-    ToggleText.Outline = true
-    ToggleText.OutlineColor = {0, 0, 0}
-    ToggleText.Transparency = 1
-    ToggleText.Center = false
-    ToggleText.Visible = self.Visible
+                local ToggleBorder = Drawing.new("Square")
+                ToggleBorder.Size = {20, 20}
+                ToggleBorder.Filled = false
+                ToggleBorder.Thickness = 1
+                ToggleBorder.Transparency = 1
+                ToggleBorder.Visible = self.Visible
+                ToggleBorder.Color = Colors["Object Border"]
 
-    local State = DefaultState or false
-    
-    local function UpdateToggleVisuals()
-        -- Position fill inside border (1px padding)
-        local borderPos = ToggleBorder.Position
-        local borderSize = ToggleBorder.Size
-        ToggleFill.Position = {borderPos.x + 1, borderPos.y + 1}
-        ToggleFill.Size = {borderSize.x - 2, borderSize.y - 2}
-        
-        -- Update visibility
-        ToggleFill.Visible = State
-        
-        -- Handle hover (border always changes color when hovered)
-        local IsHovered = WindowActive and WindowActive:IsHovered(ToggleBorder)
-        ToggleBorder.Color = IsHovered and Colors["Accent"] or Colors["ObjectBorder"]
-    end
-    
-    local ToggleObj = {
-        Type = "Toggle",
-        Name = ToggleName,
-        Callback = Callback,
-        ToggleBorder = ToggleBorder,
-        ToggleFill = ToggleFill,
-        ToggleText = ToggleText,
-        Visible = self.Visible,
-        State = State,
-        Update = UpdateToggleVisuals
-    }
+                local ToggleText = Drawing.new("Text")
+                ToggleText.Text = ToggleName or "Toggle"
+                ToggleText.Size = 12
+                ToggleText.Font = 5
+                ToggleText.Color = Colors["Text"]
+                ToggleText.Outline = true
+                ToggleText.OutlineColor = {0, 0, 0}
+                ToggleText.Transparency = 1
+                ToggleText.Center = false
+                ToggleText.Visible = self.Visible
 
-    -- Initial setup
-    UpdateToggleVisuals()
-    table.insert(self.Interfaces, ToggleObj)
+                local ToggleState = DefaultState or false
 
-    return ToggleObj
-end
+                local ToggleObj = {
+                    Type = "Toggle",
+                    Name = ToggleName,
+                    State = ToggleState,
+                    Callback = Callback,
+                    Box = ToggleBox,
+                    Border = ToggleBorder,
+                    Text = ToggleText,
+                    DefaultBorderColor = Colors["Object Border"],
+                    OriginalBoxColor = ToggleState and Colors["Accent"] or Colors["Object Background"],
+                    Visible = self.Visible
+                }
+
+                function ToggleObj:SetState(NewState)
+                    self.State = NewState
+                    self.Box.Color = NewState and Colors["Accent"] or Colors["Object Background"]
+                    self.OriginalBoxColor = self.Box.Color
+                    if self.Callback then
+                        spawn(function() self.Callback(NewState) end)
+                    end
+                end
+
+                table.insert(self.Interfaces, ToggleObj)
+
+                if IsVisible and Main.ActiveTab == TabContent.Name then
+                    Main:UpdateLayout()
+                end
+
+                return ToggleObj
+            end
 
             if Side == "Left" then
                 table.insert(self.LeftSections, SectionObj)
@@ -751,8 +754,8 @@ spawn(function()
                                          if InterfaceObj.Type == "Button" and InterfaceObj.ButtonBackground.Visible then
                                              local IsHover = WindowActive:IsHovered(InterfaceObj.ButtonBackground)
                                              if IsHover then
-                                                 if InterfaceObj.ButtonBackground.Color ~= Colors["TabSelectedBackground"] then
-                                                     InterfaceObj.ButtonBackground.Color = Colors["TabSelectedBackground"]
+                                                 if InterfaceObj.ButtonBackground.Color ~= Colors["Tab Selected Background"] then
+                                                     InterfaceObj.ButtonBackground.Color = Colors["Tab Selected Background"]
                                                      InterfaceObj.ButtonBackground.Transparency = 0.135
                                                      InterfaceObj.ButtonBorder.Color = Colors["Accent"]
 
@@ -772,32 +775,24 @@ spawn(function()
                                                      return
                                                  end
                                              end
-                                         elseif InterfaceObj.Type == "Toggle" and InterfaceObj.ToggleBorder.Visible then
-                                             local togglePos = InterfaceObj.ToggleBorder.Position
-                                             local toggleSize = InterfaceObj.ToggleBorder.Size
-                                             local textPos = InterfaceObj.ToggleText.Position
-                                             local textBounds = InterfaceObj.ToggleText.TextBounds or {x = 100, y = 12}
-                                             
-                                             local hitboxX = togglePos.x
-                                             local hitboxY = togglePos.y
-                                             local hitboxWidth = (textPos.x + textBounds.x) - togglePos.x + 5
-                                             local hitboxHeight = math.max(toggleSize.y, textBounds.y)
-                                             
-                                             local IsHover = (Mouse.X >= hitboxX and Mouse.X <= hitboxX + hitboxWidth and
-                                                             Mouse.Y >= hitboxY and Mouse.Y <= hitboxY + hitboxHeight)
-                                             
+                                         elseif InterfaceObj.Type == "Toggle" and InterfaceObj.Box.Visible then
+                                             local IsHover = WindowActive:IsHovered(InterfaceObj.Box)
                                              if IsHover then
-                                                 IsMouseOverUI = true
-                                                 HoveredButton = InterfaceObj
-                                                 InterfaceObj.State = not InterfaceObj.State
-                                                 InterfaceObj.Update()
-                                                 
-                                                 if InterfaceObj.Callback then 
-                                                     spawn(function() 
-                                                         InterfaceObj.Callback(InterfaceObj.State) 
-                                                     end) 
-                                                 end
-                                                 
+                                                 InterfaceObj.Box.Color = Colors["Tab Selected Background"]
+                                                 InterfaceObj.Box.Transparency = 0.135
+                                                 InterfaceObj.Border.Color = Colors["Accent"]
+
+                                                 local TargetToggleObj = InterfaceObj
+                                                 spawn(function()
+                                                     wait(0.05)
+                                                     if IsVisible and WindowActive and TargetToggleObj and TargetToggleObj.Box.Visible then
+                                                          TargetToggleObj:SetState(not TargetToggleObj.State)
+                                                          TargetToggleObj.Box.Color = TargetToggleObj.OriginalBoxColor
+                                                          TargetToggleObj.Box.Transparency = 1
+                                                          local isHoverNow = WindowActive:IsHovered(TargetToggleObj.Box)
+                                                          TargetToggleObj.Border.Color = isHoverNow and Colors["Accent"] or TargetToggleObj.DefaultBorderColor
+                                                     end
+                                                 end)
                                                  UIClickHandled = true
                                                  return
                                              end
@@ -827,29 +822,17 @@ spawn(function()
                                              HoveredButton = InterfaceObj
                                          end
 
-                                         if InterfaceObj.ButtonBackground.Color ~= Colors["TabSelectedBackground"] then
+                                         if InterfaceObj.ButtonBackground.Color ~= Colors["Tab Selected Background"] then
                                              InterfaceObj.ButtonBorder.Color = IsCurrentlyHovered and Colors["Accent"] or InterfaceObj.DefaultBorderColor
                                          end
                                      elseif InterfaceObj.Type == "Toggle" then
-                                         local togglePos = InterfaceObj.ToggleBorder.Position
-                                         local toggleSize = InterfaceObj.ToggleBorder.Size
-                                         local textPos = InterfaceObj.ToggleText.Position
-                                         local textBounds = InterfaceObj.ToggleText.TextBounds or {x = 100, y = 12}
-                                         
-                                         local hitboxX = togglePos.x
-                                         local hitboxY = togglePos.y
-                                         local hitboxWidth = (textPos.x + textBounds.x) - togglePos.x + 5
-                                         local hitboxHeight = math.max(toggleSize.y, textBounds.y)
-                                         
-                                         local IsCurrentlyHovered = (Mouse.X >= hitboxX and Mouse.X <= hitboxX + hitboxWidth and
-                                                                   Mouse.Y >= hitboxY and Mouse.Y <= hitboxY + hitboxHeight)
-                                         
+                                         local IsCurrentlyHovered = WindowActive:IsHovered(InterfaceObj.Box)
                                          if IsCurrentlyHovered then
                                              IsMouseOverUI = true
                                              HoveredButton = InterfaceObj
-                                             InterfaceObj.ToggleBorder.Color = Colors["Accent"]
-                                         else
-                                             InterfaceObj.ToggleBorder.Color = InterfaceObj.State and Colors["Accent"] or Colors["ObjectBorder"]
+                                         end
+                                         if InterfaceObj.Box.Color ~= Colors["Tab Selected Background"] then
+                                             InterfaceObj.Border.Color = IsCurrentlyHovered and Colors["Accent"] or InterfaceObj.DefaultBorderColor
                                          end
                                      end
                                  end
@@ -866,5 +849,5 @@ spawn(function()
     end
 end)
 
-print'h'
+print'j'
 return Library
