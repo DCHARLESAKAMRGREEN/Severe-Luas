@@ -155,7 +155,7 @@ function Library:Create(Title)
     Main.Window2Border = Drawing.new("Square")
     Main.Window2Border.Position = {Main.WindowBackground2.Position.x, Main.WindowBackground2.Position.y}
     Main.Window2Border.Size = {Main.WindowBackground2.Size.x, Main.WindowBackground2.Size.y}
-    Main.Window2Border.Color = Colors["Section Border"]
+    Main.Window2Border.Color = Colors["Window Border"]
     Main.Window2Border.Filled = false
     Main.Window2Border.Thickness = 1
     Main.Window2Border.Transparency = 1
