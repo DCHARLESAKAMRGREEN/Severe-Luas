@@ -231,7 +231,7 @@ function Library:Create(Title)
         if TotalWidth <= 0 then return end
 
         local ExactTabWidth = TotalWidth / TabCount
-        local Epsilon = 0.0001 -- Small value to help with floating point comparisons
+        local Epsilon = 0.0001
 
         for i, TabObj in ipairs(Main.Tabs) do
             local StartX = StartXBase + (i - 1) * ExactTabWidth
@@ -387,7 +387,7 @@ function Library:Create(Title)
 
             local SectionTitle = Drawing.new("Text")
             SectionTitle.Text = SectionName
-            SectionTitle.Size = 10
+            SectionTitle.Size = 12
             SectionTitle.Font = 5
             SectionTitle.Color = Colors["Text"]
             SectionTitle.Outline = true
