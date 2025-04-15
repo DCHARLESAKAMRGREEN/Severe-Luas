@@ -1,6 +1,7 @@
 local Colors = {
     ["Accent"] = {113, 93, 133},
-    ["Window Background"] = {60, 60, 60},
+    ["Window Background"] = {35, 35, 35},
+    ["Window Background 2"] = {30, 30, 30},
     ["Window Border"] = {45, 45, 45},
     ["Tab Background"] = {20, 20, 20},
     ["Tab Border"] = {45, 45, 45},
@@ -145,7 +146,7 @@ function Library:Create(Title)
     Main.WindowBackground2 = Drawing.new("Square")
     Main.WindowBackground2.Position = {Main.WindowBackground.Position.x + 10, Main.WindowBackground.Position.y + 50}
     Main.WindowBackground2.Size = {Main.WindowBackground.Size.x - 20, Main.WindowBackground.Size.y - 60}
-    Main.WindowBackground2.Color = Colors["Window Background"]
+    Main.WindowBackground2.Color = Colors["Window Background 2"]
     Main.WindowBackground2.Filled = true
     Main.WindowBackground2.Thickness = 1
     Main.WindowBackground2.Transparency = 1
@@ -220,40 +221,53 @@ function Library:Create(Title)
         local TabCount = #Main.Tabs
         if TabCount == 0 then return end
 
-        local TotalWidth = Main.TabBackground.Size.x
-        local CalculatedTabWidth = TotalWidth / TabCount
-        local MinTabWidth = 50
-        local TabWidth = math.max(CalculatedTabWidth, MinTabWidth)
+        local TabBackgroundPos = Main.TabBackground.Position
+        local TabBackgroundSize = Main.TabBackground.Size
+        local TotalWidth = TabBackgroundSize.x
+        local StartXBase = TabBackgroundPos.x
+        local TabY = TabBackgroundPos.y
+        local TabH = TabBackgroundSize.y
 
-        if TabWidth * TabCount > TotalWidth then
-             TabWidth = TotalWidth / TabCount
-        end
+        if TotalWidth <= 0 then return end
 
-        local CurrentX = Main.TabBackground.Position.x
-        local TabY = Main.TabBackground.Position.y
-        local TabH = Main.TabBackground.Size.y
+        local ExactTabWidth = TotalWidth / TabCount
+        local Epsilon = 0.0001 -- Small value to help with floating point comparisons
 
         for i, TabObj in ipairs(Main.Tabs) do
+            local StartX = StartXBase + (i - 1) * ExactTabWidth
+            local EndX = StartX + ExactTabWidth
+
+            local RoundedStartX = math.floor(StartX + Epsilon)
+            local RoundedEndX = math.floor(EndX + Epsilon)
+            local RoundedWidth = RoundedEndX - RoundedStartX
+
+            if i == TabCount then
+                RoundedEndX = math.floor(StartXBase + TotalWidth + Epsilon)
+                RoundedWidth = RoundedEndX - RoundedStartX
+            end
+
+            if RoundedWidth <= 0 then RoundedWidth = 1 end
+
             local Button = TabObj.Button
             local ButtonBorder = TabObj.ButtonBorder
             local ButtonText = TabObj.ButtonText
             local Highlight = TabObj.SelectedHighlight
 
-            Button.Size = {TabWidth, TabH}
-            Button.Position = {CurrentX, TabY}
-            ButtonBorder.Size = {TabWidth, TabH}
-            ButtonBorder.Position = {CurrentX, TabY}
-            Highlight.Size = {TabWidth, TabH}
-            Highlight.Position = {CurrentX, TabY}
+            Button.Position = {RoundedStartX, TabY}
+            Button.Size = {RoundedWidth, TabH}
+            ButtonBorder.Position = {RoundedStartX, TabY}
+            ButtonBorder.Size = {RoundedWidth, TabH}
+            Highlight.Position = {RoundedStartX, TabY}
+            Highlight.Size = {RoundedWidth, TabH}
 
             if ButtonText.TextBounds then
-                 ButtonText.Position = {CurrentX + (TabWidth / 2), TabY + (TabH / 2) - (ButtonText.TextBounds.y / 2)}
+                 ButtonText.Position = {RoundedStartX + (RoundedWidth / 2), TabY + (TabH / 2) - (ButtonText.TextBounds.y / 2)}
             else
-                 ButtonText.Position = {CurrentX + (TabWidth / 2), TabY + (TabH / 2) - 7}
+                 ButtonText.Position = {RoundedStartX + (RoundedWidth / 2), TabY + (TabH / 2) - 7}
             end
-            CurrentX = CurrentX + TabWidth
         end
     end
+
 
     function Main:UpdateSectionPositions()
         if not Main.ActiveTab or not Main.TabContents[Main.ActiveTab] then return end
@@ -338,7 +352,7 @@ function Library:Create(Title)
 
         local SelectedHighlight = Drawing.new("Square")
         SelectedHighlight.Color = Colors["Tab Selected Background"]
-        SelectedHighlight.Transparency = 0.15
+        SelectedHighlight.Transparency = 0.135
         SelectedHighlight.Filled = true
         SelectedHighlight.Visible = false
 
@@ -373,7 +387,7 @@ function Library:Create(Title)
 
             local SectionTitle = Drawing.new("Text")
             SectionTitle.Text = SectionName
-            SectionTitle.Size = 14
+            SectionTitle.Size = 10
             SectionTitle.Font = 5
             SectionTitle.Color = Colors["Text"]
             SectionTitle.Outline = true
