@@ -1,19 +1,19 @@
 local Colors = {
     ["Accent"] = {67, 12, 122},
-    ["Window Background"] = {40, 40, 40},
-    ["Window Background 2"] = {30, 30, 30},
-    ["Window Border"] = {45, 45, 45},
-    ["Tab Background"] = {20, 20, 20},
-    ["Tab Border"] = {45, 45, 45},
-    ["Tab Toggle Background"] = {28, 28, 28},
-    ["Tab Selected Background"] = {255, 255, 255},
-    ["Section Background"] = {18, 18, 18},
-    ["Section Border"] = {35, 35, 35},
+    ["WindowBackground"] = {40, 40, 40},
+    ["WindowBackground2"] = {30, 30, 30},
+    ["WindowBorder"] = {45, 45, 45},
+    ["TabBackground"] = {20, 20, 20},
+    ["TabBorder"] = {45, 45, 45},
+    ["TabToggleBackground"] = {28, 28, 28},
+    ["TabSelectedBackground"] = {255, 255, 255},
+    ["SectionBackground"] = {18, 18, 18},
+    ["SectionBorder"] = {35, 35, 35},
     ["Text"] = {200, 200, 200},
-    ["Disabled Text"] = {110, 110, 110},
-    ["Object Background"] = {25, 25, 25},
-    ["Object Border"] = {35, 35, 35},
-    ["Dropdown Option Background"] = {19, 19, 19}
+    ["DisabledText"] = {110, 110, 110},
+    ["ObjectBackground"] = {25, 25, 25},
+    ["ObjectBorder"] = {35, 35, 35},
+    ["DropdownOptionBackground"] = {19, 19, 19}
 }
 
 local MouseService = findservice(Game, "MouseService")
@@ -31,32 +31,49 @@ local DragOffsetX = 0
 local DragOffsetY = 0
 local IsVisible = true
 local TogglePressed = false
+local Padding = 5
+local ButtonHeight = 25
+local ElementSpacing = 5
+local TitleHeight = 15
 
 local function SetVisibilityRecursive(InterfaceCollection, Visible)
     for _, Interface in pairs(InterfaceCollection) do
-        if Interface.Visible ~= nil then
-             Interface.Visible = Visible
+        local IsSection = Interface.Background and Interface.Border and Interface.Title
+        local EffectiveVisible = Visible and (not IsSection or Interface.Visible)
+
+        if Interface.Background and Interface.Background.Visible ~= nil then
+            Interface.Background.Visible = EffectiveVisible
         end
+        if Interface.Border and Interface.Border.Visible ~= nil then
+            Interface.Border.Visible = EffectiveVisible
+        end
+        if Interface.Title and Interface.Title.Visible ~= nil then
+            Interface.Title.Visible = EffectiveVisible
+        end
+        if Interface.ButtonText and Interface.ButtonText.Visible ~= nil then
+             Interface.ButtonText.Visible = EffectiveVisible
+        end
+
         if Interface.Interfaces then
-            SetVisibilityRecursive(Interface.Interfaces, Visible)
+            SetVisibilityRecursive(Interface.Interfaces, EffectiveVisible)
         end
-         if Interface.Background and Interface.Background.Visible ~= nil then
-             Interface.Background.Visible = Visible
-         end
-         if Interface.Border and Interface.Border.Visible ~= nil then
-             Interface.Border.Visible = Visible
-         end
-         if Interface.Title and Interface.Title.Visible ~= nil then
-             Interface.Title.Visible = Visible
-         end
-         if Interface.Remove and Interface.Position then
+
+        if Interface.Remove and Interface.Position then
              Interface.Visible = Visible
-         end
-         if Interface.SelectedHighlight and Interface.SelectedHighlight.Visible ~= nil then
+        end
+
+        if Interface.SelectedHighlight and Interface.SelectedHighlight.Visible ~= nil then
             Interface.SelectedHighlight.Visible = false
-         end
+        end
+
+        if Interface.Type == "Button" and Interface.OnClick then
+            if Interface.Background then Interface.Background.Visible = EffectiveVisible end
+            if Interface.Border then Interface.Border.Visible = EffectiveVisible end
+            if Interface.ButtonText then Interface.ButtonText.Visible = EffectiveVisible end
+        end
     end
 end
+
 
 function ToggleUI()
     IsVisible = not IsVisible
@@ -73,29 +90,32 @@ function ToggleUI()
         Main.WindowBorder.Visible = IsVisible
 
         for _, TabObj in ipairs(Main.Tabs) do
-             TabObj.Button.Visible = IsVisible
-             TabObj.ButtonBorder.Visible = IsVisible
-             TabObj.ButtonText.Visible = IsVisible
-             if TabObj.SelectedHighlight then
-                 TabObj.SelectedHighlight.Visible = IsVisible and (TabObj.Name == Main.ActiveTab)
-             end
+            local IsActiveTab = TabObj.Name == Main.ActiveTab
+            local TabShouldBeVisible = IsVisible and IsActiveTab
 
-             local IsActiveTab = TabObj.Name == Main.ActiveTab
-             SetVisibilityRecursive(TabObj.Content.LeftSections, IsVisible and IsActiveTab)
-             SetVisibilityRecursive(TabObj.Content.RightSections, IsVisible and IsActiveTab)
-             SetVisibilityRecursive(TabObj.Content.Interfaces, IsVisible and IsActiveTab)
+            TabObj.Button.Visible = IsVisible
+            TabObj.ButtonBorder.Visible = IsVisible
+            TabObj.ButtonText.Visible = IsVisible
+            if TabObj.SelectedHighlight then
+                TabObj.SelectedHighlight.Visible = IsVisible and IsActiveTab
+            end
+
+            SetVisibilityRecursive(TabObj.Content.LeftSections, TabShouldBeVisible)
+            SetVisibilityRecursive(TabObj.Content.RightSections, TabShouldBeVisible)
         end
 
         if not IsVisible then
-             IsDragging = false
+            IsDragging = false
         else
-            Main:SelectTab(Main.ActiveTab)
+             if Main.ActiveTab then
+                Main:SelectTab(Main.ActiveTab)
+             end
         end
     end
 end
 
 
-function Library:Create(Title)
+function Library:Create(TitleText)
     local Main = {}
 
     local function SetInitialVisibility(Interface)
@@ -107,14 +127,14 @@ function Library:Create(Title)
     Main.WindowBackground = Drawing.new("Square")
     Main.WindowBackground.Size = {650, 750}
     Main.WindowBackground.Position = {350, 100}
-    Main.WindowBackground.Color = Colors["Window Background"]
+    Main.WindowBackground.Color = Colors["WindowBackground"]
     Main.WindowBackground.Filled = true
     Main.WindowBackground.Thickness = 1
     Main.WindowBackground.Transparency = 1
     SetInitialVisibility(Main.WindowBackground)
 
     Main.Title = Drawing.new("Text")
-    Main.Title.Text = Title or "Severe UI"
+    Main.Title.Text = TitleText or "Severe UI"
     Main.Title.Size = 16
     Main.Title.Font = 5
     Main.Title.Color = Colors["Text"]
@@ -128,7 +148,7 @@ function Library:Create(Title)
     Main.TabBackground = Drawing.new("Square")
     Main.TabBackground.Position = {Main.WindowBackground.Position.x + 10, Main.WindowBackground.Position.y + 25}
     Main.TabBackground.Size = {Main.WindowBackground.Size.x - 20, 25}
-    Main.TabBackground.Color = Colors["Tab Background"]
+    Main.TabBackground.Color = Colors["TabBackground"]
     Main.TabBackground.Filled = true
     Main.TabBackground.Thickness = 1
     Main.TabBackground.Transparency = 1
@@ -137,7 +157,7 @@ function Library:Create(Title)
     Main.TabBorder = Drawing.new("Square")
     Main.TabBorder.Position = {Main.TabBackground.Position.x, Main.TabBackground.Position.y}
     Main.TabBorder.Size = {Main.TabBackground.Size.x, Main.TabBackground.Size.y}
-    Main.TabBorder.Color = Colors["Tab Border"]
+    Main.TabBorder.Color = Colors["TabBorder"]
     Main.TabBorder.Filled = false
     Main.TabBorder.Thickness = 1
     Main.TabBorder.Transparency = 1
@@ -146,7 +166,7 @@ function Library:Create(Title)
     Main.WindowBackground2 = Drawing.new("Square")
     Main.WindowBackground2.Position = {Main.WindowBackground.Position.x + 10, Main.WindowBackground.Position.y + 50}
     Main.WindowBackground2.Size = {Main.WindowBackground.Size.x - 20, Main.WindowBackground.Size.y - 60}
-    Main.WindowBackground2.Color = Colors["Window Background 2"]
+    Main.WindowBackground2.Color = Colors["WindowBackground2"]
     Main.WindowBackground2.Filled = true
     Main.WindowBackground2.Thickness = 1
     Main.WindowBackground2.Transparency = 1
@@ -155,7 +175,7 @@ function Library:Create(Title)
     Main.Window2Border = Drawing.new("Square")
     Main.Window2Border.Position = {Main.WindowBackground2.Position.x, Main.WindowBackground2.Position.y}
     Main.Window2Border.Size = {Main.WindowBackground2.Size.x, Main.WindowBackground2.Size.y}
-    Main.Window2Border.Color = Colors["Window Border"]
+    Main.Window2Border.Color = Colors["WindowBorder"]
     Main.Window2Border.Filled = false
     Main.Window2Border.Thickness = 1
     Main.Window2Border.Transparency = 1
@@ -183,16 +203,16 @@ function Library:Create(Title)
         local InterfaceX, InterfaceY = InterfacePos.x, InterfacePos.y
 
         if Interface.Size then
-             local InterfaceSize = Interface.Size
-             local InterfaceW, InterfaceH = InterfaceSize.x, InterfaceSize.y
-             return MouseX >= InterfaceX and MouseX <= InterfaceX + InterfaceW and MouseY >= InterfaceY and MouseY <= InterfaceY + InterfaceH
+            local InterfaceSize = Interface.Size
+            local InterfaceW, InterfaceH = InterfaceSize.x, InterfaceSize.y
+            return MouseX >= InterfaceX and MouseX <= InterfaceX + InterfaceW and MouseY >= InterfaceY and MouseY <= InterfaceY + InterfaceH
         elseif Interface.TextBounds then
-             local InterfaceBounds = Interface.TextBounds
-             local InterfaceW, InterfaceH = InterfaceBounds.x, InterfaceBounds.y
-             if Interface.Center then
-                 InterfaceX = InterfaceX - InterfaceW / 2
-             end
-             return MouseX >= InterfaceX and MouseX <= InterfaceX + InterfaceW and MouseY >= InterfaceY and MouseY <= InterfaceY + InterfaceH
+            local InterfaceBounds = Interface.TextBounds
+            local InterfaceW, InterfaceH = InterfaceBounds.x, InterfaceBounds.y
+            if Interface.Center then
+                InterfaceX = InterfaceX - InterfaceW / 2
+            end
+            return MouseX >= InterfaceX and MouseX <= InterfaceX + InterfaceW and MouseY >= InterfaceY and MouseY <= InterfaceY + InterfaceH
         end
         return false
     end
@@ -214,7 +234,7 @@ function Library:Create(Title)
         Main.WindowBorder.Position = {BaseX, BaseY}
 
         Main:UpdateTabSizes()
-        Main:Sections()
+        Main:UpdateSectionsLayout()
     end
 
     function Main:UpdateTabSizes()
@@ -269,54 +289,78 @@ function Library:Create(Title)
     end
 
 
-    function Main:Sections()
+    function Main:UpdateSectionsLayout()
         if not Main.ActiveTab or not Main.TabContents[Main.ActiveTab] then return end
 
         local CurrentTabContent = Main.TabContents[Main.ActiveTab]
         local ParentPos = Main.WindowBackground2.Position
         local ParentSize = Main.WindowBackground2.Size
         local ParentWidth = ParentSize.x
-        local AvailableWidth = ParentWidth - (5 * 2) - 5
-        local ColumnWidth = AvailableWidth / 2
+        local AvailableWidth = ParentWidth - (Padding * 2) - ElementSpacing
+        local ColumnWidth = math.floor(AvailableWidth / 2)
 
         local BaseX = ParentPos.x
         local BaseY = ParentPos.y
 
-        local LeftColumnX = BaseX + 5
-        local RightColumnX = LeftColumnX + ColumnWidth + 5
-        local InitialY = BaseY + 5
+        local LeftColumnX = BaseX + Padding
+        local RightColumnX = LeftColumnX + ColumnWidth + ElementSpacing
+        local InitialY = BaseY + Padding
 
         CurrentTabContent.CurrentLeftY = InitialY
         CurrentTabContent.CurrentRightY = InitialY
 
-        local function PositionSection(SectionObj, ColumnX, CurrentY)
-            local PlaceholderHeight = 100
+        local function UpdateSectionAndInterfaces(SectionObj, ColumnX, CurrentColumnY)
             local Background = SectionObj.Background
             local Border = SectionObj.Border
             local Title = SectionObj.Title
+            local SectionHeight = SectionObj.RequiredHeight
 
-            Background.Position = {ColumnX, CurrentY}
-            Border.Position = {ColumnX, CurrentY}
-            Background.Size = {ColumnWidth, PlaceholderHeight}
-            Border.Size = {ColumnWidth, PlaceholderHeight}
+            Background.Position = {ColumnX, CurrentColumnY}
+            Border.Position = {ColumnX, CurrentColumnY}
+            Background.Size = {ColumnWidth, SectionHeight}
+            Border.Size = {ColumnWidth, SectionHeight}
 
             if Title then
-                Title.Position = {ColumnX + 5, CurrentY + 3}
-                Title.Visible = SectionObj.Visible
+                Title.Position = {ColumnX + Padding, CurrentColumnY + Padding}
+                Title.Visible = SectionObj.Visible and IsVisible and Main.ActiveTab == CurrentTabContent.Name
             end
-            return CurrentY + PlaceholderHeight + 5
+
+            local ContentStartY = CurrentColumnY + TitleHeight + Padding
+            local InternalY = ContentStartY
+
+            for _, Interface in ipairs(SectionObj.Interfaces) do
+                 if Interface.Type == "Button" then
+                      local ButtonWidth = ColumnWidth - (Padding * 2)
+                      Interface.Background.Position = {ColumnX + Padding, InternalY}
+                      Interface.Border.Position = {ColumnX + Padding, InternalY}
+                      Interface.ButtonText.Position = {ColumnX + Padding + (ButtonWidth / 2) , InternalY + (ButtonHeight / 2) - (Interface.ButtonText.Size / 1.5)}
+                      Interface.Background.Size = {ButtonWidth, ButtonHeight}
+                      Interface.Border.Size = {ButtonWidth, ButtonHeight}
+
+                      Interface.Background.Visible = SectionObj.Visible and IsVisible and Main.ActiveTab == CurrentTabContent.Name
+                      Interface.Border.Visible = SectionObj.Visible and IsVisible and Main.ActiveTab == CurrentTabContent.Name
+                      Interface.ButtonText.Visible = SectionObj.Visible and IsVisible and Main.ActiveTab == CurrentTabContent.Name
+
+                      InternalY = InternalY + ButtonHeight + ElementSpacing
+                 end
+            end
+
+            Background.Visible = SectionObj.Visible and IsVisible and Main.ActiveTab == CurrentTabContent.Name
+            Border.Visible = SectionObj.Visible and IsVisible and Main.ActiveTab == CurrentTabContent.Name
+
+            return CurrentColumnY + SectionHeight + ElementSpacing
         end
 
         for _, SectionObj in ipairs(CurrentTabContent.LeftSections) do
              if SectionObj.Visible then
-                CurrentTabContent.CurrentLeftY = PositionSection(SectionObj, LeftColumnX, CurrentTabContent.CurrentLeftY)
+                CurrentTabContent.CurrentLeftY = UpdateSectionAndInterfaces(SectionObj, LeftColumnX, CurrentTabContent.CurrentLeftY)
              end
         end
 
         for _, SectionObj in ipairs(CurrentTabContent.RightSections) do
-            if SectionObj.Visible then
-                CurrentTabContent.CurrentRightY = PositionSection(SectionObj, RightColumnX, CurrentTabContent.CurrentRightY)
-            end
+             if SectionObj.Visible then
+                CurrentTabContent.CurrentRightY = UpdateSectionAndInterfaces(SectionObj, RightColumnX, CurrentTabContent.CurrentRightY)
+             end
         end
     end
 
@@ -326,14 +370,14 @@ function Library:Create(Title)
         end
 
         local TabButton = Drawing.new("Square")
-        TabButton.Color = Colors["Tab Toggle Background"]
+        TabButton.Color = Colors["TabToggleBackground"]
         TabButton.Filled = true
         TabButton.Thickness = 1
         TabButton.Transparency = 1
         SetInitialVisibility(TabButton)
 
         local TabButtonBorder = Drawing.new("Square")
-        TabButtonBorder.Color = Colors["Tab Border"]
+        TabButtonBorder.Color = Colors["TabBorder"]
         TabButtonBorder.Filled = false
         TabButtonBorder.Thickness = 1
         TabButtonBorder.Transparency = 1
@@ -351,7 +395,7 @@ function Library:Create(Title)
         SetInitialVisibility(TabButtonText)
 
         local SelectedHighlight = Drawing.new("Square")
-        SelectedHighlight.Color = Colors["Tab Selected Background"]
+        SelectedHighlight.Color = Colors["TabSelectedBackground"]
         SelectedHighlight.Transparency = 0.135
         SelectedHighlight.Filled = true
         SelectedHighlight.Visible = false
@@ -372,14 +416,14 @@ function Library:Create(Title)
             SectionName = SectionName or "Section"
 
             local SectionBackground = Drawing.new("Square")
-            SectionBackground.Color = Colors["Section Background"]
+            SectionBackground.Color = Colors["SectionBackground"]
             SectionBackground.Filled = true
             SectionBackground.Thickness = 1
             SectionBackground.Transparency = 1
             SectionBackground.Visible = false
 
             local SectionBorder = Drawing.new("Square")
-            SectionBorder.Color = Colors["Section Border"]
+            SectionBorder.Color = Colors["SectionBorder"]
             SectionBorder.Filled = false
             SectionBorder.Thickness = 1
             SectionBorder.Transparency = 1
@@ -403,8 +447,71 @@ function Library:Create(Title)
                 Border = SectionBorder,
                 Title = SectionTitle,
                 Interfaces = {},
-                Visible = false
+                Visible = false,
+                RequiredHeight = TitleHeight + Padding * 2,
+                CurrentInternalY = TitleHeight + Padding
             }
+
+            function SectionObj:Button(ButtonName, OnClick)
+                 ButtonName = ButtonName or "Button"
+                 OnClick = OnClick or function() end
+
+                 local ParentWidth = Main.WindowBackground2.Size.x
+                 local AvailableWidth = ParentWidth - (Padding * 2) - ElementSpacing
+                 local ColumnWidth = math.floor(AvailableWidth / 2)
+                 local ButtonWidth = ColumnWidth - (Padding * 2)
+
+                 local ButtonBackground = Drawing.new("Square")
+                 ButtonBackground.Color = Colors["ObjectBackground"]
+                 ButtonBackground.Filled = true
+                 ButtonBackground.Thickness = 1
+                 ButtonBackground.Transparency = 1
+                 ButtonBackground.Size = {ButtonWidth, ButtonHeight}
+                 ButtonBackground.Visible = false
+
+                 local ButtonBorder = Drawing.new("Square")
+                 ButtonBorder.Color = Colors["ObjectBorder"]
+                 ButtonBorder.Filled = false
+                 ButtonBorder.Thickness = 1
+                 ButtonBorder.Transparency = 1
+                 ButtonBorder.Size = {ButtonWidth, ButtonHeight}
+                 ButtonBorder.Visible = false
+
+                 local ButtonText = Drawing.new("Text")
+                 ButtonText.Text = ButtonName
+                 ButtonText.Size = 14
+                 ButtonText.Font = 5
+                 ButtonText.Color = Colors["Text"]
+                 ButtonText.Outline = true
+                 ButtonText.OutlineColor = {0, 0, 0}
+                 ButtonText.Transparency = 1
+                 ButtonText.Center = true
+                 ButtonText.Visible = false
+
+                 local ButtonObj = {
+                      Type = "Button",
+                      Name = ButtonName,
+                      Background = ButtonBackground,
+                      Border = ButtonBorder,
+                      ButtonText = ButtonText,
+                      OnClick = OnClick,
+                      Visible = false
+                 }
+
+                 table.insert(self.Interfaces, ButtonObj)
+
+                 self.RequiredHeight = self.RequiredHeight + ButtonHeight + ElementSpacing
+                 self.CurrentInternalY = self.CurrentInternalY + ButtonHeight + ElementSpacing
+
+                 self.Background.Size = {ColumnWidth, self.RequiredHeight}
+                 self.Border.Size = {ColumnWidth, self.RequiredHeight}
+
+                 if IsVisible and Main.ActiveTab == TabContent.Name then
+                     Main:UpdateSectionsLayout()
+                 end
+
+                 return ButtonObj
+            end
 
             if Side == "Left" then
                 table.insert(self.LeftSections, SectionObj)
@@ -412,12 +519,12 @@ function Library:Create(Title)
                 table.insert(self.RightSections, SectionObj)
             end
 
+            SectionObj.Visible = true
             if IsVisible and Main.ActiveTab == self.Name then
-                 SectionObj.Visible = true
-                 SectionBackground.Visible = true
-                 SectionBorder.Visible = true
-                 SectionTitle.Visible = true
-                 Main:Sections()
+                SectionBackground.Visible = true
+                SectionBorder.Visible = true
+                SectionTitle.Visible = true
+                Main:UpdateSectionsLayout()
             end
 
             return SectionObj
@@ -438,32 +545,40 @@ function Library:Create(Title)
 
         Main:UpdateTabSizes()
 
-        if IsVisible then
-            if #Main.Tabs == 1 then
-                Main:SelectTab(TabName)
-            else
-                 Main:SelectTab(Main.ActiveTab)
-            end
-        else
+        if #Main.Tabs == 1 then
+             Main.ActiveTab = TabName
+             if IsVisible then
+                  Main:SelectTab(TabName)
+             end
+        elseif Main.ActiveTab and IsVisible then
+             Main:SelectTab(Main.ActiveTab)
+        end
+
+        if not IsVisible then
              TabButton.Visible = false
              TabButtonBorder.Visible = false
              TabButtonText.Visible = false
              SelectedHighlight.Visible = false
+             SetVisibilityRecursive(TabContent.LeftSections, false)
+             SetVisibilityRecursive(TabContent.RightSections, false)
         end
+
 
         return TabContent
     end
 
     function Main:SelectTab(TabName)
         if not Main.TabButtons[TabName] then return end
-        if not IsVisible then return end
+        if not IsVisible then
+            Main.ActiveTab = TabName
+            return
+        end
 
         for _, OtherTab in ipairs(Main.Tabs) do
             OtherTab.SelectedHighlight.Visible = false
             OtherTab.Content.Visible = false
             SetVisibilityRecursive(OtherTab.Content.LeftSections, false)
             SetVisibilityRecursive(OtherTab.Content.RightSections, false)
-            SetVisibilityRecursive(OtherTab.Content.Interfaces, false)
         end
 
         local SelectedTab = Main.TabButtons[TabName]
@@ -473,9 +588,8 @@ function Library:Create(Title)
 
         SetVisibilityRecursive(SelectedTab.Content.LeftSections, true)
         SetVisibilityRecursive(SelectedTab.Content.RightSections, true)
-        SetVisibilityRecursive(SelectedTab.Content.Interfaces, true)
 
-        Main:Sections()
+        Main:UpdateSectionsLayout()
     end
 
     WindowActive = Main
@@ -491,64 +605,76 @@ spawn(function()
         Mouse.Pressed = isleftpressed()
 
         local Keys = getpressedkeys()
-        local IsTogglePressed = false
+        local IsToggleKeyHeld = false
         if Keys then
             for _, k in ipairs(Keys) do
                 if k == 'P' then
-                    IsTogglePressed = true
+                    IsToggleKeyHeld = true
                     break
                 end
             end
         end
 
-        if IsTogglePressed and not TogglePressed then
+        if IsToggleKeyHeld and not TogglePressed then
             ToggleUI()
         end
-        TogglePressed = IsTogglePressed
+        TogglePressed = IsToggleKeyHeld
 
-        local IsHovered = false
+        local IsHoveringAnyUI = false
         if IsVisible and WindowActive then
              if WindowActive:IsHoveringWindow() then
-                IsHovered = true
-             end
-
-             if not IsHovered then
-                 for _, TabObj in ipairs(WindowActive.Tabs) do
-                     if TabObj.Button.Visible and WindowActive:IsHovered(TabObj.Button) then
-                         IsHovered = true
-                         break
-                     end
-                 end
+                 IsHoveringAnyUI = true
              end
 
             local WindowPos = WindowActive.WindowBackground.Position
-            local WindowSize = WindowActive.WindowBackground.Size
-            local WindowX = WindowPos.x
-            local WindowY = WindowPos.y
             local DragAreaYMax = WindowActive.TabBackground.Position.y
 
-            if Mouse.Clicked and IsHovered and Mouse.Y < DragAreaYMax and not IsDragging then
-                IsDragging = true
-                DragOffsetX = Mouse.X - WindowX
-                DragOffsetY = Mouse.Y - WindowY
-            elseif Mouse.Pressed and IsDragging then
+            if Mouse.Pressed and IsDragging then
                 local NewX = Mouse.X - DragOffsetX
                 local NewY = Mouse.Y - DragOffsetY
                 WindowActive.WindowBackground.Position = {NewX, NewY}
                 WindowActive:UpdateElementPositions()
             elseif not Mouse.Pressed and IsDragging then
-                 IsDragging = false
+                IsDragging = false
             end
 
-            if Mouse.Clicked and not IsDragging then
-                 if IsHovered and Mouse.Y >= DragAreaYMax then
-                     for _, TabObj in ipairs(WindowActive.Tabs) do
-                         if WindowActive:IsHovered(TabObj.Button) then
-                             WindowActive:SelectTab(TabObj.Name)
-                             break
-                         end
-                     end
-                 end
+            if Mouse.Clicked then
+                if WindowActive:IsHovered(WindowActive.WindowBackground) and Mouse.Y < DragAreaYMax and not IsDragging then
+                     IsDragging = true
+                     DragOffsetX = Mouse.X - WindowPos.x
+                     DragOffsetY = Mouse.Y - WindowPos.y
+                elseif not IsDragging then
+                    local ClickHandled = false
+                    for _, TabObj in ipairs(WindowActive.Tabs) do
+                        if WindowActive:IsHovered(TabObj.Button) then
+                            WindowActive:SelectTab(TabObj.Name)
+                            IsHoveringAnyUI = true
+                            ClickHandled = true
+                            break
+                        end
+                    end
+
+                    if not ClickHandled and WindowActive.ActiveTab then
+                        local ActiveContent = WindowActive.TabContents[WindowActive.ActiveTab]
+                        local function CheckClicksInSectionList(SectionList)
+                             for _, SectionObj in ipairs(SectionList) do
+                                 if SectionObj.Visible then
+                                     for _, Interface in ipairs(SectionObj.Interfaces) do
+                                         if Interface.Type == "Button" and Interface.Visible and WindowActive:IsHovered(Interface.Background) then
+                                             if Interface.OnClick then Interface.OnClick() end
+                                             IsHoveringAnyUI = true
+                                             return true
+                                         end
+                                     end
+                                 end
+                             end
+                             return false
+                        end
+
+                        if CheckClicksInSectionList(ActiveContent.LeftSections) then ClickHandled = true end
+                        if not ClickHandled and CheckClicksInSectionList(ActiveContent.RightSections) then ClickHandled = true end
+                    end
+                end
             end
         end
 
@@ -556,5 +682,5 @@ spawn(function()
     end
 end)
 
-print("V1")
+print("V1 - Button Added")
 return Library
