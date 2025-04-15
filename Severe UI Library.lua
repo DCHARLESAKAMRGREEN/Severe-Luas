@@ -17,24 +17,15 @@ local Colors = {
 local MouseService = findservice(Game, "MouseService")
 local Mouse = {
     X = 0,
-    Y = 0,
-    LastHoverState = false
+    Y = 0
 }
 
-spawn(function()
-    while true do
-        local MouseLocation = getmouselocation(MouseService)
-        Mouse.X = MouseLocation.x
-        Mouse.Y = MouseLocation.y
-        wait()
-    end
-end)
-
 local Library = {}
+local ActiveWindow = nil
 
 function Library:Create(Title)
     local Main = {}
-    
+
     Main.WindowBackground = Drawing.new("Square")
     Main.WindowBackground.Size = {650, 750}
     Main.WindowBackground.Position = {350, 100}
@@ -105,86 +96,63 @@ function Library:Create(Title)
     Main.TabButtons = {}
     Main.TabContents = {}
     Main.ActiveTab = nil
-    Main.MaxTabWidth = 250
-    Main.MinTabWidth = 100
-
-    function Main:CalculateTabWidth()
-        local AvailableWidth = Main.TabBackground.Size.x
-        local TabCount = #Main.Tabs
-        if TabCount == 0 then return Main.MaxTabWidth end
-        local CalculatedWidth = math.floor(AvailableWidth / TabCount)
-        return math.clamp(CalculatedWidth, Main.MinTabWidth, Main.MaxTabWidth)
-    end
 
     function Main:IsHovered()
-        local CurrentlyHovered = false
-        
-        local function CheckElement(Element)
-            if not Element then return false end
-            local PosX, PosY = Element.Position.x, Element.Position.y
-            local SizeX, SizeY = Element.Size and Element.Size.x or Element.TextBounds.x, 
-                                Element.Size and Element.Size.y or Element.TextBounds.y
-            return Mouse.X >= PosX and Mouse.X <= PosX + SizeX and Mouse.Y >= PosY and Mouse.Y <= PosY + SizeY
+        local MouseX, MouseY = Mouse.X, Mouse.Y
+        local WindowX, WindowY = Main.WindowBackground.Position.x, Main.WindowBackground.Position.y
+        local WindowW, WindowH = Main.WindowBackground.Size.x, Main.WindowBackground.Size.y
+
+        if MouseX >= WindowX and MouseX <= WindowX + WindowW and MouseY >= WindowY and MouseY <= WindowY + WindowH then
+            return true
         end
-        
-        if CheckElement(Main.WindowBackground) or
-           CheckElement(Main.Title) or
-           CheckElement(Main.TabBackground) or
-           CheckElement(Main.WindowBackground2) then
-            CurrentlyHovered = true
-        end
-        
-        for _, Tab in ipairs(Main.Tabs) do
-            if CheckElement(Tab.Button) or CheckElement(Tab.ButtonText) then
-                CurrentlyHovered = true
-            end
-        end
-        
-        if CurrentlyHovered and not Mouse.LastHoverState then
-            print("Hovered")
-        end
-        Mouse.LastHoverState = CurrentlyHovered
-        return CurrentlyHovered
+        return false
     end
 
-    spawn(function()
-        while Main and Main.IsHovered do
-            Main:IsHovered()
-            wait()
+    function Main:UpdateTabSizes()
+        local TabCount = #Main.Tabs
+        if TabCount == 0 then return end
+
+        local TotalWidth = Main.TabBackground.Size.x
+        local CalculatedTabWidth = TotalWidth / TabCount
+        local MinTabWidth = 50 -- Optional: Set a minimum width
+        local TabWidth = math.max(CalculatedTabWidth, MinTabWidth)
+        
+        -- Ensure total width doesn't exceed container if minimum width is applied
+        if TabWidth * TabCount > TotalWidth then
+             TabWidth = TotalWidth / TabCount -- Recalculate if min width pushes total over
         end
-    end)
+
+
+        local CurrentX = Main.TabBackground.Position.x
+        for i, TabObj in ipairs(Main.Tabs) do
+            TabObj.Button.Size = {TabWidth, Main.TabBackground.Size.y}
+            TabObj.Button.Position = {CurrentX, Main.TabBackground.Position.y}
+            TabObj.ButtonBorder.Size = {TabWidth, Main.TabBackground.Size.y}
+            TabObj.ButtonBorder.Position = {CurrentX, Main.TabBackground.Position.y}
+            TabObj.ButtonText.Position = {CurrentX + (TabWidth / 2), Main.TabBackground.Position.y + (Main.TabBackground.Size.y / 2) - 7}
+            CurrentX = CurrentX + TabWidth
+        end
+    end
 
     function Main:Tab(TabName)
         if not TabName then
             TabName = "Tab " .. (#Main.Tabs + 1)
         end
-        
-        local TabWidth = Main:CalculateTabWidth()
-        local TabX = Main.TabBackground.Position.x
-        
-        if #Main.Tabs > 0 then
-            local LastTab = Main.Tabs[#Main.Tabs]
-            TabX = LastTab.Button.Position.x + LastTab.Button.Size.x
-        end
-        
+
         local TabButton = Drawing.new("Square")
-        TabButton.Size = {TabWidth, Main.TabBackground.Size.y}
-        TabButton.Position = {TabX, Main.TabBackground.Position.y}
         TabButton.Color = Colors["Tab Toggle Background"]
         TabButton.Filled = true
         TabButton.Thickness = 1
         TabButton.Transparency = 1
         TabButton.Visible = true
-        
+
         local TabButtonBorder = Drawing.new("Square")
-        TabButtonBorder.Size = {TabWidth, Main.TabBackground.Size.y}
-        TabButtonBorder.Position = {TabX, Main.TabBackground.Position.y}
         TabButtonBorder.Color = Colors["Tab Border"]
         TabButtonBorder.Filled = false
         TabButtonBorder.Thickness = 1
         TabButtonBorder.Transparency = 1
         TabButtonBorder.Visible = true
-        
+
         local TabButtonText = Drawing.new("Text")
         TabButtonText.Text = TabName
         TabButtonText.Size = 14
@@ -192,17 +160,16 @@ function Library:Create(Title)
         TabButtonText.Color = Colors["Text"]
         TabButtonText.Outline = true
         TabButtonText.OutlineColor = {0, 0, 0}
-        TabButtonText.Position = {TabX + (TabWidth / 2), Main.TabBackground.Position.y + (Main.TabBackground.Size.y / 2) - 7}
         TabButtonText.Transparency = 1
         TabButtonText.Visible = true
         TabButtonText.Center = true
-        
+
         local TabContent = {
             Name = TabName,
             Elements = {},
             Visible = false
         }
-        
+
         local TabObj = {
             Name = TabName,
             Button = TabButton,
@@ -210,15 +177,19 @@ function Library:Create(Title)
             ButtonText = TabButtonText,
             Content = TabContent
         }
-        
+
         table.insert(Main.Tabs, TabObj)
         Main.TabButtons[TabName] = TabObj
         Main.TabContents[TabName] = TabContent
-        
+
+        Main:UpdateTabSizes()
+
         if #Main.Tabs == 1 then
             Main:SelectTab(TabName)
+        else
+            Main:SelectTab(Main.ActiveTab) -- Reselect active tab to ensure color is correct
         end
-        
+
         return TabContent
     end
 
@@ -226,20 +197,20 @@ function Library:Create(Title)
         for _, Tab in ipairs(Main.Tabs) do
             Tab.Button.Color = Colors["Tab Toggle Background"]
             Tab.Content.Visible = false
-            
+
             for _, Element in pairs(Tab.Content.Elements) do
                 if Element.Visible ~= nil then
                     Element.Visible = false
                 end
             end
         end
-        
+
         local SelectedTab = Main.TabButtons[TabName]
         if SelectedTab then
             SelectedTab.Button.Color = Colors["Accent"]
             SelectedTab.Content.Visible = true
             Main.ActiveTab = TabName
-            
+
             for _, Element in pairs(SelectedTab.Content.Elements) do
                 if Element.Visible ~= nil then
                     Element.Visible = true
@@ -247,9 +218,24 @@ function Library:Create(Title)
             end
         end
     end
-    
+
+    ActiveWindow = Main
     return Main
 end
 
-print("Version 3")
+spawn(function()
+    while true do
+        local MouseLocation = getmouselocation(MouseService)
+        Mouse.X = MouseLocation.x
+        Mouse.Y = MouseLocation.y
+
+        if ActiveWindow and ActiveWindow:IsHovered() then
+             print("Hovered")
+        end
+
+        wait()
+    end
+end)
+
+print("Version 4")
 return Library
