@@ -32,17 +32,6 @@ local DragOffsetY = 0
 local IsVisible = true
 local TogglePressed = false
 
-local LayoutConfig = {
-    SectionTitleHeight = 15,
-    SectionPaddingY = 5,
-    SectionElementPaddingX = 8,
-    SectionElementPaddingY = 8,
-    ToggleHeight = 15,
-    CheckboxSize = 12,
-    ButtonHeight = 20,
-    MinSectionHeight = 30
-}
-
 local function SetVisibilityRecursive(InterfaceCollection, Visible)
     for _, Interface in pairs(InterfaceCollection) do
         if Interface.Visible ~= nil then
@@ -63,12 +52,6 @@ local function SetVisibilityRecursive(InterfaceCollection, Visible)
          if Interface.Remove and Interface.Position then
              Interface.Visible = Visible
          end
-         if Interface.CheckboxSquare and Interface.CheckboxSquare.Visible ~= nil then Interface.CheckboxSquare.Visible = Visible end
-         if Interface.CheckboxBorder and Interface.CheckboxBorder.Visible ~= nil then Interface.CheckboxBorder.Visible = Visible end
-         if Interface.LabelText and Interface.LabelText.Visible ~= nil then Interface.LabelText.Visible = Visible end
-         if Interface.ButtonBackground and Interface.ButtonBackground.Visible ~= nil then Interface.ButtonBackground.Visible = Visible end
-         if Interface.ButtonBorder and Interface.ButtonBorder.Visible ~= nil then Interface.ButtonBorder.Visible = Visible end
-         if Interface.ButtonText and Interface.ButtonText.Visible ~= nil then Interface.ButtonText.Visible = Visible end
          if Interface.SelectedHighlight and Interface.SelectedHighlight.Visible ~= nil then
             Interface.SelectedHighlight.Visible = false
          end
@@ -306,72 +289,33 @@ function Library:Create(Title)
         CurrentTabContent.CurrentLeftY = InitialY
         CurrentTabContent.CurrentRightY = InitialY
 
-        local function LayoutSingleSection(SectionObj, ColumnX, CurrentY)
-            local RequiredHeight = LayoutConfig.SectionTitleHeight + LayoutConfig.SectionPaddingY
-            local CurrentElementY = CurrentY + LayoutConfig.SectionTitleHeight + LayoutConfig.SectionPaddingY
-            local ElementStartX = ColumnX + LayoutConfig.SectionElementPaddingX
+        local function PositionSection(SectionObj, ColumnX, CurrentY)
+            local PlaceholderHeight = 100
+            local Background = SectionObj.Background
+            local Border = SectionObj.Border
+            local Title = SectionObj.Title
 
-            if SectionObj.Title then
-                SectionObj.Title.Position = {ColumnX + 5, CurrentY + 3}
-                SectionObj.Title.Visible = SectionObj.Visible
+            Background.Position = {ColumnX, CurrentY}
+            Border.Position = {ColumnX, CurrentY}
+            Background.Size = {ColumnWidth, PlaceholderHeight}
+            Border.Size = {ColumnWidth, PlaceholderHeight}
+
+            if Title then
+                Title.Position = {ColumnX + 5, CurrentY + 3}
+                Title.Visible = SectionObj.Visible
             end
-
-            for _, Interface in ipairs(SectionObj.Interfaces) do
-                 if Interface.Type == "Toggle" then
-                    local CheckboxX = ElementStartX
-                    local CheckboxY = CurrentElementY + (LayoutConfig.ToggleHeight - LayoutConfig.CheckboxSize) / 2
-
-                    Interface.CheckboxBorder.Position = {CheckboxX, CheckboxY}
-                    Interface.CheckboxSquare.Position = {CheckboxX + 1, CheckboxY + 1}
-                    Interface.LabelText.Position = {CheckboxX + LayoutConfig.CheckboxSize + 5, CurrentElementY + (LayoutConfig.ToggleHeight / 2) - (Interface.LabelText.TextBounds and Interface.LabelText.TextBounds.y / 2 or 7) }
-
-                    Interface.CheckboxBorder.Visible = SectionObj.Visible
-                    Interface.CheckboxSquare.Visible = SectionObj.Visible
-                    Interface.LabelText.Visible = SectionObj.Visible
-
-                    RequiredHeight = RequiredHeight + LayoutConfig.ToggleHeight + LayoutConfig.SectionElementPaddingY
-                    CurrentElementY = CurrentElementY + LayoutConfig.ToggleHeight + LayoutConfig.SectionElementPaddingY
-
-                 elseif Interface.Type == "Button" then
-                    local ButtonWidth = ColumnWidth - (LayoutConfig.SectionElementPaddingX * 2)
-                    local ButtonX = ElementStartX
-                    local ButtonY = CurrentElementY
-
-                    Interface.ButtonBackground.Position = {ButtonX, ButtonY}
-                    Interface.ButtonBackground.Size = {ButtonWidth, LayoutConfig.ButtonHeight}
-                    Interface.ButtonBorder.Position = {ButtonX, ButtonY}
-                    Interface.ButtonBorder.Size = {ButtonWidth, LayoutConfig.ButtonHeight}
-                    Interface.ButtonText.Position = {ButtonX + ButtonWidth / 2, ButtonY + LayoutConfig.ButtonHeight / 2 - (Interface.ButtonText.TextBounds and Interface.ButtonText.TextBounds.y / 2 or 7)}
-
-                    Interface.ButtonBackground.Visible = SectionObj.Visible
-                    Interface.ButtonBorder.Visible = SectionObj.Visible
-                    Interface.ButtonText.Visible = SectionObj.Visible
-
-                    RequiredHeight = RequiredHeight + LayoutConfig.ButtonHeight + LayoutConfig.SectionElementPaddingY
-                    CurrentElementY = CurrentElementY + LayoutConfig.ButtonHeight + LayoutConfig.SectionElementPaddingY
-                 end
-            end
-
-            RequiredHeight = RequiredHeight + LayoutConfig.SectionPaddingY
-            local FinalHeight = math.max(LayoutConfig.MinSectionHeight, RequiredHeight)
-
-            SectionObj.Background.Position = {ColumnX, CurrentY}
-            SectionObj.Border.Position = {ColumnX, CurrentY}
-            SectionObj.Background.Size = {ColumnWidth, FinalHeight}
-            SectionObj.Border.Size = {ColumnWidth, FinalHeight}
-
-            return CurrentY + FinalHeight + 5
+            return CurrentY + PlaceholderHeight + 5
         end
 
         for _, SectionObj in ipairs(CurrentTabContent.LeftSections) do
              if SectionObj.Visible then
-                CurrentTabContent.CurrentLeftY = LayoutSingleSection(SectionObj, LeftColumnX, CurrentTabContent.CurrentLeftY)
+                CurrentTabContent.CurrentLeftY = PositionSection(SectionObj, LeftColumnX, CurrentTabContent.CurrentLeftY)
              end
         end
 
         for _, SectionObj in ipairs(CurrentTabContent.RightSections) do
             if SectionObj.Visible then
-                CurrentTabContent.CurrentRightY = LayoutSingleSection(SectionObj, RightColumnX, CurrentTabContent.CurrentRightY)
+                CurrentTabContent.CurrentRightY = PositionSection(SectionObj, RightColumnX, CurrentTabContent.CurrentRightY)
             end
         end
     end
@@ -461,106 +405,6 @@ function Library:Create(Title)
                 Interfaces = {},
                 Visible = false
             }
-
-            function SectionObj:Toggle(ToggleName, ToggleOptions)
-                ToggleOptions = ToggleOptions or {}
-                local DefaultState = ToggleOptions.Default or false
-                local CallbackFunc = ToggleOptions.Callback
-
-                local CheckboxSquare = Drawing.new("Square")
-                CheckboxSquare.Size = {LayoutConfig.CheckboxSize - 2, LayoutConfig.CheckboxSize - 2}
-                CheckboxSquare.Color = DefaultState and Colors["Accent"] or Colors["Object Background"]
-                CheckboxSquare.Filled = true
-                CheckboxSquare.Visible = false
-
-                local CheckboxBorder = Drawing.new("Square")
-                CheckboxBorder.Size = {LayoutConfig.CheckboxSize, LayoutConfig.CheckboxSize}
-                CheckboxBorder.Color = Colors["Object Border"]
-                CheckboxBorder.Filled = false
-                CheckboxBorder.Thickness = 1
-                CheckboxBorder.Visible = false
-
-                local LabelText = Drawing.new("Text")
-                LabelText.Text = ToggleName or "Toggle"
-                LabelText.Size = 14
-                LabelText.Font = 0
-                LabelText.Color = Colors["Text"]
-                LabelText.Outline = false
-                LabelText.Center = false
-                LabelText.Visible = false
-
-                local ToggleObj = {
-                    Type = "Toggle",
-                    Name = ToggleName,
-                    Toggled = DefaultState,
-                    CheckboxSquare = CheckboxSquare,
-                    CheckboxBorder = CheckboxBorder,
-                    LabelText = LabelText,
-                    Callback = CallbackFunc,
-                    Visible = false
-                }
-
-                table.insert(self.Interfaces, ToggleObj)
-
-                if IsVisible and WindowActive and WindowActive.ActiveTab == TabContent.Name then
-                    SetInitialVisibility(CheckboxSquare)
-                    SetInitialVisibility(CheckboxBorder)
-                    SetInitialVisibility(LabelText)
-                    ToggleObj.Visible = true
-                    WindowActive:Sections()
-                end
-
-                return ToggleObj
-            end
-
-            function SectionObj:Button(ButtonName, ButtonOptions)
-                ButtonOptions = ButtonOptions or {}
-                local CallbackFunc = ButtonOptions.Callback
-
-                local ButtonBackground = Drawing.new("Square")
-                ButtonBackground.Size = {0, LayoutConfig.ButtonHeight}
-                ButtonBackground.Color = Colors["Object Background"]
-                ButtonBackground.Filled = true
-                ButtonBackground.Visible = false
-
-                local ButtonBorder = Drawing.new("Square")
-                ButtonBorder.Size = {0, LayoutConfig.ButtonHeight}
-                ButtonBorder.Color = Colors["Object Border"]
-                ButtonBorder.Filled = false
-                ButtonBorder.Thickness = 1
-                ButtonBorder.Visible = false
-
-                local ButtonText = Drawing.new("Text")
-                ButtonText.Text = ButtonName or "Button"
-                ButtonText.Size = 14
-                ButtonText.Font = 0
-                ButtonText.Color = Colors["Text"]
-                ButtonText.Outline = false
-                ButtonText.Center = true
-                ButtonText.Visible = false
-
-                local ButtonObj = {
-                    Type = "Button",
-                    Name = ButtonName,
-                    ButtonBackground = ButtonBackground,
-                    ButtonBorder = ButtonBorder,
-                    ButtonText = ButtonText,
-                    Callback = CallbackFunc,
-                    Visible = false
-                }
-
-                table.insert(self.Interfaces, ButtonObj)
-
-                if IsVisible and WindowActive and WindowActive.ActiveTab == TabContent.Name then
-                    SetInitialVisibility(ButtonBackground)
-                    SetInitialVisibility(ButtonBorder)
-                    SetInitialVisibility(ButtonText)
-                    ButtonObj.Visible = true
-                    WindowActive:Sections()
-                end
-
-                return ButtonObj
-            end
 
             if Side == "Left" then
                 table.insert(self.LeftSections, SectionObj)
@@ -668,8 +512,6 @@ spawn(function()
                 IsHovered = true
              end
 
-             local DragAreaYMax = WindowActive.TabBackground.Position.y
-
              if not IsHovered then
                  for _, TabObj in ipairs(WindowActive.Tabs) do
                      if TabObj.Button.Visible and WindowActive:IsHovered(TabObj.Button) then
@@ -679,31 +521,11 @@ spawn(function()
                  end
              end
 
-             if not IsHovered and WindowActive.ActiveTab then
-                 local ActiveContent = WindowActive.TabContents[WindowActive.ActiveTab]
-                 local function CheckSectionInterfacesHover(Sections)
-                     for _, SectionObj in ipairs(Sections) do
-                         if SectionObj.Visible then
-                             for _, Interface in ipairs(SectionObj.Interfaces) do
-                                 if Interface.Type == "Toggle" and Interface.Visible and (WindowActive:IsHovered(Interface.CheckboxBorder) or WindowActive:IsHovered(Interface.LabelText)) then
-                                     return true
-                                 elseif Interface.Type == "Button" and Interface.Visible and WindowActive:IsHovered(Interface.ButtonBackground) then
-                                     return true
-                                 end
-                             end
-                         end
-                     end
-                     return false
-                 end
-                 if CheckSectionInterfacesHover(ActiveContent.LeftSections) or CheckSectionInterfacesHover(ActiveContent.RightSections) then
-                     IsHovered = true
-                 end
-             end
-
             local WindowPos = WindowActive.WindowBackground.Position
             local WindowSize = WindowActive.WindowBackground.Size
             local WindowX = WindowPos.x
             local WindowY = WindowPos.y
+            local DragAreaYMax = WindowActive.TabBackground.Position.y
 
             if Mouse.Clicked and IsHovered and Mouse.Y < DragAreaYMax and not IsDragging then
                 IsDragging = true
@@ -719,51 +541,19 @@ spawn(function()
             end
 
             if Mouse.Clicked and not IsDragging then
-                 local ClickHandled = false
-
-                 if IsHovered and Mouse.Y < DragAreaYMax and Mouse.Y >= WindowActive.TabBackground.Position.y then
+                 if IsHovered and Mouse.Y >= DragAreaYMax then
                      for _, TabObj in ipairs(WindowActive.Tabs) do
                          if WindowActive:IsHovered(TabObj.Button) then
                              WindowActive:SelectTab(TabObj.Name)
-                             ClickHandled = true
                              break
                          end
                      end
                  end
-
-                 if not ClickHandled and WindowActive.ActiveTab then
-                    local ActiveContent = WindowActive.TabContents[WindowActive.ActiveTab]
-                    local function HandleInterfaceClick(Sections)
-                        for _, SectionObj in ipairs(Sections) do
-                            if SectionObj.Visible then
-                                for _, Interface in ipairs(SectionObj.Interfaces) do
-                                    if Interface.Type == "Toggle" and Interface.Visible and WindowActive:IsHovered(Interface.CheckboxBorder) then
-                                        Interface.Toggled = not Interface.Toggled
-                                        Interface.CheckboxSquare.Color = Interface.Toggled and Colors["Accent"] or Colors["Object Background"]
-                                        if Interface.Callback then
-                                             Interface.Callback(Interface.Toggled)
-                                        end
-                                        return true
-                                    elseif Interface.Type == "Button" and Interface.Visible and WindowActive:IsHovered(Interface.ButtonBackground) then
-                                        if Interface.Callback then
-                                             Interface.Callback()
-                                        end
-                                        return true
-                                    end
-                                end
-                            end
-                        end
-                        return false
-                    end
-                    if HandleInterfaceClick(ActiveContent.LeftSections) or HandleInterfaceClick(ActiveContent.RightSections) then
-                        ClickHandled = true
-                    end
-                 end
             end
         end
+
         wait()
     end
 end)
 
-PRINT"V1")
 return Library
