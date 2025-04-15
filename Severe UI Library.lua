@@ -105,51 +105,51 @@ function Library:Create(Title)
     Main.TabButtons = {}
     Main.TabContents = {}
     Main.ActiveTab = nil
-    Main.MaxTabWidth = 120
-    Main.MinTabWidth = 80
+    Main.MaxTabWidth = 250
+    Main.MinTabWidth = 100
 
     function Main:CalculateTabWidth()
-        local availableWidth = Main.TabBackground.Size.x
-        local tabCount = #Main.Tabs
-        if tabCount == 0 then return Main.MaxTabWidth end
-        local calculatedWidth = math.floor(availableWidth / tabCount)
-        return math.clamp(calculatedWidth, Main.MinTabWidth, Main.MaxTabWidth)
+        local AvailableWidth = Main.TabBackground.Size.x
+        local TabCount = #Main.Tabs
+        if TabCount == 0 then return Main.MaxTabWidth end
+        local CalculatedWidth = math.floor(AvailableWidth / TabCount)
+        return math.clamp(CalculatedWidth, Main.MinTabWidth, Main.MaxTabWidth)
     end
 
-    function Main:IsMouseOverElement(element)
-        if not element then return false end
-        local pos = element.Position
-        local size = element.Size or {x = element.TextBounds.x, y = element.TextBounds.y}
-        return Mouse.X >= pos.x and Mouse.X <= pos.x + size.x and Mouse.Y >= pos.y and Mouse.Y <= pos.y + size.y
-    end
-
-    function Main:CheckHover()
-        local currentlyHovered = false
+    function Main:IsHovered()
+        local CurrentlyHovered = false
         
-        if Main:IsMouseOverElement(Main.WindowBackground) or
-           Main:IsMouseOverElement(Main.Title) or
-           Main:IsMouseOverElement(Main.TabBackground) or
-           Main:IsMouseOverElement(Main.WindowBackground2) then
-            currentlyHovered = true
+        local function CheckElement(Element)
+            if not Element then return false end
+            local PosX, PosY = Element.Position.x, Element.Position.y
+            local SizeX, SizeY = Element.Size and Element.Size.x or Element.TextBounds.x, 
+                                Element.Size and Element.Size.y or Element.TextBounds.y
+            return Mouse.X >= PosX and Mouse.X <= PosX + SizeX and Mouse.Y >= PosY and Mouse.Y <= PosY + SizeY
         end
         
-        for _, tab in ipairs(Main.Tabs) do
-            if Main:IsMouseOverElement(tab.Button) or
-               Main:IsMouseOverElement(tab.ButtonText) then
-                currentlyHovered = true
+        if CheckElement(Main.WindowBackground) or
+           CheckElement(Main.Title) or
+           CheckElement(Main.TabBackground) or
+           CheckElement(Main.WindowBackground2) then
+            CurrentlyHovered = true
+        end
+        
+        for _, Tab in ipairs(Main.Tabs) do
+            if CheckElement(Tab.Button) or CheckElement(Tab.ButtonText) then
+                CurrentlyHovered = true
             end
         end
         
-        if currentlyHovered and not Mouse.LastHoverState then
+        if CurrentlyHovered and not Mouse.LastHoverState then
             print("Hovered")
         end
-        Mouse.LastHoverState = currentlyHovered
-        return currentlyHovered
+        Mouse.LastHoverState = CurrentlyHovered
+        return CurrentlyHovered
     end
 
     spawn(function()
-        while Main and Main.CheckHover do
-            Main:CheckHover()
+        while Main and Main.IsHovered do
+            Main:IsHovered()
             wait()
         end
     end)
@@ -251,5 +251,5 @@ function Library:Create(Title)
     return Main
 end
 
-print("Version 2")
+print("Version 3")
 return Library
