@@ -16,7 +16,6 @@ local Colors = {
     ["Dropdown Option Background"] = {19, 19, 19}
 }
 
-local Game = Game
 local MouseService = findservice(Game, "MouseService")
 local Mouse = {
     X = 0,
@@ -306,7 +305,7 @@ function Library:Create(TitleText)
             if SectionObj.Interfaces then
                 for _, InterfaceObj in ipairs(SectionObj.Interfaces) do
                      if InterfaceObj.Type == "Button" then
-                         local ButtonHeight = 17
+                         local ButtonHeight = 20
                          local ButtonWidth = Width - (Padding * 2)
                          local ButtonX = ColumnX + Padding
                          local ButtonY = CurrentInternalY
@@ -508,7 +507,7 @@ function Library:Create(TitleText)
                 ToggleInnerBox.Color = DefaultState and Colors["Accent"] or Colors["Object Background"]
                 local ToggleText = Drawing.new("Text")
                 ToggleText.Text = ToggleName or "Toggle"
-                ToggleText.Size = 12
+                ToggleText.Size = 14
                 ToggleText.Font = 5
                 ToggleText.Color = Colors["Text"]
                 ToggleText.Outline = true
@@ -754,5 +753,5 @@ spawn(function()
     end
 end)
 
-print'g'
+print("Library Loaded")
 return Library
