@@ -25,35 +25,35 @@ local Mouse = {
 }
 
 local Library = {}
-local ActiveWindow = nil
+local WindowActive = nil
 local IsDragging = false
 local DragOffsetX = 0
 local DragOffsetY = 0
 local IsVisible = true
 local TogglePressed = false
 
-local function SetVisibility(Elements, Visible)
-    for _, Element in pairs(Elements) do
-        if Element.Visible ~= nil then
-             Element.Visible = Visible
+local function SetVisibilityRecursive(InterfaceCollection, Visible)
+    for _, Interface in pairs(InterfaceCollection) do
+        if Interface.Visible ~= nil then
+             Interface.Visible = Visible
         end
-        if Element.Elements then
-            SetVisibility(Element.Elements, Visible)
+        if Interface.Interfaces then
+            SetVisibilityRecursive(Interface.Interfaces, Visible)
         end
-         if Element.Background and Element.Background.Visible ~= nil then
-             Element.Background.Visible = Visible
+         if Interface.Background and Interface.Background.Visible ~= nil then
+             Interface.Background.Visible = Visible
          end
-         if Element.Border and Element.Border.Visible ~= nil then
-             Element.Border.Visible = Visible
+         if Interface.Border and Interface.Border.Visible ~= nil then
+             Interface.Border.Visible = Visible
          end
-         if Element.Title and Element.Title.Visible ~= nil then
-             Element.Title.Visible = Visible
+         if Interface.Title and Interface.Title.Visible ~= nil then
+             Interface.Title.Visible = Visible
          end
-         if Element.Remove and Element.Position then
-             Element.Visible = Visible
+         if Interface.Remove and Interface.Position then
+             Interface.Visible = Visible
          end
-         if Element.SelectedHighlight and Element.SelectedHighlight.Visible ~= nil then
-            Element.SelectedHighlight.Visible = false
+         if Interface.SelectedHighlight and Interface.SelectedHighlight.Visible ~= nil then
+            Interface.SelectedHighlight.Visible = false
          end
     end
 end
@@ -61,8 +61,8 @@ end
 function ToggleUI()
     IsVisible = not IsVisible
 
-    if ActiveWindow then
-        local Main = ActiveWindow
+    if WindowActive then
+        local Main = WindowActive
 
         Main.WindowBackground.Visible = IsVisible
         Main.Title.Visible = IsVisible
@@ -81,9 +81,9 @@ function ToggleUI()
              end
 
              local IsActiveTab = TabObj.Name == Main.ActiveTab
-             SetVisibility(TabObj.Content.LeftSections, IsVisible and IsActiveTab)
-             SetVisibility(TabObj.Content.RightSections, IsVisible and IsActiveTab)
-             SetVisibility(TabObj.Content.Elements, IsVisible and IsActiveTab)
+             SetVisibilityRecursive(TabObj.Content.LeftSections, IsVisible and IsActiveTab)
+             SetVisibilityRecursive(TabObj.Content.RightSections, IsVisible and IsActiveTab)
+             SetVisibilityRecursive(TabObj.Content.Interfaces, IsVisible and IsActiveTab)
         end
 
         if not IsVisible then
@@ -98,9 +98,9 @@ end
 function Library:Create(Title)
     local Main = {}
 
-    local function SetInitialVisibility(Element)
-        if Element and Element.Visible ~= nil then
-            Element.Visible = IsVisible
+    local function SetInitialVisibility(Interface)
+        if Interface and Interface.Visible ~= nil then
+            Interface.Visible = IsVisible
         end
     end
 
@@ -175,24 +175,24 @@ function Library:Create(Title)
     Main.TabContents = {}
     Main.ActiveTab = nil
 
-    function Main:IsHovered(Element)
-        if not IsVisible or not Element or not Element.Visible then return false end
+    function Main:IsHovered(Interface)
+        if not IsVisible or not Interface or not Interface.Visible then return false end
         local MouseX, MouseY = Mouse.X, Mouse.Y
-        local ElemPos = Element.Position
-        if not ElemPos then return false end
-        local ElemX, ElemY = ElemPos.x, ElemPos.y
+        local InterfacePos = Interface.Position
+        if not InterfacePos then return false end
+        local InterfaceX, InterfaceY = InterfacePos.x, InterfacePos.y
 
-        if Element.Size then
-             local ElemSize = Element.Size
-             local ElemW, ElemH = ElemSize.x, ElemSize.y
-             return MouseX >= ElemX and MouseX <= ElemX + ElemW and MouseY >= ElemY and MouseY <= ElemY + ElemH
-        elseif Element.TextBounds then
-             local ElemBounds = Element.TextBounds
-             local ElemW, ElemH = ElemBounds.x, ElemBounds.y
-             if Element.Center then
-                 ElemX = ElemX - ElemW / 2
+        if Interface.Size then
+             local InterfaceSize = Interface.Size
+             local InterfaceW, InterfaceH = InterfaceSize.x, InterfaceSize.y
+             return MouseX >= InterfaceX and MouseX <= InterfaceX + InterfaceW and MouseY >= InterfaceY and MouseY <= InterfaceY + InterfaceH
+        elseif Interface.TextBounds then
+             local InterfaceBounds = Interface.TextBounds
+             local InterfaceW, InterfaceH = InterfaceBounds.x, InterfaceBounds.y
+             if Interface.Center then
+                 InterfaceX = InterfaceX - InterfaceW / 2
              end
-             return MouseX >= ElemX and MouseX <= ElemX + ElemW and MouseY >= ElemY and MouseY <= ElemY + ElemH
+             return MouseX >= InterfaceX and MouseX <= InterfaceX + InterfaceW and MouseY >= InterfaceY and MouseY <= InterfaceY + InterfaceH
         end
         return false
     end
@@ -214,7 +214,7 @@ function Library:Create(Title)
         Main.WindowBorder.Position = {BaseX, BaseY}
 
         Main:UpdateTabSizes()
-        Main:UpdateSectionPositions()
+        Main:Sections()
     end
 
     function Main:UpdateTabSizes()
@@ -269,7 +269,7 @@ function Library:Create(Title)
     end
 
 
-    function Main:UpdateSectionPositions()
+    function Main:Sections()
         if not Main.ActiveTab or not Main.TabContents[Main.ActiveTab] then return end
 
         local CurrentTabContent = Main.TabContents[Main.ActiveTab]
@@ -358,7 +358,7 @@ function Library:Create(Title)
 
         local TabContent = {
             Name = TabName,
-            Elements = {},
+            Interfaces = {},
             LeftSections = {},
             RightSections = {},
             CurrentLeftY = 0,
@@ -402,7 +402,7 @@ function Library:Create(Title)
                 Background = SectionBackground,
                 Border = SectionBorder,
                 Title = SectionTitle,
-                Elements = {},
+                Interfaces = {},
                 Visible = false
             }
 
@@ -417,7 +417,7 @@ function Library:Create(Title)
                  SectionBackground.Visible = true
                  SectionBorder.Visible = true
                  SectionTitle.Visible = true
-                 Main:UpdateSectionPositions()
+                 Main:Sections()
             end
 
             return SectionObj
@@ -461,9 +461,9 @@ function Library:Create(Title)
         for _, OtherTab in ipairs(Main.Tabs) do
             OtherTab.SelectedHighlight.Visible = false
             OtherTab.Content.Visible = false
-            SetVisibility(OtherTab.Content.LeftSections, false)
-            SetVisibility(OtherTab.Content.RightSections, false)
-            SetVisibility(OtherTab.Content.Elements, false)
+            SetVisibilityRecursive(OtherTab.Content.LeftSections, false)
+            SetVisibilityRecursive(OtherTab.Content.RightSections, false)
+            SetVisibilityRecursive(OtherTab.Content.Interfaces, false) 
         end
 
         local SelectedTab = Main.TabButtons[TabName]
@@ -471,14 +471,14 @@ function Library:Create(Title)
         SelectedTab.Content.Visible = true
         Main.ActiveTab = TabName
 
-        SetVisibility(SelectedTab.Content.LeftSections, true)
-        SetVisibility(SelectedTab.Content.RightSections, true)
-        SetVisibility(SelectedTab.Content.Elements, true)
+        SetVisibilityRecursive(SelectedTab.Content.LeftSections, true)
+        SetVisibilityRecursive(SelectedTab.Content.RightSections, true)
+        SetVisibilityRecursive(SelectedTab.Content.Interfaces, true) 
 
-        Main:UpdateSectionPositions()
+        Main:Sections()
     end
 
-    ActiveWindow = Main
+    WindowActive = Main
     return Main
 end
 
@@ -506,13 +506,16 @@ spawn(function()
         end
         TogglePressed = IsTogglePressed
 
-        if IsVisible and ActiveWindow then
-            local WindowPos = ActiveWindow.WindowBackground.Position
-            local WindowSize = ActiveWindow.WindowBackground.Size
+        local IsHoveringNow = false
+        if IsVisible and WindowActive then
+             IsHoveringNow = WindowActive:IsHoveringWindow()
+
+            local WindowPos = WindowActive.WindowBackground.Position
+            local WindowSize = WindowActive.WindowBackground.Size
             local WindowX = WindowPos.x
             local WindowY = WindowPos.y
 
-            local DragAreaYMax = ActiveWindow.TabBackground.Position.y
+            local DragAreaYMax = WindowActive.TabBackground.Position.y
             local IsHoveredDragArea = Mouse.X >= WindowX and
                                   Mouse.X <= WindowX + WindowSize.x and
                                   Mouse.Y >= WindowY and
@@ -525,25 +528,31 @@ spawn(function()
             elseif Mouse.Pressed and IsDragging then
                 local NewX = Mouse.X - DragOffsetX
                 local NewY = Mouse.Y - DragOffsetY
-                ActiveWindow.WindowBackground.Position = {NewX, NewY}
-                ActiveWindow:UpdateElementPositions()
+                WindowActive.WindowBackground.Position = {NewX, NewY}
+                WindowActive:UpdateElementPositions()
             elseif not Mouse.Pressed and IsDragging then
                  IsDragging = false
             end
 
             if Mouse.Clicked and not IsDragging then
-                for _, TabObj in ipairs(ActiveWindow.Tabs) do
-                    if ActiveWindow:IsHovered(TabObj.Button) then
-                        ActiveWindow:SelectTab(TabObj.Name)
+                for _, TabObj in ipairs(WindowActive.Tabs) do
+                    if WindowActive:IsHovered(TabObj.Button) then
+                        WindowActive:SelectTab(TabObj.Name)
                         break
                     end
                 end
             end
         end
 
+        if IsHoveringNow then
+            set_window_passthrough(false)
+        else
+            set_window_passthrough(true)
+        end
+
         wait()
     end
 end)
 
-print("UI Library Loaded")
+print("V1")
 return Library
