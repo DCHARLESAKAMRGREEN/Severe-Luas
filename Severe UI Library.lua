@@ -134,7 +134,7 @@ function Library:Create(Title)
     Main.WindowBorder = Drawing.new("Square")
     Main.WindowBorder.Size = {Main.WindowBackground.Size.x, Main.WindowBackground.Size.y}
     Main.WindowBorder.Position = {Main.WindowBackground.Position.x, Main.WindowBackground.Position.y}
-    Main.WindowBorder.Color = Colors["Window Border"]
+    Main.WindowBorder.Color = Colors["Accent"]
     Main.WindowBorder.Filled = false
     Main.WindowBorder.Thickness = 1
     Main.WindowBorder.Transparency = 1
