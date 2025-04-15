@@ -27,14 +27,14 @@ local ActiveWindow = nil
 local IsDragging = false
 local DragOffsetX = 0
 local DragOffsetY = 0
-local IsVisible = true 
-local WasPDown = false 
+local IsVisible = true
+local TogglePressed = false
 
 function ToggleUI()
     IsVisible = not IsVisible
     if ActiveWindow then
         local Main = ActiveWindow
-        
+
         Main.WindowBackground.Visible = IsVisible
         Main.Title.Visible = IsVisible
         Main.TabBackground.Visible = IsVisible
@@ -47,19 +47,33 @@ function ToggleUI()
              TabObj.Button.Visible = IsVisible
              TabObj.ButtonBorder.Visible = IsVisible
              TabObj.ButtonText.Visible = IsVisible
+
+             for _, SectionObj in ipairs(TabObj.Content.Sections) do
+                SectionObj.Background.Visible = IsVisible and TabObj.Name == Main.ActiveTab
+                SectionObj.Border.Visible = IsVisible and TabObj.Name == Main.ActiveTab
+             end
         end
 
         if not IsVisible then
              for _, TabContent in pairs(Main.TabContents) do
+                for _, SectionObj in ipairs(TabContent.Sections) do
+                     SectionObj.Background.Visible = false
+                     SectionObj.Border.Visible = false
+                     for _, Element in pairs(SectionObj.Elements) do
+                        if Element.Visible ~= nil then
+                             Element.Visible = false
+                        end
+                     end
+                 end
                  for _, Element in pairs(TabContent.Elements) do
                      if Element.Visible ~= nil then
                          Element.Visible = false
                      end
                  end
              end
-             IsDragging = false 
+             IsDragging = false
         else
-            Main:SelectTab(Main.ActiveTab) 
+            Main:SelectTab(Main.ActiveTab)
         end
     end
 end
@@ -67,7 +81,7 @@ end
 
 function Library:Create(Title)
     local Main = {}
-    
+
     local function SetInitialVisibility(Element)
         if Element and Element.Visible ~= nil then
             Element.Visible = IsVisible
@@ -116,7 +130,7 @@ function Library:Create(Title)
     Main.WindowBackground2 = Drawing.new("Square")
     Main.WindowBackground2.Position = {Main.WindowBackground.Position.x + 10, Main.WindowBackground.Position.y + 50}
     Main.WindowBackground2.Size = {Main.WindowBackground.Size.x - 20, Main.WindowBackground.Size.y - 60}
-    Main.WindowBackground2.Color = Colors["Section Background"]
+    Main.WindowBackground2.Color = Colors["Window Background"]
     Main.WindowBackground2.Filled = true
     Main.WindowBackground2.Thickness = 1
     Main.WindowBackground2.Transparency = 1
@@ -146,14 +160,14 @@ function Library:Create(Title)
     Main.ActiveTab = nil
 
     function Main:IsHovered(Element)
-        if not IsVisible or not Element or not Element.Visible then return false end 
+        if not IsVisible or not Element or not Element.Visible then return false end
         local MouseX, MouseY = Mouse.X, Mouse.Y
         local ElemX, ElemY = Element.Position.x, Element.Position.y
         local ElemW, ElemH = Element.Size.x, Element.Size.y
 
         return MouseX >= ElemX and MouseX <= ElemX + ElemW and MouseY >= ElemY and MouseY <= ElemY + ElemH
     end
-    
+
     function Main:IsHoveringWindow()
          if not IsVisible then return false end
          return Main:IsHovered(Main.WindowBackground)
@@ -161,7 +175,7 @@ function Library:Create(Title)
 
     function Main:UpdateElementPositions()
         local BaseX, BaseY = Main.WindowBackground.Position.x, Main.WindowBackground.Position.y
-        
+
         Main.Title.Position = {BaseX + 10, BaseY + 5}
         Main.TabBackground.Position = {BaseX + 10, BaseY + 25}
         Main.TabBorder.Position = {Main.TabBackground.Position.x, Main.TabBackground.Position.y}
@@ -169,7 +183,8 @@ function Library:Create(Title)
         Main.Window2Border.Position = {Main.WindowBackground2.Position.x, Main.WindowBackground2.Position.y}
         Main.WindowBorder.Position = {BaseX, BaseY}
 
-        Main:UpdateTabSizes() 
+        Main:UpdateTabSizes()
+        Main:UpdateSectionPositions()
     end
 
     function Main:UpdateTabSizes()
@@ -178,7 +193,7 @@ function Library:Create(Title)
 
         local TotalWidth = Main.TabBackground.Size.x
         local CalculatedTabWidth = TotalWidth / TabCount
-        local MinTabWidth = 50 
+        local MinTabWidth = 50
         local TabWidth = math.max(CalculatedTabWidth, MinTabWidth)
 
         if TabWidth * TabCount > TotalWidth then
@@ -193,6 +208,24 @@ function Library:Create(Title)
             TabObj.ButtonBorder.Position = {CurrentX, Main.TabBackground.Position.y}
             TabObj.ButtonText.Position = {CurrentX + (TabWidth / 2), Main.TabBackground.Position.y + (Main.TabBackground.Size.y / 2) - 7}
             CurrentX = CurrentX + TabWidth
+        end
+    end
+
+    function Main:UpdateSectionPositions()
+        if not Main.ActiveTab or not Main.TabContents[Main.ActiveTab] then return end
+
+        local CurrentTabContent = Main.TabContents[Main.ActiveTab]
+        local SectionPadding = 10
+        local CurrentY = Main.WindowBackground2.Position.y + SectionPadding
+
+        for _, SectionObj in ipairs(CurrentTabContent.Sections) do
+            SectionObj.Background.Position = {Main.WindowBackground2.Position.x + SectionPadding, CurrentY}
+            SectionObj.Border.Position = {Main.WindowBackground2.Position.x + SectionPadding, CurrentY}
+
+            SectionObj.Background.Size = {Main.WindowBackground2.Size.x - (SectionPadding * 2), 100} -- Placeholder Height
+            SectionObj.Border.Size = SectionObj.Background.Size
+
+            CurrentY = CurrentY + SectionObj.Background.Size.y + SectionPadding
         end
     end
 
@@ -229,8 +262,37 @@ function Library:Create(Title)
         local TabContent = {
             Name = TabName,
             Elements = {},
-            Visible = false 
+            Sections = {},
+            Visible = false
         }
+
+        function TabContent:Section(SectionName)
+            local SectionBackground = Drawing.new("Square")
+            SectionBackground.Color = Colors["Section Background"]
+            SectionBackground.Filled = true
+            SectionBackground.Thickness = 1
+            SectionBackground.Transparency = 1
+            SectionBackground.Visible = false
+
+            local SectionBorder = Drawing.new("Square")
+            SectionBorder.Color = Colors["Section Border"]
+            SectionBorder.Filled = false
+            SectionBorder.Thickness = 1
+            SectionBorder.Transparency = 1
+            SectionBorder.Visible = false
+
+            local SectionObj = {
+                Name = SectionName or "Section " .. (#self.Sections + 1),
+                Background = SectionBackground,
+                Border = SectionBorder,
+                Elements = {},
+                Visible = false
+            }
+
+            table.insert(self.Sections, SectionObj)
+            Main:UpdateSectionPositions()
+            return SectionObj
+        end
 
         local TabObj = {
             Name = TabName,
@@ -244,42 +306,51 @@ function Library:Create(Title)
         Main.TabButtons[TabName] = TabObj
         Main.TabContents[TabName] = TabContent
 
-        Main:UpdateTabSizes() 
+        Main:UpdateTabSizes()
 
         if IsVisible then
             if #Main.Tabs == 1 then
-                Main:SelectTab(TabName) 
+                Main:SelectTab(TabName)
             else
-                 Main:SelectTab(Main.ActiveTab) 
+                 Main:SelectTab(Main.ActiveTab)
             end
-        else 
+        else
              TabButton.Visible = false
              TabButtonBorder.Visible = false
              TabButtonText.Visible = false
         end
 
-
         return TabContent
     end
 
     function Main:SelectTab(TabName)
-        if not Main.TabButtons[TabName] then return end 
-        if not IsVisible then return end 
+        if not Main.TabButtons[TabName] then return end
+        if not IsVisible then return end
 
         for _, Tab in ipairs(Main.Tabs) do
-            Tab.Button.Color = Colors["Tab Toggle Background"] 
-            Tab.Content.Visible = false 
+            Tab.Button.Color = Colors["Tab Toggle Background"]
+            Tab.Content.Visible = false
 
             for _, Element in pairs(Tab.Content.Elements) do
                 if Element.Visible ~= nil then
                     Element.Visible = false
                 end
             end
+            for _, SectionObj in ipairs(Tab.Content.Sections) do
+                 SectionObj.Background.Visible = false
+                 SectionObj.Border.Visible = false
+                 SectionObj.Visible = false
+                 for _, Element in pairs(SectionObj.Elements) do
+                     if Element.Visible ~= nil then
+                         Element.Visible = false
+                     end
+                 end
+            end
         end
 
         local SelectedTab = Main.TabButtons[TabName]
-        SelectedTab.Button.Color = Colors["Accent"] 
-        SelectedTab.Content.Visible = true 
+        SelectedTab.Button.Color = Colors["Accent"]
+        SelectedTab.Content.Visible = true
         Main.ActiveTab = TabName
 
         for _, Element in pairs(SelectedTab.Content.Elements) do
@@ -287,12 +358,23 @@ function Library:Create(Title)
                 Element.Visible = true
             end
         end
+        for _, SectionObj in ipairs(SelectedTab.Content.Sections) do
+             SectionObj.Background.Visible = true
+             SectionObj.Border.Visible = true
+             SectionObj.Visible = true
+             for _, Element in pairs(SectionObj.Elements) do
+                 if Element.Visible ~= nil then
+                     Element.Visible = true
+                 end
+             end
+        end
+        Main:UpdateSectionPositions()
     end
 
     ActiveWindow = Main
     if not IsVisible then
-        ToggleUI() 
-        IsVisible = false 
+        ToggleUI()
+        IsVisible = false
     end
     return Main
 end
@@ -302,35 +384,35 @@ spawn(function()
         local MouseLocation = getmouselocation(MouseService)
         Mouse.X = MouseLocation.x
         Mouse.Y = MouseLocation.y
-        Mouse.Clicked = isleftclicked() 
-        Mouse.Pressed = isleftpressed() 
-        
-        local Keys = getpressedkeys() 
-        local IsPDown = false
-        if Keys then 
-            for _, KeyCode in ipairs(Keys) do 
-                if KeyCode == 'P' then 
-                    IsPDown = true
-                    break 
+        Mouse.Clicked = isleftclicked()
+        Mouse.Pressed = isleftpressed()
+
+        local Keys = getpressedkeys()
+        local IsTogglePressed = false
+        if Keys then
+            for _, k in ipairs(Keys) do
+                if k == 'P' then
+                    IsTogglePressed = true
+                    break
                 end
             end
         end
 
-        if IsPDown and not WasPDown then
+        if IsTogglePressed and not TogglePressed then
             ToggleUI()
         end
-        WasPDown = IsPDown 
+        TogglePressed = IsTogglePressed
 
         if IsVisible and ActiveWindow then
-            local IsHovering = ActiveWindow:IsHoveringWindow() 
+            local IsHovering = ActiveWindow:IsHoveringWindow()
 
             local DragAreaYMax = ActiveWindow.TabBackground.Position.y
-            local IsOverDragArea = Mouse.X >= ActiveWindow.WindowBackground.Position.x and 
-                                   Mouse.X <= ActiveWindow.WindowBackground.Position.x + ActiveWindow.WindowBackground.Size.x and
-                                   Mouse.Y >= ActiveWindow.WindowBackground.Position.y and 
-                                   Mouse.Y < DragAreaYMax 
+            local IsHoveredUI = Mouse.X >= ActiveWindow.WindowBackground.Position.x and
+                                  Mouse.X <= ActiveWindow.WindowBackground.Position.x + ActiveWindow.WindowBackground.Size.x and
+                                  Mouse.Y >= ActiveWindow.WindowBackground.Position.y and
+                                  Mouse.Y < DragAreaYMax
 
-            if Mouse.Clicked and IsOverDragArea and not IsDragging then
+            if Mouse.Clicked and IsHoveredUI and not IsDragging then
                 IsDragging = true
                 DragOffsetX = Mouse.X - ActiveWindow.WindowBackground.Position.x
                 DragOffsetY = Mouse.Y - ActiveWindow.WindowBackground.Position.y
@@ -343,19 +425,19 @@ spawn(function()
                  IsDragging = false
             end
 
-            if Mouse.Clicked and not IsDragging then 
+            if Mouse.Clicked and not IsDragging then
                 for _, TabObj in ipairs(ActiveWindow.Tabs) do
-                    if ActiveWindow:IsHovered(TabObj.Button) then 
-                         ActiveWindow:SelectTab(TabObj.Name)
-                         break 
+                    if ActiveWindow:IsHovered(TabObj.Button) then
+                        ActiveWindow:SelectTab(TabObj.Name)
+                        break
                     end
                 end
             end
-        end 
+        end
 
         wait()
     end
 end)
 
-print("Loaded Library V2")
+print("Loaded Library V3")
 return Library
