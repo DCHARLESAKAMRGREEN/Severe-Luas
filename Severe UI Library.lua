@@ -1,6 +1,6 @@
 local Colors = {
     ["Accent"] = {113, 93, 133},
-    ["Window Background"] = {30, 30, 30},
+    ["Window Background"] = {60, 60, 60},
     ["Window Border"] = {45, 45, 45},
     ["Tab Background"] = {20, 20, 20},
     ["Tab Border"] = {45, 45, 45},
