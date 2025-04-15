@@ -17,7 +17,8 @@ local Colors = {
 local MouseService = findservice(Game, "MouseService")
 local Mouse = {
     X = 0,
-    Y = 0
+    Y = 0,
+    LastHoverState = false
 }
 
 spawn(function()
@@ -115,17 +116,43 @@ function Library:Create(Title)
         return math.clamp(calculatedWidth, Main.MinTabWidth, Main.MaxTabWidth)
     end
 
-    function Main:IsHovered()
-        local MouseX, MouseY = Mouse.X, Mouse.Y
-        local WindowX, WindowY = Main.WindowBackground.Position.x, Main.WindowBackground.Position.y
-        local WindowW, WindowH = Main.WindowBackground.Size.x, Main.WindowBackground.Size.y
-        
-        if MouseX >= WindowX and MouseX <= WindowX + WindowW and MouseY >= WindowY and MouseY <= WindowY + WindowH then
-            print("Hovered")
-            return true
-        end
-        return false
+    function Main:IsMouseOverElement(element)
+        if not element then return false end
+        local pos = element.Position
+        local size = element.Size or {x = element.TextBounds.x, y = element.TextBounds.y}
+        return Mouse.X >= pos.x and Mouse.X <= pos.x + size.x and Mouse.Y >= pos.y and Mouse.Y <= pos.y + size.y
     end
+
+    function Main:CheckHover()
+        local currentlyHovered = false
+        
+        if Main:IsMouseOverElement(Main.WindowBackground) or
+           Main:IsMouseOverElement(Main.Title) or
+           Main:IsMouseOverElement(Main.TabBackground) or
+           Main:IsMouseOverElement(Main.WindowBackground2) then
+            currentlyHovered = true
+        end
+        
+        for _, tab in ipairs(Main.Tabs) do
+            if Main:IsMouseOverElement(tab.Button) or
+               Main:IsMouseOverElement(tab.ButtonText) then
+                currentlyHovered = true
+            end
+        end
+        
+        if currentlyHovered and not Mouse.LastHoverState then
+            print("Hovered")
+        end
+        Mouse.LastHoverState = currentlyHovered
+        return currentlyHovered
+    end
+
+    spawn(function()
+        while Main and Main.CheckHover do
+            Main:CheckHover()
+            wait()
+        end
+    end)
 
     function Main:Tab(TabName)
         if not TabName then
@@ -224,5 +251,5 @@ function Library:Create(Title)
     return Main
 end
 
-print("Version 1")
+print("Version 2")
 return Library
