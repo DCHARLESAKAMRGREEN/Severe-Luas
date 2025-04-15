@@ -16,194 +16,278 @@ local Colors = {
 
 local Library = {}
 
-function Library:Create(title)
-    local self = {}
+function Library:Create(Title)
+    local Main = {}
+    
+    -- Get MouseService
+    local Game = Game()
+    local MouseService = findservice(Game, "UserInputService")
     
     -- Window background
-    self.WindowBackground = Drawing.new("Square")
-    self.WindowBackground.Size = {650, 750}
-    self.WindowBackground.Position = {350, 100}
-    self.WindowBackground.Color = Colors["Window Background"]
-    self.WindowBackground.Filled = true
-    self.WindowBackground.Thickness = 1
-    self.WindowBackground.Transparency = 1
-    self.WindowBackground.Visible = true
+    Main.WindowBackground = Drawing.new("Square")
+    Main.WindowBackground.Size = {650, 750}
+    Main.WindowBackground.Position = {350, 100}
+    Main.WindowBackground.Color = Colors["Window Background"]
+    Main.WindowBackground.Filled = true
+    Main.WindowBackground.Thickness = 1
+    Main.WindowBackground.Transparency = 1
+    Main.WindowBackground.Visible = true
 
     -- Title
-    self.Title = Drawing.new("Text")
-    self.Title.Text = title or "Severe UI"
-    self.Title.Size = 16
-    self.Title.Font = 5
-    self.Title.Color = Colors["Text"]
-    self.Title.Outline = true
-    self.Title.OutlineColor = {0, 0, 0}
-    self.Title.Position = {self.WindowBackground.Position.x + 10, self.WindowBackground.Position.y + 5}
-    self.Title.Transparency = 1
-    self.Title.Visible = true
-    self.Title.Center = false
+    Main.Title = Drawing.new("Text")
+    Main.Title.Text = Title or "Severe UI"
+    Main.Title.Size = 16
+    Main.Title.Font = 5
+    Main.Title.Color = Colors["Text"]
+    Main.Title.Outline = true
+    Main.Title.OutlineColor = {0, 0, 0}
+    Main.Title.Position = {Main.WindowBackground.Position.x + 10, Main.WindowBackground.Position.y + 5}
+    Main.Title.Transparency = 1
+    Main.Title.Visible = true
+    Main.Title.Center = false
 
     -- Tab background
-    self.TabBackground = Drawing.new("Square")
-    self.TabBackground.Position = {self.WindowBackground.Position.x + 10, self.WindowBackground.Position.y + 25}
-    self.TabBackground.Size = {self.WindowBackground.Size.x - 20, 25}
-    self.TabBackground.Color = Colors["Tab Background"]
-    self.TabBackground.Filled = true
-    self.TabBackground.Thickness = 1
-    self.TabBackground.Transparency = 1
-    self.TabBackground.Visible = true
+    Main.TabBackground = Drawing.new("Square")
+    Main.TabBackground.Position = {Main.WindowBackground.Position.x + 10, Main.WindowBackground.Position.y + 25}
+    Main.TabBackground.Size = {Main.WindowBackground.Size.x - 20, 25}
+    Main.TabBackground.Color = Colors["Tab Background"]
+    Main.TabBackground.Filled = true
+    Main.TabBackground.Thickness = 1
+    Main.TabBackground.Transparency = 1
+    Main.TabBackground.Visible = true
 
     -- Tab border
-    self.TabBorder = Drawing.new("Square")
-    self.TabBorder.Position = {self.TabBackground.Position.x, self.TabBackground.Position.y}
-    self.TabBorder.Size = {self.TabBackground.Size.x, self.TabBackground.Size.y}
-    self.TabBorder.Color = Colors["Tab Border"]
-    self.TabBorder.Filled = false
-    self.TabBorder.Thickness = 1
-    self.TabBorder.Transparency = 1
-    self.TabBorder.Visible = true
+    Main.TabBorder = Drawing.new("Square")
+    Main.TabBorder.Position = {Main.TabBackground.Position.x, Main.TabBackground.Position.y}
+    Main.TabBorder.Size = {Main.TabBackground.Size.x, Main.TabBackground.Size.y}
+    Main.TabBorder.Color = Colors["Tab Border"]
+    Main.TabBorder.Filled = false
+    Main.TabBorder.Thickness = 1
+    Main.TabBorder.Transparency = 1
+    Main.TabBorder.Visible = true
 
     -- Content background
-    self.WindowBackground2 = Drawing.new("Square")
-    self.WindowBackground2.Position = {self.WindowBackground.Position.x + 10, self.WindowBackground.Position.y + 50}
-    self.WindowBackground2.Size = {self.WindowBackground.Size.x - 20, self.WindowBackground.Size.y - 60}
-    self.WindowBackground2.Color = Colors["Section Background"]
-    self.WindowBackground2.Filled = true
-    self.WindowBackground2.Thickness = 1
-    self.WindowBackground2.Transparency = 1
-    self.WindowBackground2.Visible = true
+    Main.WindowBackground2 = Drawing.new("Square")
+    Main.WindowBackground2.Position = {Main.WindowBackground.Position.x + 10, Main.WindowBackground.Position.y + 50}
+    Main.WindowBackground2.Size = {Main.WindowBackground.Size.x - 20, Main.WindowBackground.Size.y - 60}
+    Main.WindowBackground2.Color = Colors["Section Background"]
+    Main.WindowBackground2.Filled = true
+    Main.WindowBackground2.Thickness = 1
+    Main.WindowBackground2.Transparency = 1
+    Main.WindowBackground2.Visible = true
 
     -- Content border
-    self.Window2Border = Drawing.new("Square")
-    self.Window2Border.Position = {self.WindowBackground2.Position.x, self.WindowBackground2.Position.y}
-    self.Window2Border.Size = {self.WindowBackground2.Size.x, self.WindowBackground2.Size.y}
-    self.Window2Border.Color = Colors["Section Border"]
-    self.Window2Border.Filled = false
-    self.Window2Border.Thickness = 1
-    self.Window2Border.Transparency = 1
-    self.Window2Border.Visible = true
+    Main.Window2Border = Drawing.new("Square")
+    Main.Window2Border.Position = {Main.WindowBackground2.Position.x, Main.WindowBackground2.Position.y}
+    Main.Window2Border.Size = {Main.WindowBackground2.Size.x, Main.WindowBackground2.Size.y}
+    Main.Window2Border.Color = Colors["Section Border"]
+    Main.Window2Border.Filled = false
+    Main.Window2Border.Thickness = 1
+    Main.Window2Border.Transparency = 1
+    Main.Window2Border.Visible = true
 
     -- Window border
-    self.WindowBorder = Drawing.new("Square")
-    self.WindowBorder.Size = {self.WindowBackground.Size.x, self.WindowBackground.Size.y}
-    self.WindowBorder.Position = {self.WindowBackground.Position.x, self.WindowBackground.Position.y}
-    self.WindowBorder.Color = Colors["Window Border"]
-    self.WindowBorder.Filled = false
-    self.WindowBorder.Thickness = 1
-    self.WindowBorder.Transparency = 1
-    self.WindowBorder.Visible = true
+    Main.WindowBorder = Drawing.new("Square")
+    Main.WindowBorder.Size = {Main.WindowBackground.Size.x, Main.WindowBackground.Size.y}
+    Main.WindowBorder.Position = {Main.WindowBackground.Position.x, Main.WindowBackground.Position.y}
+    Main.WindowBorder.Color = Colors["Window Border"]
+    Main.WindowBorder.Filled = false
+    Main.WindowBorder.Thickness = 1
+    Main.WindowBorder.Transparency = 1
+    Main.WindowBorder.Visible = true
 
     -- Tab system
-    self.Tabs = {}
-    self.TabButtons = {}
-    self.TabContents = {}
-    self.ActiveTab = nil
+    Main.Tabs = {}
+    Main.TabButtons = {}
+    Main.TabContents = {}
+    Main.ActiveTab = nil
+    Main.Dragging = false
+    Main.DragOffset = {x = 0, y = 0}
+
+    -- Helper function to check if a point is within a rectangle
+    function Main:IsHovered(Rect, Point)
+        return Point.x >= Rect.Position.x and 
+               Point.x <= Rect.Position.x + Rect.Size.x and 
+               Point.y >= Rect.Position.y and 
+               Point.y <= Rect.Position.y + Rect.Size.y
+    end
 
     -- Function to add a tab
-    function self:Tab(tabName)
-        if not tabName then
-            tabName = "Tab " .. (#self.Tabs + 1)
+    function Main:Tab(TabName)
+        if not TabName then
+            TabName = "Tab " .. (#Main.Tabs + 1)
         end
         
         -- Create tab button
-        local tabCount = #self.Tabs
-        local tabWidth = 100 -- Fixed width for tabs
-        local tabX = self.TabBackground.Position.x + (tabCount * tabWidth)
+        local TabCount = #Main.Tabs
+        local TabWidth = 500 -- Fixed width for tabs
+        local TabX = Main.TabBackground.Position.x + (TabCount * TabWidth)
         
         -- Create the tab button
-        local tabButton = Drawing.new("Square")
-        tabButton.Size = {tabWidth, self.TabBackground.Size.y}
-        tabButton.Position = {tabX, self.TabBackground.Position.y}
-        tabButton.Color = Colors["Tab Toggle Background"]
-        tabButton.Filled = true
-        tabButton.Thickness = 1
-        tabButton.Transparency = 1
-        tabButton.Visible = true
+        local TabButton = Drawing.new("Square")
+        TabButton.Size = {TabWidth, Main.TabBackground.Size.y}
+        TabButton.Position = {TabX, Main.TabBackground.Position.y}
+        TabButton.Color = Colors["Tab Toggle Background"]
+        TabButton.Filled = true
+        TabButton.Thickness = 1
+        TabButton.Transparency = 1
+        TabButton.Visible = true
         
         -- Create tab button border
-        local tabButtonBorder = Drawing.new("Square")
-        tabButtonBorder.Size = {tabWidth, self.TabBackground.Size.y}
-        tabButtonBorder.Position = {tabX, self.TabBackground.Position.y}
-        tabButtonBorder.Color = Colors["Tab Border"]
-        tabButtonBorder.Filled = false
-        tabButtonBorder.Thickness = 1
-        tabButtonBorder.Transparency = 1
-        tabButtonBorder.Visible = true
+        local TabButtonBorder = Drawing.new("Square")
+        TabButtonBorder.Size = {TabWidth, Main.TabBackground.Size.y}
+        TabButtonBorder.Position = {TabX, Main.TabBackground.Position.y}
+        TabButtonBorder.Color = Colors["Tab Border"]
+        TabButtonBorder.Filled = false
+        TabButtonBorder.Thickness = 1
+        TabButtonBorder.Transparency = 1
+        TabButtonBorder.Visible = true
         
         -- Create tab button text
-        local tabButtonText = Drawing.new("Text")
-        tabButtonText.Text = tabName
-        tabButtonText.Size = 14
-        tabButtonText.Font = 5
-        tabButtonText.Color = Colors["Text"]
-        tabButtonText.Outline = true
-        tabButtonText.OutlineColor = {0, 0, 0}
-        tabButtonText.Position = {tabX + (tabWidth / 2), self.TabBackground.Position.y + (self.TabBackground.Size.y / 2) - 7}
-        tabButtonText.Transparency = 1
-        tabButtonText.Visible = true
-        tabButtonText.Center = true
+        local TabButtonText = Drawing.new("Text")
+        TabButtonText.Text = TabName
+        TabButtonText.Size = 14
+        TabButtonText.Font = 5
+        TabButtonText.Color = Colors["Text"]
+        TabButtonText.Outline = true
+        TabButtonText.OutlineColor = {0, 0, 0}
+        TabButtonText.Position = {TabX + (TabWidth / 2), Main.TabBackground.Position.y + (Main.TabBackground.Size.y / 2) - 7}
+        TabButtonText.Transparency = 1
+        TabButtonText.Visible = true
+        TabButtonText.Center = true
         
         -- Create tab content container
-        local tabContent = {
-            Name = tabName,
+        local TabContent = {
+            Name = TabName,
             Elements = {},
             Visible = false
         }
         
         -- Store everything
-        local tabObj = {
-            Name = tabName,
-            Button = tabButton,
-            ButtonBorder = tabButtonBorder,
-            ButtonText = tabButtonText,
-            Content = tabContent
+        local TabObj = {
+            Name = TabName,
+            Button = TabButton,
+            ButtonBorder = TabButtonBorder,
+            ButtonText = TabButtonText,
+            Content = TabContent
         }
         
-        table.insert(self.Tabs, tabObj)
-        self.TabButtons[tabName] = tabObj
-        self.TabContents[tabName] = tabContent
+        table.insert(Main.Tabs, TabObj)
+        Main.TabButtons[TabName] = TabObj
+        Main.TabContents[TabName] = TabContent
         
         -- If this is the first tab, make it active
-        if #self.Tabs == 1 then
-            self:SelectTab(tabName)
+        if #Main.Tabs == 1 then
+            Main:SelectTab(TabName)
         end
         
         -- Return tab content for chaining
-        return tabContent
+        return TabContent
     end
 
     -- Function to select a tab
-    function self:SelectTab(tabName)
+    function Main:SelectTab(TabName)
         -- Hide all tab contents
-        for _, tab in ipairs(self.Tabs) do
+        for _, Tab in ipairs(Main.Tabs) do
             -- Reset tab appearance
-            tab.Button.Color = Colors["Tab Toggle Background"]
-            tab.Content.Visible = false
+            Tab.Button.Color = Colors["Tab Toggle Background"]
+            Tab.Content.Visible = false
             
             -- Hide all elements of this tab
-            for _, element in pairs(tab.Content.Elements) do
-                if element.Visible ~= nil then
-                    element.Visible = false
+            for _, Element in pairs(Tab.Content.Elements) do
+                if Element.Visible ~= nil then
+                    Element.Visible = false
                 end
             end
         end
         
         -- Show selected tab content
-        local selectedTab = self.TabButtons[tabName]
-        if selectedTab then
-            selectedTab.Button.Color = Colors["Accent"]
-            selectedTab.Content.Visible = true
-            self.ActiveTab = tabName
+        local SelectedTab = Main.TabButtons[TabName]
+        if SelectedTab then
+            SelectedTab.Button.Color = Colors["Accent"]
+            SelectedTab.Content.Visible = true
+            Main.ActiveTab = TabName
             
             -- Show all elements of this tab
-            for _, element in pairs(selectedTab.Content.Elements) do
-                if element.Visible ~= nil then
-                    element.Visible = true
+            for _, Element in pairs(SelectedTab.Content.Elements) do
+                if Element.Visible ~= nil then
+                    Element.Visible = true
                 end
             end
         end
     end
+
+    -- Handle window dragging
+    spawn(function()
+        while wait(0.01) do
+            -- Get mouse position
+            local MousePos = getmouselocation(MouseService)
+            local Mouse = {x = MousePos.x, y = MousePos.y}
+            
+            -- Handle dragging
+            if isleftpressed() then
+                -- Check if mouse is in title bar for drag start
+                if Main:IsHovered({
+                    Position = {Main.WindowBackground.Position.x, Main.WindowBackground.Position.y},
+                    Size = {Main.WindowBackground.Size.x, 25}  -- Title bar height
+                }, Mouse) and not Main.Dragging then
+                    Main.Dragging = true
+                    Main.DragOffset = {
+                        x = Mouse.x - Main.WindowBackground.Position.x,
+                        y = Mouse.y - Main.WindowBackground.Position.y
+                    }
+                end
+                
+                -- Update position while dragging
+                if Main.Dragging then
+                    local NewX = Mouse.x - Main.DragOffset.x
+                    local NewY = Mouse.y - Main.DragOffset.y
+                    
+                    -- Move window
+                    Main.WindowBackground.Position = {NewX, NewY}
+                    Main.WindowBorder.Position = {NewX, NewY}
+                    Main.Title.Position = {NewX + 10, NewY + 5}
+                    Main.TabBackground.Position = {NewX + 10, NewY + 25}
+                    Main.TabBorder.Position = {NewX + 10, NewY + 25}
+                    Main.WindowBackground2.Position = {NewX + 10, NewY + 50}
+                    Main.Window2Border.Position = {NewX + 10, NewY + 50}
+                    
+                    -- Move tab buttons
+                    for _, Tab in ipairs(Main.Tabs) do
+                        local TabIndex = 0
+                        for i, t in ipairs(Main.Tabs) do
+                            if t == Tab then
+                                TabIndex = i - 1
+                                break
+                            end
+                        end
+                        
+                        local TabX = Main.TabBackground.Position.x + (TabIndex * 500)
+                        Tab.Button.Position = {TabX, Main.TabBackground.Position.y}
+                        Tab.ButtonBorder.Position = {TabX, Main.TabBackground.Position.y}
+                        Tab.ButtonText.Position = {TabX + (500 / 2), Main.TabBackground.Position.y + (Main.TabBackground.Size.y / 2) - 7}
+                    end
+                end
+            else
+                Main.Dragging = false
+            end
+            
+            -- Handle tab clicking
+            if isleftclicked() then
+                for _, Tab in ipairs(Main.Tabs) do
+                    if Main:IsHovered({
+                        Position = Tab.Button.Position,
+                        Size = Tab.Button.Size
+                    }, Mouse) then
+                        Main:SelectTab(Tab.Name)
+                        wait(0.2) -- Debounce
+                    end
+                end
+            end
+        end
+    end)
     
-    return self
+    return Main
 end
 
 return Library
