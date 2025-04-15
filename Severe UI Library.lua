@@ -545,76 +545,90 @@ function Library:Create(TitleText)
                 return ButtonObj
             end
 
-            function SectionObj:Toggle(ToggleName, DefaultState, Callback)
-                local ToggleBackground = Drawing.new("Square")
-                ToggleBackground.Color = Colors["Accent"]
-                ToggleBackground.Filled = false
-                ToggleBackground.Thickness = 1
-                ToggleBackground.Transparency = 1
-                ToggleBackground.Visible = self.Visible
+function SectionObj:Toggle(ToggleName, DefaultState, Callback)
+    -- Create outer border box
+    local ToggleBorder = Drawing.new("Square")
+    ToggleBorder.Color = Colors["ObjectBorder"]
+    ToggleBorder.Filled = false
+    ToggleBorder.Thickness = 1
+    ToggleBorder.Transparency = 1
+    ToggleBorder.Visible = self.Visible
 
-                local ToggleBorder = Drawing.new("Square")
-                ToggleBorder.Color = Colors["ObjectBorder"]
-                ToggleBorder.Filled = false
-                ToggleBorder.Thickness = 1
-                ToggleBorder.Transparency = 1
-                ToggleBorder.Visible = true
+    -- Create inner fill box (initially hidden)
+    local ToggleFill = Drawing.new("Square")
+    ToggleFill.Color = Colors["Accent"]
+    ToggleFill.Filled = true
+    ToggleFill.Transparency = 0.5
+    ToggleFill.Visible = false
 
-                local ToggleText = Drawing.new("Text")
-                ToggleText.Text = ToggleName or "Toggle"
-                ToggleText.Size = 12
-                ToggleText.Font = 5
-                ToggleText.Color = Colors["Text"]
-                ToggleText.Outline = true
-                ToggleText.OutlineColor = {0, 0, 0}
-                ToggleText.Transparency = 1
-                ToggleText.Center = false
-                ToggleText.Visible = self.Visible
+    -- Create label text
+    local ToggleText = Drawing.new("Text")
+    ToggleText.Text = ToggleName or "Toggle"
+    ToggleText.Size = 12
+    ToggleText.Font = 5
+    ToggleText.Color = Colors["Text"]
+    ToggleText.Outline = true
+    ToggleText.OutlineColor = {0, 0, 0}
+    ToggleText.Transparency = 1
+    ToggleText.Center = false
+    ToggleText.Visible = self.Visible
 
-                local State = DefaultState or false
-                
-                local function UpdateToggleVisuals()
-                    if State then
-                        ToggleBackground.Filled = true
-                        ToggleBackground.Transparency = 0.5
-                        ToggleBorder.Color = Colors["Accent"]
-                    else
-                        ToggleBackground.Filled = false
-                        ToggleBackground.Transparency = 1
-                        ToggleBorder.Color = Colors["ObjectBorder"]
-                    end
-                    
-                    local IsHovered = WindowActive and WindowActive:IsHovered(ToggleBackground)
-                    if not State then
-                        ToggleBorder.Color = IsHovered and Colors["Accent"] or Colors["ObjectBorder"]
-                    end
-                end
-                
-                UpdateToggleVisuals()
+    local State = DefaultState or false
+    
+    local function UpdateToggleVisuals()
+        -- Position the fill inside the border (with 1px padding)
+        local borderPos = ToggleBorder.Position
+        local borderSize = ToggleBorder.Size
+        ToggleFill.Position = {borderPos.x + 1, borderPos.y + 1}
+        ToggleFill.Size = {borderSize.x - 2, borderSize.y - 2}
 
-                local ToggleObj = {
-                    Type = "Toggle",
-                    Name = ToggleName,
-                    Callback = Callback,
-                    ToggleBackground = ToggleBackground,
-                    ToggleBorder = ToggleBorder,
-                    ToggleText = ToggleText,
-                    DefaultBorderColor = Colors["ObjectBorder"],
-                    OriginalBackgroundColor = Colors["Accent"],
-                    OriginalBackgroundTransparency = 0.5,
-                    Visible = self.Visible,
-                    State = State,
-                    Update = UpdateToggleVisuals
-                }
+        -- Update visibility based on state
+        ToggleFill.Visible = State
+        
+        -- Handle hover effects
+        local IsHovered = WindowActive and WindowActive:IsHovered(ToggleBorder)
+        ToggleBorder.Color = IsHovered and Colors["Accent"] or Colors["ObjectBorder"]
+    end
+    
+    local ToggleObj = {
+        Type = "Toggle",
+        Name = ToggleName,
+        Callback = Callback,
+        ToggleBorder = ToggleBorder,
+        ToggleFill = ToggleFill,
+        ToggleText = ToggleText,
+        Visible = self.Visible,
+        State = State,
+        Update = UpdateToggleVisuals
+    }
 
-                table.insert(self.Interfaces, ToggleObj)
+    -- Initial setup
+    UpdateToggleVisuals()
+    table.insert(self.Interfaces, ToggleObj)
 
-                if IsVisible and Main.ActiveTab == TabContent.Name then
-                    Main:UpdateLayout()
-                end
+    -- Position all elements during layout
+    local function PositionElements()
+        local ToggleSize = 20
+        local ToggleX = ColumnX + Padding
+        local ToggleY = CurrentInternalY
 
-                return ToggleObj
-            end
+        ToggleBorder.Position = {ToggleX, ToggleY}
+        ToggleBorder.Size = {ToggleSize, ToggleSize}
+        
+        UpdateToggleVisuals() -- Positions fill relative to border
+
+        local TextYOffset = math.floor((ToggleSize - 12) / 2)
+        ToggleText.Position = {ToggleX + ToggleSize + 5, ToggleY + TextYOffset}
+
+        return ToggleSize + Padding
+    end
+
+    if IsVisible and Main.ActiveTab == TabContent.Name then
+        Main:UpdateLayout()
+    end
+
+    return ToggleObj
+end
 
             if Side == "Left" then
                 table.insert(self.LeftSections, SectionObj)
