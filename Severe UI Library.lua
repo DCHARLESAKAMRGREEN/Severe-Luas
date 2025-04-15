@@ -16,6 +16,7 @@ local Colors = {
     ["DropdownOptionBackground"] = {19, 19, 19}
 }
 
+local Game = Game
 local MouseService = findservice(Game, "MouseService")
 local Mouse = {
     X = 0,
@@ -334,7 +335,7 @@ function Library:Create(TitleText)
             if SectionObj.Interfaces then
                 for _, InterfaceObj in ipairs(SectionObj.Interfaces) do
                      if InterfaceObj.Type == "Button" then
-                         local ButtonHeight = 20
+                         local ButtonHeight = 17
                          local ButtonWidth = Width - (Padding * 2)
                          local ButtonX = ColumnX + Padding
                          local ButtonY = CurrentInternalY
@@ -547,7 +548,7 @@ function Library:Create(TitleText)
             function SectionObj:Toggle(ToggleName, DefaultState, Callback)
                 local ToggleBackground = Drawing.new("Square")
                 ToggleBackground.Color = Colors["Accent"]
-                ToggleBackground.Filled = false  -- Will be set based on state
+                ToggleBackground.Filled = false
                 ToggleBackground.Thickness = 1
                 ToggleBackground.Transparency = 1
                 ToggleBackground.Visible = self.Visible
@@ -557,7 +558,7 @@ function Library:Create(TitleText)
                 ToggleBorder.Filled = false
                 ToggleBorder.Thickness = 1
                 ToggleBorder.Transparency = 1
-                ToggleBorder.Visible = self.Visible
+                ToggleBorder.Visible = true
 
                 local ToggleText = Drawing.new("Text")
                 ToggleText.Text = ToggleName or "Toggle"
@@ -574,31 +575,17 @@ function Library:Create(TitleText)
                 
                 local function UpdateToggleVisuals()
                     if State then
-                        ToggleBackground.Filled = true  -- Fill when on
+                        ToggleBackground.Filled = true
                         ToggleBackground.Transparency = 0.5
                         ToggleBorder.Color = Colors["Accent"]
                     else
-                        ToggleBackground.Filled = false  -- No fill when off
-                        ToggleBackground.Transparency = 1
-                        
-                        -- Only check hover when not toggled
-                        local isHovered = false
-                        if WindowActive then
-                            local togglePos = ToggleBackground.Position
-                            local toggleSize = ToggleBackground.Size
-                            local textPos = ToggleText.Position
-                            local textBounds = ToggleText.TextBounds or {x = 100, y = 12}
-                            
-                            local hitboxX = togglePos.x
-                            local hitboxY = togglePos.y
-                            local hitboxWidth = (textPos.x + textBounds.x) - togglePos.x + 5
-                            local hitboxHeight = math.max(toggleSize.y, textBounds.y)
-                            
-                            isHovered = (Mouse.X >= hitboxX and Mouse.X <= hitboxX + hitboxWidth and
-                                       Mouse.Y >= hitboxY and Mouse.Y <= hitboxY + hitboxHeight)
-                        end
-                        
-                        ToggleBorder.Color = isHovered and Colors["Accent"] or Colors["ObjectBorder"]
+                        ToggleBackground.Filled = false
+                        ToggleBorder.Color = Colors["ObjectBorder"]
+                    end
+                    
+                    local IsHovered = WindowActive and WindowActive:IsHovered(ToggleBackground)
+                    if not State then
+                        ToggleBorder.Color = IsHovered and Colors["Accent"] or Colors["ObjectBorder"]
                     end
                 end
                 
@@ -714,138 +701,186 @@ spawn(function()
         local Keys = getpressedkeys()
         local IsToggleKeyPressed = false
         if Keys then
-for _,key in ipairs(Keys) do
-            if key == "RightShift" then
-                IsToggleKeyPressed = true
-                break
-            end
-        end
-    end
-
-    if IsToggleKeyPressed and not TogglePressed then
-        ToggleUI()
-        TogglePressed = true
-    elseif not IsToggleKeyPressed then
-        TogglePressed = false
-    end
-
-    if WindowActive and IsVisible then
-        IsMouseOverUI = WindowActive:IsHoveringWindow()
-
-        if Mouse.Pressed and not IsDragging then
-            local TitleBarArea = {
-                x = WindowActive.WindowBackground.Position.x,
-                y = WindowActive.WindowBackground.Position.y,
-                width = WindowActive.WindowBackground.Size.x,
-                height = 25
-            }
-
-            if Mouse.X >= TitleBarArea.x and Mouse.X <= TitleBarArea.x + TitleBarArea.width and
-               Mouse.Y >= TitleBarArea.y and Mouse.Y <= TitleBarArea.y + TitleBarArea.height then
-                IsDragging = true
-                DragOffsetX = Mouse.X - WindowActive.WindowBackground.Position.x
-                DragOffsetY = Mouse.Y - WindowActive.WindowBackground.Position.y
-            end
-        end
-
-        if not Mouse.Pressed then
-            IsDragging = false
-        end
-
-        if IsDragging then
-            WindowActive.WindowBackground.Position = {Mouse.X - DragOffsetX, Mouse.Y - DragOffsetY}
-            WindowActive:UpdateElementPositions()
-        end
-
-        -- Handle Tab Button Clicks
-        if Mouse.Clicked and not UIClickHandled then
-            for _, TabObj in ipairs(WindowActive.Tabs) do
-                if WindowActive:IsHovered(TabObj.Button) then
-                    WindowActive:SelectTab(TabObj.Name)
-                    UIClickHandled = true
+            for _, k in ipairs(Keys) do
+                if k == 'P' then
+                    IsToggleKeyPressed = true
                     break
                 end
             end
         end
 
-        -- Check for button hovers and clicks
-        if WindowActive.ActiveTab then
-            local CurrentTabContent = WindowActive.TabContents[WindowActive.ActiveTab]
-            if CurrentTabContent then
-                local function ProcessInterfaces(Interfaces)
-                    for _, Interface in ipairs(Interfaces) do
-                        if Interface.Type == "Section" and Interface.Visible and Interface.Interfaces then
-                            for _, InterfaceObj in ipairs(Interface.Interfaces) do
-                                if InterfaceObj.Type == "Button" and InterfaceObj.Visible then
-                                    local IsHovered = WindowActive:IsHovered(InterfaceObj.ButtonBackground)
-                                    
-                                    if IsHovered then
-                                        InterfaceObj.ButtonBorder.Color = Colors["Accent"]
-                                        HoveredButton = InterfaceObj
-                                    else
-                                        InterfaceObj.ButtonBorder.Color = InterfaceObj.DefaultBorderColor
-                                    end
-                                    
-                                    if IsHovered and Mouse.Clicked and not UIClickHandled then
-                                        if InterfaceObj.Callback then
-                                            spawn(function()
-                                                InterfaceObj.Callback()
-                                            end)
-                                        end
-                                        UIClickHandled = true
-                                    end
-                                elseif InterfaceObj.Type == "Toggle" and InterfaceObj.Visible then
-                                    local ToggleX = InterfaceObj.ToggleBackground.Position.x
-                                    local ToggleY = InterfaceObj.ToggleBackground.Position.y
-                                    local ToggleSize = InterfaceObj.ToggleBackground.Size.x
-                                    local TextX = InterfaceObj.ToggleText.Position.x
-                                    local TextY = InterfaceObj.ToggleText.Position.y
-                                    local TextWidth = InterfaceObj.ToggleText.TextBounds and InterfaceObj.ToggleText.TextBounds.x or 100
-                                    local TextHeight = InterfaceObj.ToggleText.TextBounds and InterfaceObj.ToggleText.TextBounds.y or 12
-                                    
-                                    local HitboxX = ToggleX
-                                    local HitboxY = ToggleY
-                                    local HitboxWidth = (TextX + TextWidth) - ToggleX + 5
-                                    local HitboxHeight = math.max(ToggleSize, TextHeight)
-                                    
-                                    local IsHovered = Mouse.X >= HitboxX and Mouse.X <= HitboxX + HitboxWidth and
-                                                     Mouse.Y >= HitboxY and Mouse.Y <= HitboxY + HitboxHeight
-                                    
-                                    if IsHovered and Mouse.Clicked and not UIClickHandled then
-                                        InterfaceObj.State = not InterfaceObj.State
-                                        InterfaceObj.Update()
-                                        
-                                        if InterfaceObj.Callback then
-                                            spawn(function()
-                                                InterfaceObj.Callback(InterfaceObj.State)
-                                            end)
-                                        end
-                                        UIClickHandled = true
-                                    else
-                                        InterfaceObj.Update()
-                                    end
-                                end
-                            end
-                        end
+        if IsToggleKeyPressed and not TogglePressed then
+            ToggleUI()
+        end
+        TogglePressed = IsToggleKeyPressed
+
+        if IsVisible and WindowActive then
+            if WindowActive:IsHoveringWindow() then IsMouseOverUI = true end
+            for _, TabObj in ipairs(WindowActive.Tabs) do
+                if TabObj.Button.Visible and WindowActive:IsHovered(TabObj.Button) then
+                    IsMouseOverUI = true
+                    break
+                end
+            end
+
+            local WindowPos = WindowActive.WindowBackground.Position
+            local DragAreaYMax = WindowActive.TabBackground.Position.y
+            if Mouse.Clicked and IsMouseOverUI and Mouse.Y < DragAreaYMax and not IsDragging then
+                IsDragging = true
+                DragOffsetX = Mouse.X - WindowPos.x
+                DragOffsetY = Mouse.Y - WindowPos.y
+                UIClickHandled = true
+            elseif Mouse.Pressed and IsDragging then
+                IsMouseOverUI = true
+                local NewX = Mouse.X - DragOffsetX
+                local NewY = Mouse.Y - DragOffsetY
+                WindowActive.WindowBackground.Position = {NewX, NewY}
+                WindowActive:UpdateElementPositions()
+                UIClickHandled = true
+            elseif not Mouse.Pressed and IsDragging then
+                IsDragging = false
+            end
+
+            if Mouse.Clicked and not IsDragging and not UIClickHandled then
+                for _, TabObj in ipairs(WindowActive.Tabs) do
+                    if TabObj.Button.Visible and WindowActive:IsHovered(TabObj.Button) then
+                        WindowActive:SelectTab(TabObj.Name)
+                        UIClickHandled = true
+                        break
                     end
                 end
-                
-                ProcessInterfaces(CurrentTabContent.LeftSections)
-                ProcessInterfaces(CurrentTabContent.RightSections)
+
+                if not UIClickHandled and WindowActive.ActiveTab then
+                    local CurrentTabContent = WindowActive.TabContents[WindowActive.ActiveTab]
+                    if CurrentTabContent then
+                         local function CheckButtonClick(Sections)
+                             if UIClickHandled then return end
+                             for _, SectionObj in ipairs(Sections) do
+                                 if SectionObj.Visible and SectionObj.Interfaces then
+                                     for InterfaceIndex, InterfaceObj in ipairs(SectionObj.Interfaces) do
+                                         if InterfaceObj.Type == "Button" and InterfaceObj.ButtonBackground.Visible then
+                                             local IsHover = WindowActive:IsHovered(InterfaceObj.ButtonBackground)
+                                             if IsHover then
+                                                 if InterfaceObj.ButtonBackground.Color ~= Colors["TabSelectedBackground"] then
+                                                     InterfaceObj.ButtonBackground.Color = Colors["TabSelectedBackground"]
+                                                     InterfaceObj.ButtonBackground.Transparency = 0.135
+                                                     InterfaceObj.ButtonBorder.Color = Colors["Accent"]
+
+                                                     local TargetButtonObj = InterfaceObj
+                                                     spawn(function()
+                                                         wait(0.05)
+                                                         if IsVisible and WindowActive and TargetButtonObj and TargetButtonObj.ButtonBackground.Visible then
+                                                              TargetButtonObj.ButtonBackground.Color = TargetButtonObj.OriginalBackgroundColor
+                                                              TargetButtonObj.ButtonBackground.Transparency = TargetButtonObj.OriginalBackgroundTransparency
+                                                              local isHoverNow = WindowActive:IsHovered(TargetButtonObj.ButtonBackground)
+                                                              TargetButtonObj.ButtonBorder.Color = isHoverNow and Colors["Accent"] or TargetButtonObj.DefaultBorderColor
+                                                         end
+                                                     end)
+
+                                                     if InterfaceObj.Callback then spawn(InterfaceObj.Callback) end
+                                                     UIClickHandled = true
+                                                     return
+                                                 end
+                                             end
+                                         elseif InterfaceObj.Type == "Toggle" and InterfaceObj.ToggleBackground.Visible then
+                                             local togglePos = InterfaceObj.ToggleBackground.Position
+                                             local toggleSize = InterfaceObj.ToggleBackground.Size
+                                             local textPos = InterfaceObj.ToggleText.Position
+                                             local textBounds = InterfaceObj.ToggleText.TextBounds or {x = 100, y = 12}
+                                             
+                                             local hitboxX = togglePos.x
+                                             local hitboxY = togglePos.y
+                                             local hitboxWidth = (textPos.x + textBounds.x) - togglePos.x + 5
+                                             local hitboxHeight = math.max(toggleSize.y, textBounds.y)
+                                             
+                                             local IsHover = (Mouse.X >= hitboxX and Mouse.X <= hitboxX + hitboxWidth and
+                                                             Mouse.Y >= hitboxY and Mouse.Y <= hitboxY + hitboxHeight)
+                                             
+                                             if IsHover then
+                                                 IsMouseOverUI = true
+                                                 HoveredButton = InterfaceObj
+                                                 InterfaceObj.State = not InterfaceObj.State
+                                                 InterfaceObj.Update()
+                                                 
+                                                 if InterfaceObj.Callback then 
+                                                     spawn(function() 
+                                                         InterfaceObj.Callback(InterfaceObj.State) 
+                                                     end) 
+                                                 end
+                                                 
+                                                 UIClickHandled = true
+                                                 return
+                                             end
+                                         end
+                                     end
+                                 end
+                             end
+                         end
+                         CheckButtonClick(CurrentTabContent.LeftSections)
+                         CheckButtonClick(CurrentTabContent.RightSections)
+                    end
+                end
             end
+
+            if WindowActive.ActiveTab then
+                 local CurrentTabContent = WindowActive.TabContents[WindowActive.ActiveTab]
+                 if CurrentTabContent then
+                     local function UpdateButtonVisuals(Sections)
+                         for _, SectionObj in ipairs(Sections) do
+                             if SectionObj.Visible and SectionObj.Interfaces then
+                                 for InterfaceIndex, InterfaceObj in ipairs(SectionObj.Interfaces) do
+                                     if InterfaceObj.Type == "Button" then
+                                         local IsCurrentlyHovered = WindowActive:IsHovered(InterfaceObj.ButtonBackground)
+
+                                         if IsCurrentlyHovered then
+                                             IsMouseOverUI = true
+                                             HoveredButton = InterfaceObj
+                                         end
+
+                                         if InterfaceObj.ButtonBackground.Color ~= Colors["TabSelectedBackground"] then
+                                             InterfaceObj.ButtonBorder.Color = IsCurrentlyHovered and Colors["Accent"] or InterfaceObj.DefaultBorderColor
+                                         end
+                                     elseif InterfaceObj.Type == "Toggle" then
+                                         local togglePos = InterfaceObj.ToggleBackground.Position
+                                         local toggleSize = InterfaceObj.ToggleBackground.Size
+                                         local textPos = InterfaceObj.ToggleText.Position
+                                         local textBounds = InterfaceObj.ToggleText.TextBounds or {x = 100, y = 12}
+                                         
+                                         local hitboxX = togglePos.x
+                                         local hitboxY = togglePos.y
+                                         local hitboxWidth = (textPos.x + textBounds.x) - togglePos.x + 5
+                                         local hitboxHeight = math.max(toggleSize.y, textBounds.y)
+                                         
+                                         local IsCurrentlyHovered = (Mouse.X >= hitboxX and Mouse.X <= hitboxX + hitboxWidth and
+                                                                   Mouse.Y >= hitboxY and Mouse.Y <= hitboxY + hitboxHeight)
+                                         
+                                         if IsCurrentlyHovered then
+                                             IsMouseOverUI = true
+                                             HoveredButton = InterfaceObj
+                                             if not InterfaceObj.State then
+                                                 InterfaceObj.ToggleBorder.Color = Colors["Accent"]
+                                             end
+                                         else
+                                             if InterfaceObj.State then
+                                                 InterfaceObj.ToggleBorder.Color = Colors["Accent"]
+                                             else
+                                                 InterfaceObj.ToggleBorder.Color = Colors["ObjectBorder"]
+                                             end
+                                         end
+                                     end
+                                 end
+                             end
+                         end
+                     end
+                     UpdateButtonVisuals(CurrentTabContent.LeftSections)
+                     UpdateButtonVisuals(CurrentTabContent.RightSections)
+                 end
+             end
         end
-        
-        if HoveredButton and HoveredButton.ButtonBackground then
-            set_window_passthrough(false)
-        else
-            set_window_passthrough(not IsMouseOverUI)
-        end
-    else
-        set_window_passthrough(true)
+
+        wait()
     end
-    
-    wait()
-end
 end)
 
+print("V1.7 - Fixed Toggle Button Filling")
 return Library
