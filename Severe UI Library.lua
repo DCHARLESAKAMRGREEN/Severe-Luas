@@ -88,6 +88,7 @@ function ToggleUI()
 
         if not IsVisible then
              IsDragging = false
+             set_window_passthrough(true)
         else
             Main:SelectTab(Main.ActiveTab)
         end
@@ -463,7 +464,7 @@ function Library:Create(Title)
             OtherTab.Content.Visible = false
             SetVisibilityRecursive(OtherTab.Content.LeftSections, false)
             SetVisibilityRecursive(OtherTab.Content.RightSections, false)
-            SetVisibilityRecursive(OtherTab.Content.Interfaces, false) 
+            SetVisibilityRecursive(OtherTab.Content.Interfaces, false)
         end
 
         local SelectedTab = Main.TabButtons[TabName]
@@ -473,7 +474,7 @@ function Library:Create(Title)
 
         SetVisibilityRecursive(SelectedTab.Content.LeftSections, true)
         SetVisibilityRecursive(SelectedTab.Content.RightSections, true)
-        SetVisibilityRecursive(SelectedTab.Content.Interfaces, true) 
+        SetVisibilityRecursive(SelectedTab.Content.Interfaces, true)
 
         Main:Sections()
     end
@@ -506,9 +507,20 @@ spawn(function()
         end
         TogglePressed = IsTogglePressed
 
-        local IsHoveringNow = false
+        local IsHovered = false
         if IsVisible and WindowActive then
-             IsHoveringNow = WindowActive:IsHoveringWindow()
+             if WindowActive:IsHoveringWindow() then
+                IsHovered = true
+             end
+
+             if not IsHovered then
+                 for _, TabObj in ipairs(WindowActive.Tabs) do
+                     if TabObj.Button.Visible and WindowActive:IsHovered(TabObj.Button) then
+                         IsHovered = true
+                         break
+                     end
+                 end
+             end
 
             local WindowPos = WindowActive.WindowBackground.Position
             local WindowSize = WindowActive.WindowBackground.Size
@@ -535,16 +547,18 @@ spawn(function()
             end
 
             if Mouse.Clicked and not IsDragging then
-                for _, TabObj in ipairs(WindowActive.Tabs) do
-                    if WindowActive:IsHovered(TabObj.Button) then
-                        WindowActive:SelectTab(TabObj.Name)
-                        break
-                    end
-                end
+                 if IsHovered and not IsHoveredDragArea then
+                     for _, TabObj in ipairs(WindowActive.Tabs) do
+                         if WindowActive:IsHovered(TabObj.Button) then
+                             WindowActive:SelectTab(TabObj.Name)
+                             break
+                         end
+                     end
+                 end
             end
         end
 
-        if IsHoveringNow then
+        if IsHovered then
             set_window_passthrough(false)
         else
             set_window_passthrough(true)
@@ -554,5 +568,5 @@ spawn(function()
     end
 end)
 
-print("V1")
+print("V2")
 return Library
