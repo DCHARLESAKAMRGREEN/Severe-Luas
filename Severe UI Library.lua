@@ -335,7 +335,7 @@ function Library:Create(TitleText)
             if SectionObj.Interfaces then
                 for _, InterfaceObj in ipairs(SectionObj.Interfaces) do
                      if InterfaceObj.Type == "Button" then
-                         local ButtonHeight = 17
+                         local ButtonHeight = 20
                          local ButtonWidth = Width - (Padding * 2)
                          local ButtonX = ColumnX + Padding
                          local ButtonY = CurrentInternalY
@@ -360,8 +360,7 @@ function Library:Create(TitleText)
 
                          CurrentInternalY = CurrentInternalY + ButtonHeight + Padding
                      elseif InterfaceObj.Type == "Toggle" then
-                         local ToggleHeight = 17
-                         local ToggleWidth = Width - (Padding * 2)
+                         local ToggleSize = 20
                          local ToggleX = ColumnX + Padding
                          local ToggleY = CurrentInternalY
 
@@ -370,20 +369,14 @@ function Library:Create(TitleText)
                          SetElementVisibility(InterfaceObj.ToggleText, true)
 
                          InterfaceObj.ToggleBackground.Position = {ToggleX, ToggleY}
-                         InterfaceObj.ToggleBackground.Size = {ToggleWidth, ToggleHeight}
+                         InterfaceObj.ToggleBackground.Size = {ToggleSize, ToggleSize}
                          InterfaceObj.ToggleBorder.Position = {ToggleX, ToggleY}
-                         InterfaceObj.ToggleBorder.Size = {ToggleWidth, ToggleHeight}
+                         InterfaceObj.ToggleBorder.Size = {ToggleSize, ToggleSize}
 
-                         local TextYOffset = 0
-                         if InterfaceObj.ToggleText.TextBounds then
-                             TextYOffset = math.floor((ToggleHeight - InterfaceObj.ToggleText.TextBounds.y) / 2)
-                         else
-                             TextYOffset = 1
-                         end
-                         InterfaceObj.ToggleText.Position = {ToggleX + 5, ToggleY + TextYOffset}
-                         InterfaceObj.ToggleText.Center = false
+                         local TextYOffset = math.floor((ToggleSize - 12) / 2)
+                         InterfaceObj.ToggleText.Position = {ToggleX + ToggleSize + 5, ToggleY + TextYOffset}
 
-                         CurrentInternalY = CurrentInternalY + ToggleHeight + Padding
+                         CurrentInternalY = CurrentInternalY + ToggleSize + Padding
                      end
                 end
             end
@@ -585,14 +578,13 @@ function Library:Create(TitleText)
                         ToggleBackground.Filled = true
                         ToggleBackground.Color = Colors["Accent"]
                         ToggleBackground.Transparency = 0.5
+                        ToggleBorder.Visible = false
                     else
                         ToggleBackground.Filled = false
                         ToggleBackground.Color = Colors["Object Background"]
                         ToggleBackground.Transparency = 1
+                        ToggleBorder.Visible = true
                     end
-                    
-                    local isHovered = WindowActive and WindowActive:IsHovered(ToggleBackground)
-                    ToggleBorder.Color = isHovered and Colors["Accent"] or Colors["Object Border"]
                 end
                 
                 UpdateToggleVisuals()
@@ -789,8 +781,22 @@ spawn(function()
                                                  end
                                              end
                                          elseif InterfaceObj.Type == "Toggle" and InterfaceObj.ToggleBackground.Visible then
-                                             local IsHover = WindowActive:IsHovered(InterfaceObj.ToggleBackground)
+                                             local togglePos = InterfaceObj.ToggleBackground.Position
+                                             local toggleSize = InterfaceObj.ToggleBackground.Size
+                                             local textPos = InterfaceObj.ToggleText.Position
+                                             local textBounds = InterfaceObj.ToggleText.TextBounds or {x = 100, y = 12}
+                                             
+                                             local hitboxX = togglePos.x
+                                             local hitboxY = togglePos.y
+                                             local hitboxWidth = (textPos.x + textBounds.x) - togglePos.x + 5
+                                             local hitboxHeight = math.max(toggleSize.y, textBounds.y)
+                                             
+                                             local IsHover = (Mouse.X >= hitboxX and Mouse.X <= hitboxX + hitboxWidth and
+                                                             Mouse.Y >= hitboxY and Mouse.Y <= hitboxY + hitboxHeight)
+                                             
                                              if IsHover then
+                                                 IsMouseOverUI = true
+                                                 HoveredButton = InterfaceObj
                                                  InterfaceObj.State = not InterfaceObj.State
                                                  InterfaceObj.Update()
                                                  
@@ -833,15 +839,25 @@ spawn(function()
                                              InterfaceObj.ButtonBorder.Color = IsCurrentlyHovered and Colors["Accent"] or InterfaceObj.DefaultBorderColor
                                          end
                                      elseif InterfaceObj.Type == "Toggle" then
-                                         local IsCurrentlyHovered = WindowActive:IsHovered(InterfaceObj.ToggleBackground)
+                                         local togglePos = InterfaceObj.ToggleBackground.Position
+                                         local toggleSize = InterfaceObj.ToggleBackground.Size
+                                         local textPos = InterfaceObj.ToggleText.Position
+                                         local textBounds = InterfaceObj.ToggleText.TextBounds or {x = 100, y = 12}
+                                         
+                                         local hitboxX = togglePos.x
+                                         local hitboxY = togglePos.y
+                                         local hitboxWidth = (textPos.x + textBounds.x) - togglePos.x + 5
+                                         local hitboxHeight = math.max(toggleSize.y, textBounds.y)
+                                         
+                                         local IsCurrentlyHovered = (Mouse.X >= hitboxX and Mouse.X <= hitboxX + hitboxWidth and
+                                                                   Mouse.Y >= hitboxY and Mouse.Y <= hitboxY + hitboxHeight)
                                          
                                          if IsCurrentlyHovered then
                                              IsMouseOverUI = true
                                              HoveredButton = InterfaceObj
-                                         end
-                                         
-                                         if not InterfaceObj.State then
-                                             InterfaceObj.ToggleBorder.Color = IsCurrentlyHovered and Colors["Accent"] or InterfaceObj.DefaultBorderColor
+                                             InterfaceObj.ToggleBorder.Color = Colors["Accent"]
+                                         else
+                                             InterfaceObj.ToggleBorder.Color = InterfaceObj.State and Colors["Accent"] or Colors["Object Border"]
                                          end
                                      end
                                  end
@@ -858,5 +874,5 @@ spawn(function()
     end
 end)
 
-print("V1.4 - Added Toggle Button Support")
+print("V1.5 - Compact Toggle Button Support")
 return Library
