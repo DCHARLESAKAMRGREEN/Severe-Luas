@@ -53,7 +53,6 @@ end
 
 function ToggleUI()
     IsVisible = not IsVisible
-    setmouseiconenabled(MouseService, not IsVisible)
 
     if ActiveWindow then
         local Main = ActiveWindow
@@ -94,8 +93,6 @@ function Library:Create(Title)
             Element.Visible = IsVisible
         end
     end
-
-    setmouseiconenabled(MouseService, not IsVisible)
 
     Main.WindowBackground = Drawing.new("Square")
     Main.WindowBackground.Size = {650, 750}
@@ -171,13 +168,17 @@ function Library:Create(Title)
     function Main:IsHovered(Element)
         if not IsVisible or not Element or not Element.Visible then return false end
         local MouseX, MouseY = Mouse.X, Mouse.Y
-        if Element.Size and Element.Position then
-             local ElemX, ElemY = Element.Position.x, Element.Position.y
-             local ElemW, ElemH = Element.Size.x, Element.Size.y
+        local ElemPos = Element.Position
+        if not ElemPos then return false end
+        local ElemX, ElemY = ElemPos.x, ElemPos.y
+
+        if Element.Size then
+             local ElemSize = Element.Size
+             local ElemW, ElemH = ElemSize.x, ElemSize.y
              return MouseX >= ElemX and MouseX <= ElemX + ElemW and MouseY >= ElemY and MouseY <= ElemY + ElemH
-        elseif Element.TextBounds and Element.Position then
-             local ElemX, ElemY = Element.Position.x, Element.Position.y
-             local ElemW, ElemH = Element.TextBounds.x, Element.TextBounds.y
+        elseif Element.TextBounds then
+             local ElemBounds = Element.TextBounds
+             local ElemW, ElemH = ElemBounds.x, ElemBounds.y
              if Element.Center then
                  ElemX = ElemX - ElemW / 2
              end
@@ -192,7 +193,9 @@ function Library:Create(Title)
     end
 
     function Main:UpdateElementPositions()
-        local BaseX, BaseY = Main.WindowBackground.Position.x, Main.WindowBackground.Position.y
+        local BasePos = Main.WindowBackground.Position
+        local BaseX, BaseY = BasePos.x, BasePos.y
+        local BaseSize = Main.WindowBackground.Size
 
         Main.Title.Position = {BaseX + 10, BaseY + 5}
         Main.TabBackground.Position = {BaseX + 10, BaseY + 25}
@@ -219,15 +222,19 @@ function Library:Create(Title)
         end
 
         local CurrentX = Main.TabBackground.Position.x
+        local TabY = Main.TabBackground.Position.y
+        local TabH = Main.TabBackground.Size.y
+
         for i, TabObj in ipairs(Main.Tabs) do
-            TabObj.Button.Size = {TabWidth, Main.TabBackground.Size.y}
-            TabObj.Button.Position = {CurrentX, Main.TabBackground.Position.y}
-            TabObj.ButtonBorder.Size = {TabWidth, Main.TabBackground.Size.y}
-            TabObj.ButtonBorder.Position = {CurrentX, Main.TabBackground.Position.y}
-            if TabObj.ButtonText.TextBounds then
-                 TabObj.ButtonText.Position = {CurrentX + (TabWidth / 2), Main.TabBackground.Position.y + (Main.TabBackground.Size.y / 2) - (TabObj.ButtonText.TextBounds.y / 2)}
+            TabObj.Button.Size = {TabWidth, TabH}
+            TabObj.Button.Position = {CurrentX, TabY}
+            TabObj.ButtonBorder.Size = {TabWidth, TabH}
+            TabObj.ButtonBorder.Position = {CurrentX, TabY}
+            local ButtonText = TabObj.ButtonText
+            if ButtonText.TextBounds then
+                 ButtonText.Position = {CurrentX + (TabWidth / 2), TabY + (TabH / 2) - (ButtonText.TextBounds.y / 2)}
             else
-                 TabObj.ButtonText.Position = {CurrentX + (TabWidth / 2), Main.TabBackground.Position.y + (Main.TabBackground.Size.y / 2) - 7}
+                 ButtonText.Position = {CurrentX + (TabWidth / 2), TabY + (TabH / 2) - 7}
             end
             CurrentX = CurrentX + TabWidth
         end
@@ -237,16 +244,18 @@ function Library:Create(Title)
         if not Main.ActiveTab or not Main.TabContents[Main.ActiveTab] then return end
 
         local CurrentTabContent = Main.TabContents[Main.ActiveTab]
-        local ParentWidth = Main.WindowBackground2.Size.x
-        local AvailableWidth = ParentWidth - (5 * 2) - 5 -- SidePadding*2 + MiddlePadding
+        local ParentPos = Main.WindowBackground2.Position
+        local ParentSize = Main.WindowBackground2.Size
+        local ParentWidth = ParentSize.x
+        local AvailableWidth = ParentWidth - (5 * 2) - 5
         local ColumnWidth = AvailableWidth / 2
 
-        local BaseX = Main.WindowBackground2.Position.x
-        local BaseY = Main.WindowBackground2.Position.y
+        local BaseX = ParentPos.x
+        local BaseY = ParentPos.y
 
-        local LeftColumnX = BaseX + 5 -- SidePadding
-        local RightColumnX = LeftColumnX + ColumnWidth + 5 -- MiddlePadding
-        local InitialY = BaseY + 5 -- TopPadding
+        local LeftColumnX = BaseX + 5
+        local RightColumnX = LeftColumnX + ColumnWidth + 5
+        local InitialY = BaseY + 5
 
         CurrentTabContent.CurrentLeftY = InitialY
         CurrentTabContent.CurrentRightY = InitialY
@@ -257,7 +266,7 @@ function Library:Create(Title)
             SectionObj.Border.Position = {ColumnX, CurrentY}
             SectionObj.Background.Size = {ColumnWidth, PlaceholderHeight}
             SectionObj.Border.Size = {ColumnWidth, PlaceholderHeight}
-            return CurrentY + PlaceholderHeight + 5 -- BottomPadding
+            return CurrentY + PlaceholderHeight + 5
         end
 
         for _, SectionObj in ipairs(CurrentTabContent.LeftSections) do
@@ -400,7 +409,7 @@ function Library:Create(Title)
 
         local SelectedTab = Main.TabButtons[TabName]
         SelectedTab.Button.Color = Colors["Tab Selected Background"]
-        SelectedTab.Button.Transparency = 0.9 -- 0.1 Alpha = 0.9 Transparency
+        SelectedTab.Button.Transparency = 0.3
         SelectedTab.Content.Visible = true
         Main.ActiveTab = TabName
 
@@ -439,33 +448,36 @@ spawn(function()
         end
         TogglePressed = IsTogglePressed
 
-        if IsVisible then
-            if ActiveWindow then
-                local DragAreaYMax = ActiveWindow.TabBackground.Position.y
-                local IsHoveredDragArea = Mouse.X >= ActiveWindow.WindowBackground.Position.x and
-                                      Mouse.X <= ActiveWindow.WindowBackground.Position.x + ActiveWindow.WindowBackground.Size.x and
-                                      Mouse.Y >= ActiveWindow.WindowBackground.Position.y and
-                                      Mouse.Y < DragAreaYMax
+        if IsVisible and ActiveWindow then
+            local WindowPos = ActiveWindow.WindowBackground.Position
+            local WindowSize = ActiveWindow.WindowBackground.Size
+            local WindowX = WindowPos.x
+            local WindowY = WindowPos.y
 
-                if Mouse.Clicked and IsHoveredDragArea and not IsDragging then
-                    IsDragging = true
-                    DragOffsetX = Mouse.X - ActiveWindow.WindowBackground.Position.x
-                    DragOffsetY = Mouse.Y - ActiveWindow.WindowBackground.Position.y
-                elseif Mouse.Pressed and IsDragging then
-                    local NewX = Mouse.X - DragOffsetX
-                    local NewY = Mouse.Y - DragOffsetY
-                    ActiveWindow.WindowBackground.Position = {NewX, NewY}
-                    ActiveWindow:UpdateElementPositions()
-                elseif not Mouse.Pressed and IsDragging then
-                     IsDragging = false
-                end
+            local DragAreaYMax = ActiveWindow.TabBackground.Position.y
+            local IsHoveredDragArea = Mouse.X >= WindowX and
+                                  Mouse.X <= WindowX + WindowSize.x and
+                                  Mouse.Y >= WindowY and
+                                  Mouse.Y < DragAreaYMax
 
-                if Mouse.Clicked and not IsDragging then
-                    for _, TabObj in ipairs(ActiveWindow.Tabs) do
-                        if ActiveWindow:IsHovered(TabObj.Button) then
-                            ActiveWindow:SelectTab(TabObj.Name)
-                            break
-                        end
+            if Mouse.Clicked and IsHoveredDragArea and not IsDragging then
+                IsDragging = true
+                DragOffsetX = Mouse.X - WindowX
+                DragOffsetY = Mouse.Y - WindowY
+            elseif Mouse.Pressed and IsDragging then
+                local NewX = Mouse.X - DragOffsetX
+                local NewY = Mouse.Y - DragOffsetY
+                ActiveWindow.WindowBackground.Position = {NewX, NewY}
+                ActiveWindow:UpdateElementPositions()
+            elseif not Mouse.Pressed and IsDragging then
+                 IsDragging = false
+            end
+
+            if Mouse.Clicked and not IsDragging then
+                for _, TabObj in ipairs(ActiveWindow.Tabs) do
+                    if ActiveWindow:IsHovered(TabObj.Button) then
+                        ActiveWindow:SelectTab(TabObj.Name)
+                        break
                     end
                 end
             end
@@ -475,4 +487,5 @@ spawn(function()
     end
 end)
 
+print("Loaded Library")
 return Library
