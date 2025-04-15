@@ -16,6 +16,7 @@ local Colors = {
     ["Dropdown Option Background"] = {19, 19, 19}
 }
 
+local Game = Game
 local MouseService = findservice(Game, "MouseService")
 local Mouse = {
     X = 0,
@@ -31,71 +32,94 @@ local DragOffsetX = 0
 local DragOffsetY = 0
 local IsVisible = true
 local TogglePressed = false
+local HoveredButton = nil
+local ClickedButtons = {}
+
+local function SetElementVisibility(Element, Visible)
+    if Element and Element.Visible ~= nil then
+        Element.Visible = Visible
+    end
+end
 
 local function SetVisibilityRecursive(InterfaceCollection, Visible)
     for _, Interface in pairs(InterfaceCollection) do
-        if Interface.Visible ~= nil then
+        if Interface.Type == "Section" then
+             SetElementVisibility(Interface.Background, Visible)
+             SetElementVisibility(Interface.Border, Visible)
+             SetElementVisibility(Interface.Title, Visible)
              Interface.Visible = Visible
-        end
-        if Interface.Interfaces then
-            SetVisibilityRecursive(Interface.Interfaces, Visible)
-        end
-         if Interface.Background and Interface.Background.Visible ~= nil then
-             Interface.Background.Visible = Visible
-         end
-         if Interface.Border and Interface.Border.Visible ~= nil then
-             Interface.Border.Visible = Visible
-         end
-         if Interface.Title and Interface.Title.Visible ~= nil then
-             Interface.Title.Visible = Visible
-         end
-         if Interface.Remove and Interface.Position then
+             if Interface.Interfaces then
+                 SetVisibilityRecursive(Interface.Interfaces, Visible)
+             end
+        elseif Interface.Type == "Button" then
+             SetElementVisibility(Interface.ButtonBackground, Visible)
+             SetElementVisibility(Interface.ButtonBorder, Visible)
+             SetElementVisibility(Interface.ButtonText, Visible)
              Interface.Visible = Visible
-         end
-         if Interface.SelectedHighlight and Interface.SelectedHighlight.Visible ~= nil then
-            Interface.SelectedHighlight.Visible = false
-         end
+        else
+             -- Handle other potential generic interface types if needed
+             if Interface.Visible ~= nil then
+                 Interface.Visible = Visible
+             end
+             if Interface.Interfaces then
+                 SetVisibilityRecursive(Interface.Interfaces, Visible)
+             end
+             if Interface.Background and Interface.Background.Visible ~= nil then
+                 Interface.Background.Visible = Visible
+             end
+             if Interface.Border and Interface.Border.Visible ~= nil then
+                 Interface.Border.Visible = Visible
+             end
+             if Interface.Title and Interface.Title.Visible ~= nil then
+                 Interface.Title.Visible = Visible
+             end
+             if Interface.SelectedHighlight and Interface.SelectedHighlight.Visible ~= nil then
+                 Interface.SelectedHighlight.Visible = false
+             end
+        end
     end
 end
 
 function ToggleUI()
     IsVisible = not IsVisible
+    set_window_passthrough(not IsVisible) -- Added for mouse interaction
 
     if WindowActive then
         local Main = WindowActive
 
-        Main.WindowBackground.Visible = IsVisible
-        Main.Title.Visible = IsVisible
-        Main.TabBackground.Visible = IsVisible
-        Main.TabBorder.Visible = IsVisible
-        Main.WindowBackground2.Visible = IsVisible
-        Main.Window2Border.Visible = IsVisible
-        Main.WindowBorder.Visible = IsVisible
+        SetElementVisibility(Main.WindowBackground, IsVisible)
+        SetElementVisibility(Main.Title, IsVisible)
+        SetElementVisibility(Main.TabBackground, IsVisible)
+        SetElementVisibility(Main.TabBorder, IsVisible)
+        SetElementVisibility(Main.WindowBackground2, IsVisible)
+        SetElementVisibility(Main.Window2Border, IsVisible)
+        SetElementVisibility(Main.WindowBorder, IsVisible)
 
         for _, TabObj in ipairs(Main.Tabs) do
-             TabObj.Button.Visible = IsVisible
-             TabObj.ButtonBorder.Visible = IsVisible
-             TabObj.ButtonText.Visible = IsVisible
-             if TabObj.SelectedHighlight then
-                 TabObj.SelectedHighlight.Visible = IsVisible and (TabObj.Name == Main.ActiveTab)
-             end
+            SetElementVisibility(TabObj.Button, IsVisible)
+            SetElementVisibility(TabObj.ButtonBorder, IsVisible)
+            SetElementVisibility(TabObj.ButtonText, IsVisible)
 
-             local IsActiveTab = TabObj.Name == Main.ActiveTab
-             SetVisibilityRecursive(TabObj.Content.LeftSections, IsVisible and IsActiveTab)
-             SetVisibilityRecursive(TabObj.Content.RightSections, IsVisible and IsActiveTab)
-             SetVisibilityRecursive(TabObj.Content.Interfaces, IsVisible and IsActiveTab)
+            local IsActiveTab = TabObj.Name == Main.ActiveTab
+            SetElementVisibility(TabObj.SelectedHighlight, IsVisible and IsActiveTab)
+
+            SetVisibilityRecursive(TabObj.Content.LeftSections, IsVisible and IsActiveTab)
+            SetVisibilityRecursive(TabObj.Content.RightSections, IsVisible and IsActiveTab)
         end
 
         if not IsVisible then
-             IsDragging = false
+            IsDragging = false
+            HoveredButton = nil
+            ClickedButtons = {}
         else
-            Main:SelectTab(Main.ActiveTab)
+            Main:SelectTab(Main.ActiveTab) -- Reselect to ensure correct visibility state
+            Main:UpdateLayout() -- Update layout when showing
         end
     end
 end
 
 
-function Library:Create(Title)
+function Library:Create(TitleText)
     local Main = {}
 
     local function SetInitialVisibility(Interface)
@@ -114,7 +138,7 @@ function Library:Create(Title)
     SetInitialVisibility(Main.WindowBackground)
 
     Main.Title = Drawing.new("Text")
-    Main.Title.Text = Title or "Severe UI"
+    Main.Title.Text = TitleText or "Severe UI"
     Main.Title.Size = 16
     Main.Title.Font = 5
     Main.Title.Color = Colors["Text"]
@@ -183,23 +207,27 @@ function Library:Create(Title)
         local InterfaceX, InterfaceY = InterfacePos.x, InterfacePos.y
 
         if Interface.Size then
-             local InterfaceSize = Interface.Size
-             local InterfaceW, InterfaceH = InterfaceSize.x, InterfaceSize.y
-             return MouseX >= InterfaceX and MouseX <= InterfaceX + InterfaceW and MouseY >= InterfaceY and MouseY <= InterfaceY + InterfaceH
+            local InterfaceSize = Interface.Size
+            local InterfaceW, InterfaceH = InterfaceSize.x, InterfaceSize.y
+            return MouseX >= InterfaceX and MouseX <= InterfaceX + InterfaceW and MouseY >= InterfaceY and MouseY <= InterfaceY + InterfaceH
         elseif Interface.TextBounds then
+            -- Approximation for text hover if needed, TextBounds might not be accurate for complex cases
              local InterfaceBounds = Interface.TextBounds
              local InterfaceW, InterfaceH = InterfaceBounds.x, InterfaceBounds.y
              if Interface.Center then
                  InterfaceX = InterfaceX - InterfaceW / 2
              end
+             -- Adjust Y pos slightly for better hover feel on text
+             InterfaceY = InterfaceY - InterfaceH / 4
              return MouseX >= InterfaceX and MouseX <= InterfaceX + InterfaceW and MouseY >= InterfaceY and MouseY <= InterfaceY + InterfaceH
         end
         return false
     end
 
+
     function Main:IsHoveringWindow()
-         if not IsVisible then return false end
-         return Main:IsHovered(Main.WindowBackground)
+        if not IsVisible then return false end
+        return Main:IsHovered(Main.WindowBackground)
     end
 
     function Main:UpdateElementPositions()
@@ -213,8 +241,7 @@ function Library:Create(Title)
         Main.Window2Border.Position = {Main.WindowBackground2.Position.x, Main.WindowBackground2.Position.y}
         Main.WindowBorder.Position = {BaseX, BaseY}
 
-        Main:UpdateTabSizes()
-        Main:Sections()
+        Main:UpdateLayout()
     end
 
     function Main:UpdateTabSizes()
@@ -263,62 +290,114 @@ function Library:Create(Title)
             if ButtonText.TextBounds then
                  ButtonText.Position = {RoundedStartX + (RoundedWidth / 2), TabY + (TabH / 2) - (ButtonText.TextBounds.y / 2)}
             else
-                 ButtonText.Position = {RoundedStartX + (RoundedWidth / 2), TabY + (TabH / 2) - 7}
+                 ButtonText.Position = {RoundedStartX + (RoundedWidth / 2), TabY + (TabH / 2) - 7} -- Approx center Y
             end
+            ButtonText.Center = true -- Ensure text centering updates
         end
     end
 
+    function Main:UpdateLayout()
+        Main:UpdateTabSizes()
 
-    function Main:Sections()
         if not Main.ActiveTab or not Main.TabContents[Main.ActiveTab] then return end
 
         local CurrentTabContent = Main.TabContents[Main.ActiveTab]
         local ParentPos = Main.WindowBackground2.Position
         local ParentSize = Main.WindowBackground2.Size
         local ParentWidth = ParentSize.x
-        local AvailableWidth = ParentWidth - (5 * 2) - 5
-        local ColumnWidth = AvailableWidth / 2
+        local Padding = 5
+        local AvailableWidth = ParentWidth - (Padding * 2) - Padding
+        local ColumnWidth = math.floor(AvailableWidth / 2)
 
         local BaseX = ParentPos.x
         local BaseY = ParentPos.y
 
-        local LeftColumnX = BaseX + 5
-        local RightColumnX = LeftColumnX + ColumnWidth + 5
-        local InitialY = BaseY + 5
+        local LeftColumnX = BaseX + Padding
+        local RightColumnX = LeftColumnX + ColumnWidth + Padding
+        local InitialY = BaseY + Padding
 
-        CurrentTabContent.CurrentLeftY = InitialY
-        CurrentTabContent.CurrentRightY = InitialY
+        local CurrentLeftY = InitialY
+        local CurrentRightY = InitialY
 
-        local function PositionSection(SectionObj, ColumnX, CurrentY)
-            local PlaceholderHeight = 100
-            local Background = SectionObj.Background
-            local Border = SectionObj.Border
-            local Title = SectionObj.Title
+        local function UpdateSectionLayout(SectionObj, ColumnX, StartY, Width)
+            SetElementVisibility(SectionObj.Background, true)
+            SetElementVisibility(SectionObj.Border, true)
+            SetElementVisibility(SectionObj.Title, true)
 
-            Background.Position = {ColumnX, CurrentY}
-            Border.Position = {ColumnX, CurrentY}
-            Background.Size = {ColumnWidth, PlaceholderHeight}
-            Border.Size = {ColumnWidth, PlaceholderHeight}
+            SectionObj.Background.Position = {ColumnX, StartY}
+            SectionObj.Border.Position = {ColumnX, StartY}
 
-            if Title then
-                Title.Position = {ColumnX + 5, CurrentY + 3}
-                Title.Visible = SectionObj.Visible
+            local TitleHeight = 0
+            if SectionObj.Title then
+                SectionObj.Title.Position = {ColumnX + Padding, StartY + 3}
+                if SectionObj.Title.TextBounds then TitleHeight = SectionObj.Title.TextBounds.y else TitleHeight = 12 end -- Estimate if no bounds
             end
-            return CurrentY + PlaceholderHeight + 5
+
+            local CurrentInternalY = StartY + TitleHeight + Padding * 2 -- Padding above and below title
+
+            if SectionObj.Interfaces then
+                for _, InterfaceObj in ipairs(SectionObj.Interfaces) do
+                     if InterfaceObj.Type == "Button" then
+                         local ButtonHeight = 15
+                         local ButtonWidth = Width - (Padding * 2)
+                         local ButtonX = ColumnX + Padding
+                         local ButtonY = CurrentInternalY
+
+                         SetElementVisibility(InterfaceObj.ButtonBackground, true)
+                         SetElementVisibility(InterfaceObj.ButtonBorder, true)
+                         SetElementVisibility(InterfaceObj.ButtonText, true)
+
+                         InterfaceObj.ButtonBackground.Position = {ButtonX, ButtonY}
+                         InterfaceObj.ButtonBackground.Size = {ButtonWidth, ButtonHeight}
+                         InterfaceObj.ButtonBorder.Position = {ButtonX, ButtonY}
+                         InterfaceObj.ButtonBorder.Size = {ButtonWidth, ButtonHeight}
+
+                         local TextYOffset = 0
+                         if InterfaceObj.ButtonText.TextBounds then
+                             TextYOffset = math.floor((ButtonHeight - InterfaceObj.ButtonText.TextBounds.y) / 2)
+                         else
+                             TextYOffset = 1 -- Approximation
+                         end
+                         InterfaceObj.ButtonText.Position = {ButtonX + math.floor(ButtonWidth / 2), ButtonY + TextYOffset}
+                         InterfaceObj.ButtonText.Center = true
+
+                         CurrentInternalY = CurrentInternalY + ButtonHeight + Padding
+                     end
+                     -- Add other interface types here if needed
+                end
+            end
+
+            local TotalSectionHeight = (CurrentInternalY - StartY) -- No bottom padding inside, add padding between sections
+            SectionObj.Background.Size = {Width, TotalSectionHeight}
+            SectionObj.Border.Size = {Width, TotalSectionHeight}
+            SectionObj.CalculatedHeight = TotalSectionHeight -- Store height for next section positioning
+
+            return StartY + TotalSectionHeight + Padding -- Return Y position for the start of the next section
         end
 
         for _, SectionObj in ipairs(CurrentTabContent.LeftSections) do
-             if SectionObj.Visible then
-                CurrentTabContent.CurrentLeftY = PositionSection(SectionObj, LeftColumnX, CurrentTabContent.CurrentLeftY)
-             end
+            if SectionObj.Visible then
+                CurrentLeftY = UpdateSectionLayout(SectionObj, LeftColumnX, CurrentLeftY, ColumnWidth)
+            else
+                SetElementVisibility(SectionObj.Background, false)
+                SetElementVisibility(SectionObj.Border, false)
+                SetElementVisibility(SectionObj.Title, false)
+                if SectionObj.Interfaces then SetVisibilityRecursive(SectionObj.Interfaces, false) end
+            end
         end
 
         for _, SectionObj in ipairs(CurrentTabContent.RightSections) do
-            if SectionObj.Visible then
-                CurrentTabContent.CurrentRightY = PositionSection(SectionObj, RightColumnX, CurrentTabContent.CurrentRightY)
-            end
+             if SectionObj.Visible then
+                CurrentRightY = UpdateSectionLayout(SectionObj, RightColumnX, CurrentRightY, ColumnWidth)
+             else
+                SetElementVisibility(SectionObj.Background, false)
+                SetElementVisibility(SectionObj.Border, false)
+                SetElementVisibility(SectionObj.Title, false)
+                if SectionObj.Interfaces then SetVisibilityRecursive(SectionObj.Interfaces, false) end
+             end
         end
     end
+
 
     function Main:Tab(TabName)
         if not TabName then
@@ -358,11 +437,8 @@ function Library:Create(Title)
 
         local TabContent = {
             Name = TabName,
-            Interfaces = {},
             LeftSections = {},
             RightSections = {},
-            CurrentLeftY = 0,
-            CurrentRightY = 0,
             Visible = false
         }
 
@@ -397,14 +473,68 @@ function Library:Create(Title)
             SectionTitle.Visible = false
 
             local SectionObj = {
+                Type = "Section",
                 Name = SectionName,
                 Side = Side,
                 Background = SectionBackground,
                 Border = SectionBorder,
                 Title = SectionTitle,
                 Interfaces = {},
-                Visible = false
+                Visible = false,
+                CalculatedHeight = 0 -- Initialize calculated height
             }
+
+            function SectionObj:Button(ButtonName, Callback)
+                local ButtonBackground = Drawing.new("Square")
+                ButtonBackground.Color = Colors["Object Background"]
+                ButtonBackground.Filled = true
+                ButtonBackground.Thickness = 1
+                ButtonBackground.Transparency = 1
+                ButtonBackground.Visible = self.Visible
+
+                local ButtonBorder = Drawing.new("Square")
+                ButtonBorder.Color = Colors["Object Border"]
+                ButtonBorder.Filled = false
+                ButtonBorder.Thickness = 1
+                ButtonBorder.Transparency = 1
+                ButtonBorder.Visible = self.Visible
+
+                local ButtonText = Drawing.new("Text")
+                ButtonText.Text = ButtonName or "Button"
+                ButtonText.Size = 12
+                ButtonText.Font = 5
+                ButtonText.Color = Colors["Text"]
+                ButtonText.Outline = true
+                ButtonText.OutlineColor = {0, 0, 0}
+                ButtonText.Transparency = 1
+                ButtonText.Center = true
+                ButtonText.Visible = self.Visible
+
+                local ButtonObj = {
+                    Type = "Button",
+                    Name = ButtonName,
+                    Callback = Callback,
+                    ButtonBackground = ButtonBackground,
+                    ButtonBorder = ButtonBorder,
+                    ButtonText = ButtonText,
+                    DefaultBorderColor = Colors["Object Border"],
+                    OriginalBackgroundColor = Colors["Object Background"],
+                    OriginalBackgroundTransparency = 1,
+                    IsClicked = false,
+                    ClickStartTime = 0,
+                    Visible = self.Visible
+                }
+
+                table.insert(self.Interfaces, ButtonObj)
+
+                -- Only update layout if the UI is currently visible and this section's tab is active
+                if IsVisible and Main.ActiveTab == TabContent.Name then
+                     Main:UpdateLayout()
+                end
+
+                return ButtonObj
+            end
+
 
             if Side == "Left" then
                 table.insert(self.LeftSections, SectionObj)
@@ -412,12 +542,12 @@ function Library:Create(Title)
                 table.insert(self.RightSections, SectionObj)
             end
 
-            if IsVisible and Main.ActiveTab == self.Name then
-                 SectionObj.Visible = true
-                 SectionBackground.Visible = true
-                 SectionBorder.Visible = true
-                 SectionTitle.Visible = true
-                 Main:Sections()
+            if IsVisible and Main.ActiveTab == TabContent.Name then
+                SectionObj.Visible = true
+                SetElementVisibility(SectionBackground, true)
+                SetElementVisibility(SectionBorder, true)
+                SetElementVisibility(SectionTitle, true)
+                Main:UpdateLayout() -- Update layout when adding section to active tab
             end
 
             return SectionObj
@@ -436,49 +566,47 @@ function Library:Create(Title)
         Main.TabButtons[TabName] = TabObj
         Main.TabContents[TabName] = TabContent
 
-        Main:UpdateTabSizes()
+        Main:UpdateTabSizes() -- Update sizes immediately
 
-        if IsVisible then
-            if #Main.Tabs == 1 then
-                Main:SelectTab(TabName)
-            else
-                 Main:SelectTab(Main.ActiveTab)
-            end
+        if #Main.Tabs == 1 and IsVisible then
+            Main:SelectTab(TabName) -- Select first tab automatically if visible
+        elseif Main.ActiveTab and IsVisible then
+             Main:SelectTab(Main.ActiveTab) -- Re-apply selection visuals if adding tab while visible
         else
-             TabButton.Visible = false
-             TabButtonBorder.Visible = false
-             TabButtonText.Visible = false
-             SelectedHighlight.Visible = false
+             -- Keep elements hidden if UI is not visible
+             SetElementVisibility(TabButton, false)
+             SetElementVisibility(TabButtonBorder, false)
+             SetElementVisibility(TabButtonText, false)
+             SetElementVisibility(SelectedHighlight, false)
+             SetVisibilityRecursive(TabContent.LeftSections, false)
+             SetVisibilityRecursive(TabContent.RightSections, false)
         end
 
         return TabContent
     end
 
     function Main:SelectTab(TabName)
-        if not Main.TabButtons[TabName] then return end
-        if not IsVisible then return end
+        if not Main.TabButtons[TabName] then warn("Tab not found: " .. tostring(TabName)) return end
 
-        for _, OtherTab in ipairs(Main.Tabs) do
-            OtherTab.SelectedHighlight.Visible = false
-            OtherTab.Content.Visible = false
-            SetVisibilityRecursive(OtherTab.Content.LeftSections, false)
-            SetVisibilityRecursive(OtherTab.Content.RightSections, false)
-            SetVisibilityRecursive(OtherTab.Content.Interfaces, false)
-        end
-
-        local SelectedTab = Main.TabButtons[TabName]
-        SelectedTab.SelectedHighlight.Visible = true
-        SelectedTab.Content.Visible = true
         Main.ActiveTab = TabName
 
-        SetVisibilityRecursive(SelectedTab.Content.LeftSections, true)
-        SetVisibilityRecursive(SelectedTab.Content.RightSections, true)
-        SetVisibilityRecursive(SelectedTab.Content.Interfaces, true)
+        if not IsVisible then -- If UI hidden, just set active tab name, don't change visuals
+             return
+        end
 
-        Main:Sections()
+        for OtherTabName, OtherTab in pairs(Main.TabButtons) do
+            local IsSelected = OtherTabName == TabName
+            SetElementVisibility(OtherTab.SelectedHighlight, IsSelected)
+            OtherTab.Content.Visible = IsSelected
+            SetVisibilityRecursive(OtherTab.Content.LeftSections, IsSelected)
+            SetVisibilityRecursive(OtherTab.Content.RightSections, IsSelected)
+        end
+
+        Main:UpdateLayout() -- Update layout for the newly selected tab
     end
 
     WindowActive = Main
+    if IsVisible then set_window_passthrough(false) else set_window_passthrough(true) end -- Initial passthrough state
     return Main
 end
 
@@ -489,72 +617,163 @@ spawn(function()
         Mouse.Y = MouseLocation.y
         Mouse.Clicked = isleftclicked()
         Mouse.Pressed = isleftpressed()
+        HoveredButton = nil -- Reset hovered button each frame
 
         local Keys = getpressedkeys()
-        local IsTogglePressed = false
+        local IsToggleKeyPressed = false
         if Keys then
             for _, k in ipairs(Keys) do
-                if k == 'P' then
-                    IsTogglePressed = true
+                if k == 'P' then -- Using 'P' as the toggle key from example
+                    IsToggleKeyPressed = true
                     break
                 end
             end
         end
 
-        if IsTogglePressed and not TogglePressed then
+        if IsToggleKeyPressed and not TogglePressed then
             ToggleUI()
         end
-        TogglePressed = IsTogglePressed
+        TogglePressed = IsToggleKeyPressed
 
-        local IsHovered = false
+        local IsMouseOverUI = false
+
         if IsVisible and WindowActive then
-             if WindowActive:IsHoveringWindow() then
-                IsHovered = true
-             end
+            if WindowActive:IsHoveringWindow() then
+                 IsMouseOverUI = true
+            end
 
-             if not IsHovered then
-                 for _, TabObj in ipairs(WindowActive.Tabs) do
-                     if TabObj.Button.Visible and WindowActive:IsHovered(TabObj.Button) then
-                         IsHovered = true
-                         break
-                     end
-                 end
-             end
+            -- Check Tab Hover
+            for _, TabObj in ipairs(WindowActive.Tabs) do
+                if TabObj.Button.Visible and WindowActive:IsHovered(TabObj.Button) then
+                    IsMouseOverUI = true
+                    break
+                end
+            end
 
+            -- Dragging Logic
             local WindowPos = WindowActive.WindowBackground.Position
-            local WindowSize = WindowActive.WindowBackground.Size
-            local WindowX = WindowPos.x
-            local WindowY = WindowPos.y
             local DragAreaYMax = WindowActive.TabBackground.Position.y
 
-            if Mouse.Clicked and IsHovered and Mouse.Y < DragAreaYMax and not IsDragging then
+            if Mouse.Clicked and IsMouseOverUI and Mouse.Y < DragAreaYMax and not IsDragging then
                 IsDragging = true
-                DragOffsetX = Mouse.X - WindowX
-                DragOffsetY = Mouse.Y - WindowY
+                DragOffsetX = Mouse.X - WindowPos.x
+                DragOffsetY = Mouse.Y - WindowPos.y
             elseif Mouse.Pressed and IsDragging then
+                IsMouseOverUI = true -- Ensure focus while dragging
                 local NewX = Mouse.X - DragOffsetX
                 local NewY = Mouse.Y - DragOffsetY
                 WindowActive.WindowBackground.Position = {NewX, NewY}
-                WindowActive:UpdateElementPositions()
+                WindowActive:UpdateElementPositions() -- Updates all element positions based on window pos
             elseif not Mouse.Pressed and IsDragging then
-                 IsDragging = false
+                IsDragging = false
             end
 
-            if Mouse.Clicked and not IsDragging then
-                 if IsHovered and Mouse.Y >= DragAreaYMax then
+            -- Tab and Button Interaction Logic
+            if not IsDragging and WindowActive.ActiveTab then
+                 local CurrentTabContent = WindowActive.TabContents[WindowActive.ActiveTab]
+                 if CurrentTabContent then
+                     local function ProcessSectionInterfaces(Sections)
+                         for _, SectionObj in ipairs(Sections) do
+                             if SectionObj.Visible and SectionObj.Interfaces then
+                                 for InterfaceIndex, InterfaceObj in ipairs(SectionObj.Interfaces) do
+                                     if InterfaceObj.Type == "Button" and InterfaceObj.ButtonBackground.Visible then
+                                         local IsHover = WindowActive:IsHovered(InterfaceObj.ButtonBackground)
+                                         if IsHover then
+                                             HoveredButton = InterfaceObj
+                                             IsMouseOverUI = true -- Mark UI as hovered if over a button
+                                         end
+
+                                         local ClickID = CurrentTabContent.Name .. "_" .. SectionObj.Name .. "_" .. tostring(InterfaceIndex)
+
+                                         -- Handle Click Start
+                                         if Mouse.Clicked and IsHover and not ClickedButtons[ClickID] then
+                                              ClickedButtons[ClickID] = {
+                                                  Obj = InterfaceObj,
+                                                  StartTime = tick()
+                                              }
+                                              InterfaceObj.ButtonBackground.Color = Colors["Tab Selected Background"]
+                                              InterfaceObj.ButtonBackground.Transparency = 0.135
+                                              InterfaceObj.ButtonBorder.Color = Colors["Accent"] -- Highlight border during click
+
+                                              if InterfaceObj.Callback then
+                                                  spawn(InterfaceObj.Callback)
+                                              end
+                                         end
+                                     end
+                                 end
+                             end
+                         end
+                     end
+                     ProcessSectionInterfaces(CurrentTabContent.LeftSections)
+                     ProcessSectionInterfaces(CurrentTabContent.RightSections)
+                 end
+
+                 -- Handle Tab Click
+                 if Mouse.Clicked and not IsMouseOverUI then -- Check if mouse isn't already interacting with content
                      for _, TabObj in ipairs(WindowActive.Tabs) do
-                         if WindowActive:IsHovered(TabObj.Button) then
+                         if TabObj.Button.Visible and WindowActive:IsHovered(TabObj.Button) then
                              WindowActive:SelectTab(TabObj.Name)
+                             IsMouseOverUI = true -- Clicked a tab, counts as UI interaction
                              break
                          end
                      end
                  end
             end
+
+            -- Handle Button Visual Updates (Hover and Click End) outside the click detection
+            if WindowActive.ActiveTab then
+                 local CurrentTabContent = WindowActive.TabContents[WindowActive.ActiveTab]
+                 if CurrentTabContent then
+                     local function UpdateButtonVisuals(Sections)
+                         for _, SectionObj in ipairs(Sections) do
+                             if SectionObj.Visible and SectionObj.Interfaces then
+                                 for InterfaceIndex, InterfaceObj in ipairs(SectionObj.Interfaces) do
+                                     if InterfaceObj.Type == "Button" then
+                                         local ClickID = CurrentTabContent.Name .. "_" .. SectionObj.Name .. "_" .. tostring(InterfaceIndex)
+                                         local ClickData = ClickedButtons[ClickID]
+
+                                         if ClickData then
+                                             -- Check if click animation should end
+                                             if tick() - ClickData.StartTime >= 0.3 then
+                                                  InterfaceObj.ButtonBackground.Color = InterfaceObj.OriginalBackgroundColor
+                                                  InterfaceObj.ButtonBackground.Transparency = InterfaceObj.OriginalBackgroundTransparency
+                                                  ClickedButtons[ClickID] = nil -- Remove from active clicks
+
+                                                  -- Reset border based on current hover state *after* click ends
+                                                  if HoveredButton == InterfaceObj then
+                                                      InterfaceObj.ButtonBorder.Color = Colors["Accent"]
+                                                  else
+                                                      InterfaceObj.ButtonBorder.Color = InterfaceObj.DefaultBorderColor
+                                                  end
+                                             else
+                                                 -- Keep accent border during click animation
+                                                 InterfaceObj.ButtonBorder.Color = Colors["Accent"]
+                                             end
+                                         else
+                                             -- Not currently clicking, set border based on hover
+                                             if HoveredButton == InterfaceObj then
+                                                  InterfaceObj.ButtonBorder.Color = Colors["Accent"]
+                                             else
+                                                  InterfaceObj.ButtonBorder.Color = InterfaceObj.DefaultBorderColor
+                                             end
+                                         end
+                                     end
+                                 end
+                             end
+                         end
+                     end
+                     UpdateButtonVisuals(CurrentTabContent.LeftSections)
+                     UpdateButtonVisuals(CurrentTabContent.RightSections)
+                 end
+             end
         end
+
+        -- Set mouse passthrough based on whether the mouse is over the UI *and* the UI is visible
+        set_window_passthrough(not (IsVisible and IsMouseOverUI))
 
         wait()
     end
 end)
 
-print("V1")
+print("V1 - Button Added")
 return Library
