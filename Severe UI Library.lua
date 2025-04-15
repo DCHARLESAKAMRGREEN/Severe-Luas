@@ -29,6 +29,25 @@ local DragOffsetX = 0
 local DragOffsetY = 0
 local IsVisible = true
 local TogglePressed = false
+local SectionPadding = 10
+local SectionMiddlePadding = 10
+
+local function SetElementVisibilityRecursive(Elements, Visible)
+    for _, Element in pairs(Elements) do
+        if Element.Visible ~= nil then
+             Element.Visible = Visible
+        end
+        if Element.Elements then
+            SetElementVisibilityRecursive(Element.Elements, Visible)
+        end
+         if Element.Background and Element.Background.Visible ~= nil then
+             Element.Background.Visible = Visible
+         end
+         if Element.Border and Element.Border.Visible ~= nil then
+             Element.Border.Visible = Visible
+         end
+    end
+end
 
 function ToggleUI()
     IsVisible = not IsVisible
@@ -48,29 +67,13 @@ function ToggleUI()
              TabObj.ButtonBorder.Visible = IsVisible
              TabObj.ButtonText.Visible = IsVisible
 
-             for _, SectionObj in ipairs(TabObj.Content.Sections) do
-                SectionObj.Background.Visible = IsVisible and TabObj.Name == Main.ActiveTab
-                SectionObj.Border.Visible = IsVisible and TabObj.Name == Main.ActiveTab
-             end
+             local IsActiveTab = TabObj.Name == Main.ActiveTab
+             SetElementVisibilityRecursive(TabObj.Content.LeftSections, IsVisible and IsActiveTab)
+             SetElementVisibilityRecursive(TabObj.Content.RightSections, IsVisible and IsActiveTab)
+             SetElementVisibilityRecursive(TabObj.Content.Elements, IsVisible and IsActiveTab) -- Handle elements not in sections
         end
 
         if not IsVisible then
-             for _, TabContent in pairs(Main.TabContents) do
-                for _, SectionObj in ipairs(TabContent.Sections) do
-                     SectionObj.Background.Visible = false
-                     SectionObj.Border.Visible = false
-                     for _, Element in pairs(SectionObj.Elements) do
-                        if Element.Visible ~= nil then
-                             Element.Visible = false
-                        end
-                     end
-                 end
-                 for _, Element in pairs(TabContent.Elements) do
-                     if Element.Visible ~= nil then
-                         Element.Visible = false
-                     end
-                 end
-             end
              IsDragging = false
         else
             Main:SelectTab(Main.ActiveTab)
@@ -215,17 +218,35 @@ function Library:Create(Title)
         if not Main.ActiveTab or not Main.TabContents[Main.ActiveTab] then return end
 
         local CurrentTabContent = Main.TabContents[Main.ActiveTab]
-        local SectionPadding = 10
-        local CurrentY = Main.WindowBackground2.Position.y + SectionPadding
+        local ParentWidth = Main.WindowBackground2.Size.x
+        local AvailableWidth = ParentWidth - (SectionPadding * 2) - SectionMiddlePadding
+        local ColumnWidth = AvailableWidth / 2
 
-        for _, SectionObj in ipairs(CurrentTabContent.Sections) do
-            SectionObj.Background.Position = {Main.WindowBackground2.Position.x + SectionPadding, CurrentY}
-            SectionObj.Border.Position = {Main.WindowBackground2.Position.x + SectionPadding, CurrentY}
+        local BaseX = Main.WindowBackground2.Position.x
+        local BaseY = Main.WindowBackground2.Position.y
 
-            SectionObj.Background.Size = {Main.WindowBackground2.Size.x - (SectionPadding * 2), 100} -- Placeholder Height
-            SectionObj.Border.Size = SectionObj.Background.Size
+        local LeftColumnX = BaseX + SectionPadding
+        local RightColumnX = LeftColumnX + ColumnWidth + SectionMiddlePadding
+        local InitialY = BaseY + SectionPadding
 
-            CurrentY = CurrentY + SectionObj.Background.Size.y + SectionPadding
+        CurrentTabContent.CurrentLeftY = InitialY
+        CurrentTabContent.CurrentRightY = InitialY
+
+        local function PositionSection(SectionObj, ColumnX, CurrentY)
+            local PlaceholderHeight = 100 -- Replace with dynamic height calculation later
+            SectionObj.Background.Position = {ColumnX, CurrentY}
+            SectionObj.Border.Position = {ColumnX, CurrentY}
+            SectionObj.Background.Size = {ColumnWidth, PlaceholderHeight}
+            SectionObj.Border.Size = {ColumnWidth, PlaceholderHeight}
+            return CurrentY + PlaceholderHeight + SectionPadding
+        end
+
+        for _, SectionObj in ipairs(CurrentTabContent.LeftSections) do
+            CurrentTabContent.CurrentLeftY = PositionSection(SectionObj, LeftColumnX, CurrentTabContent.CurrentLeftY)
+        end
+
+        for _, SectionObj in ipairs(CurrentTabContent.RightSections) do
+            CurrentTabContent.CurrentRightY = PositionSection(SectionObj, RightColumnX, CurrentTabContent.CurrentRightY)
         end
     end
 
@@ -261,36 +282,54 @@ function Library:Create(Title)
 
         local TabContent = {
             Name = TabName,
-            Elements = {},
-            Sections = {},
+            Elements = {}, -- Elements directly in tab, not in sections
+            LeftSections = {},
+            RightSections = {},
+            CurrentLeftY = 0,
+            CurrentRightY = 0,
             Visible = false
         }
 
-        function TabContent:Section(SectionName)
+        function TabContent:Section(SectionName, Options)
+            Options = Options or {}
+            local Side = Options.Side or "Left" -- Default to Left
+
             local SectionBackground = Drawing.new("Square")
             SectionBackground.Color = Colors["Section Background"]
             SectionBackground.Filled = true
             SectionBackground.Thickness = 1
             SectionBackground.Transparency = 1
-            SectionBackground.Visible = false
+            SectionBackground.Visible = false -- Initially hidden
 
             local SectionBorder = Drawing.new("Square")
             SectionBorder.Color = Colors["Section Border"]
             SectionBorder.Filled = false
             SectionBorder.Thickness = 1
             SectionBorder.Transparency = 1
-            SectionBorder.Visible = false
+            SectionBorder.Visible = false -- Initially hidden
 
             local SectionObj = {
-                Name = SectionName or "Section " .. (#self.Sections + 1),
+                Name = SectionName or "Section",
+                Side = Side,
                 Background = SectionBackground,
                 Border = SectionBorder,
                 Elements = {},
                 Visible = false
             }
 
-            table.insert(self.Sections, SectionObj)
-            Main:UpdateSectionPositions()
+            if Side == "Left" then
+                table.insert(self.LeftSections, SectionObj)
+            else -- Assume Right
+                table.insert(self.RightSections, SectionObj)
+            end
+
+            if IsVisible and Main.ActiveTab == self.Name then
+                 SectionObj.Visible = true
+                 SectionBackground.Visible = true
+                 SectionBorder.Visible = true
+                 Main:UpdateSectionPositions()
+            end
+
             return SectionObj
         end
 
@@ -312,7 +351,7 @@ function Library:Create(Title)
             if #Main.Tabs == 1 then
                 Main:SelectTab(TabName)
             else
-                 Main:SelectTab(Main.ActiveTab)
+                 Main:SelectTab(Main.ActiveTab) -- Reselect current to apply visibility
             end
         else
              TabButton.Visible = false
@@ -327,48 +366,26 @@ function Library:Create(Title)
         if not Main.TabButtons[TabName] then return end
         if not IsVisible then return end
 
-        for _, Tab in ipairs(Main.Tabs) do
-            Tab.Button.Color = Colors["Tab Toggle Background"]
-            Tab.Content.Visible = false
-
-            for _, Element in pairs(Tab.Content.Elements) do
-                if Element.Visible ~= nil then
-                    Element.Visible = false
-                end
-            end
-            for _, SectionObj in ipairs(Tab.Content.Sections) do
-                 SectionObj.Background.Visible = false
-                 SectionObj.Border.Visible = false
-                 SectionObj.Visible = false
-                 for _, Element in pairs(SectionObj.Elements) do
-                     if Element.Visible ~= nil then
-                         Element.Visible = false
-                     end
-                 end
-            end
+        -- Hide all elements from all tabs first
+        for _, OtherTab in ipairs(Main.Tabs) do
+            OtherTab.Button.Color = Colors["Tab Toggle Background"]
+            OtherTab.Content.Visible = false
+            SetElementVisibilityRecursive(OtherTab.Content.LeftSections, false)
+            SetElementVisibilityRecursive(OtherTab.Content.RightSections, false)
+            SetElementVisibilityRecursive(OtherTab.Content.Elements, false)
         end
 
+        -- Show elements for the selected tab
         local SelectedTab = Main.TabButtons[TabName]
         SelectedTab.Button.Color = Colors["Accent"]
         SelectedTab.Content.Visible = true
         Main.ActiveTab = TabName
 
-        for _, Element in pairs(SelectedTab.Content.Elements) do
-            if Element.Visible ~= nil then
-                Element.Visible = true
-            end
-        end
-        for _, SectionObj in ipairs(SelectedTab.Content.Sections) do
-             SectionObj.Background.Visible = true
-             SectionObj.Border.Visible = true
-             SectionObj.Visible = true
-             for _, Element in pairs(SectionObj.Elements) do
-                 if Element.Visible ~= nil then
-                     Element.Visible = true
-                 end
-             end
-        end
-        Main:UpdateSectionPositions()
+        SetElementVisibilityRecursive(SelectedTab.Content.LeftSections, true)
+        SetElementVisibilityRecursive(SelectedTab.Content.RightSections, true)
+        SetElementVisibilityRecursive(SelectedTab.Content.Elements, true)
+
+        Main:UpdateSectionPositions() -- Recalculate layout for the now active tab
     end
 
     ActiveWindow = Main
@@ -391,7 +408,7 @@ spawn(function()
         local IsTogglePressed = false
         if Keys then
             for _, k in ipairs(Keys) do
-                if k == 'P' then
+                if k == 'P' then -- Assuming 'P' is still the toggle key
                     IsTogglePressed = true
                     break
                 end
@@ -407,12 +424,12 @@ spawn(function()
             local IsHovering = ActiveWindow:IsHoveringWindow()
 
             local DragAreaYMax = ActiveWindow.TabBackground.Position.y
-            local IsHoveredUI = Mouse.X >= ActiveWindow.WindowBackground.Position.x and
+            local IsHoveredDragArea = Mouse.X >= ActiveWindow.WindowBackground.Position.x and
                                   Mouse.X <= ActiveWindow.WindowBackground.Position.x + ActiveWindow.WindowBackground.Size.x and
                                   Mouse.Y >= ActiveWindow.WindowBackground.Position.y and
                                   Mouse.Y < DragAreaYMax
 
-            if Mouse.Clicked and IsHoveredUI and not IsDragging then
+            if Mouse.Clicked and IsHoveredDragArea and not IsDragging then
                 IsDragging = true
                 DragOffsetX = Mouse.X - ActiveWindow.WindowBackground.Position.x
                 DragOffsetY = Mouse.Y - ActiveWindow.WindowBackground.Position.y
@@ -420,7 +437,7 @@ spawn(function()
                 local NewX = Mouse.X - DragOffsetX
                 local NewY = Mouse.Y - DragOffsetY
                 ActiveWindow.WindowBackground.Position = {NewX, NewY}
-                ActiveWindow:UpdateElementPositions()
+                ActiveWindow:UpdateElementPositions() -- Update all child elements during drag
             elseif not Mouse.Pressed and IsDragging then
                  IsDragging = false
             end
@@ -439,5 +456,4 @@ spawn(function()
     end
 end)
 
-print("Loaded Library V3")
 return Library
