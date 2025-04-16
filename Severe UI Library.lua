@@ -119,7 +119,7 @@ function Library:Create(TitleText)
     end
 
     Main.WindowBackground = Drawing.new("Square")
-    Main.WindowBackground.Size = {650, 750}
+    Main.WindowBackground.Size = {650, 700}
     Main.WindowBackground.Position = {350, 100}
     Main.WindowBackground.Color = Colors["Window Background"]
     Main.WindowBackground.Filled = true
