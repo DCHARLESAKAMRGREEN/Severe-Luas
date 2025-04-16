@@ -24,7 +24,8 @@ local Mouse = {
     Pressed = false
 }
 
-local Library = {}
+local Library = {} -- Initialize Library here
+
 local WindowActive = nil
 local IsDragging = false
 local DragOffsetX = 0
@@ -34,7 +35,7 @@ local IsToggled = false
 local HoveredButton = nil
 local Running = true
 
-function Library:Unload()
+Library.Unload = function() -- Changed to Library.Unload
     Running = false
     if WindowActive then
         local function RemoveDrawingObjects(T)
@@ -98,7 +99,7 @@ local function SetInterfaceVisibility(UI, Visible)
     end
 end
 
-function ToggleUI()
+local function ToggleUI()
     IsVisible = not IsVisible
     if WindowActive then
         local Main = WindowActive
@@ -128,7 +129,7 @@ function ToggleUI()
     end
 end
 
-function Library:Create(Options)
+Library.Create = function(Options) -- Changed to Library.Create
     local Main = {}
     local TitleText = Options.Name or "Severe UI"
 
@@ -771,7 +772,8 @@ Content = TabContent
                                         HoveredButton = Object
                                         Object.ButtonBackground.Color = {
                                             math.min(Object.OriginalBackgroundColor[1] + 10, 255),
-                                            math.min(Object.OriginalBackgroundColor[2] + 10, 255)
+                                            math.min(Object.OriginalBackgroundColor[2] + 10, 255),
+                                            math.min(Object.OriginalBackgroundColor[3] + 10, 255)
                                         }
                                         Object.ButtonBorder.Color = Colors["Accent"]
                                     else
@@ -907,3 +909,5 @@ Content = TabContent
         wait()
     end -- End of 'while Running do'
 end) -- End of 'spawn(function()
+
+return Library
