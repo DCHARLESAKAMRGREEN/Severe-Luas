@@ -37,7 +37,6 @@ local Running = true
 function Library:Unload()
     Running = false
     if WindowActive then
-        -- Remove all drawing objects
         local function RemoveDrawingObjects(t)
             for _, v in pairs(t) do
                 if type(v) == "table" and v.Remove then
@@ -180,7 +179,7 @@ function Library:Create(TitleText)
 
     Main.WindowBackground2 = Drawing.new("Square")
     Main.WindowBackground2.Position = {Main.WindowBackground.Position.x + 10, Main.WindowBackground.Position.y + 48}
-    Main.WindowBackground2.Size = {Main.WindowBackground.Size.x - 20, Main.WindowBackground.Size.y - 68}
+    Main.WindowBackground2.Size = {Main.WindowBackground.Size.x - 20, Main.WindowBackground.Size.y - 60}
     Main.WindowBackground2.Color = Colors["Window Background 2"]
     Main.WindowBackground2.Filled = true
     Main.WindowBackground2.Thickness = 1
@@ -332,7 +331,7 @@ function Library:Create(TitleText)
                         Object.ButtonBorder.Size = {ButtonWidth, ButtonHeight}
                         Object.ButtonText.Position = {ButtonX + math.floor(ButtonWidth / 2), ButtonY + 3}
                         Object.ButtonText.Center = true
-                        Object.ButtonText.Size = 12
+                        Object.ButtonText.Size = 13
                         CurrentInternalY = CurrentInternalY + ButtonHeight + Padding
                     elseif Object.Type == "Toggle" then
                         local ToggleHeight = 18
@@ -347,9 +346,9 @@ function Library:Create(TitleText)
                         Object.OuterBox.Size = {ToggleWidth, ToggleHeight}
                         Object.InnerBox.Position = {ToggleX + 2, ToggleY + 2}
                         Object.InnerBox.Size = {14, 14}
-                        Object.Text.Position = {ToggleX + ToggleWidth + Padding, ToggleY + 4}
+                        Object.Text.Position = {ToggleX + ToggleWidth + Padding, ToggleY + 10}
                         Object.Text.Center = false
-                        Object.Text.Size = 12
+                        Object.Text.Size = 14
                         CurrentInternalY = CurrentInternalY + ToggleHeight + Padding
                     end
                 end
