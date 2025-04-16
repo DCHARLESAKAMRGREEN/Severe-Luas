@@ -736,5 +736,4 @@ spawn(function()
     end
 end)
 
-print'1'
 return Library
