@@ -225,6 +225,12 @@ function Library:Create(Options)
         if Object.Size then
             local ObjectSize = Object.Size
             local ObjectW, ObjectH = ObjectSize.x, ObjectSize.y
+            -- Ensure all values are numbers before comparison
+            if type(MouseX) ~= "number" or type(MouseY) ~= "number" or
+               type(ObjectX) ~= "number" or type(ObjectY) ~= "number" or
+               type(ObjectW) ~= "number" or type(ObjectH) ~= "number" then
+                return false  -- Or handle the error appropriately
+            end
             return MouseX >= ObjectX and MouseX <= ObjectX + ObjectW and MouseY >= ObjectY and MouseY <= ObjectY + ObjectH
         elseif Object.TextBounds then
             local ObjectBounds = Object.TextBounds
@@ -233,6 +239,12 @@ function Library:Create(Options)
                 ObjectX = ObjectX - ObjectW / 2
             end
             ObjectY = ObjectY - ObjectH / 4
+             -- Ensure all values are numbers before comparison
+            if type(MouseX) ~= "number" or type(MouseY) ~= "number" or
+               type(ObjectX) ~= "number" or type(ObjectY) ~= "number" or
+               type(ObjectW) ~= "number" or type(ObjectH) ~= "number" then
+                return false  -- Or handle the error appropriately
+            end
             return MouseX >= ObjectX and MouseX <= ObjectX + ObjectW and MouseY >= ObjectY and MouseY <= ObjectY + ObjectH
         end
         return false
@@ -317,7 +329,7 @@ function Library:Create(Options)
             SetObjectVisibility(SectionObj.Title, true)
             SectionObj.Background.Position = {ColumnX, StartY}
             SectionObj.Border.Position = {ColumnX, StartY}
-            local TitleHeight = SectionObj.Title.TextBounds and SectionObj.Title.TextBounds.y or 12
+local TitleHeight = SectionObj.Title.TextBounds and SectionObj.Title.TextBounds.y or 12
             SectionObj.Title.Position = {ColumnX + Padding, StartY + 3}
             local CurrentInternalY = StartY + TitleHeight + Padding * 2
 
@@ -331,7 +343,8 @@ function Library:Create(Options)
                         SetObjectVisibility(Object.ButtonBackground, true)
                         SetObjectVisibility(Object.ButtonBorder, true)
                         SetObjectVisibility(Object.ButtonText, true)
-                        Object.ButtonBackground.Position = {ButtonY, ButtonWidth, ButtonHeight}
+                        Object.ButtonBackground.Position = {ButtonX, ButtonY}
+                        Object.ButtonBackground.Size = {ButtonWidth, ButtonHeight}
                         Object.ButtonBorder.Position = {ButtonX, ButtonY}
                         Object.ButtonBorder.Size = {ButtonWidth, ButtonHeight}
                         Object.ButtonText.Position = {ButtonX + (ButtonWidth / 2), ButtonY + (ButtonHeight / 2) - 7}
@@ -624,7 +637,7 @@ function Library:Create(Options)
         ToggleSlider.ValueText.Font = 5
         ToggleSlider.ValueText.Color = Colors["Text"]
         ToggleSlider.ValueText.Outline = true
-        ToggleSlider.ValueText.OutlineColor = {0, 0, 0}
+        ToggleSlider.OutlineColor = {0, 0, 0}
         ToggleSlider.ValueText.Transparency = 1
         ToggleSlider.ValueText.Center = true
         ToggleSlider.Min = 0
@@ -713,7 +726,7 @@ function Library:Create(Options)
     WindowActive = Main
     spawn(function()
         while Running do
-            Mouse.X, Mouse.Y = getmouseosition()
+            Mouse.X, Mouse.Y = getmouseposition()
             Mouse.Clicked = isleftclicked()
             Mouse.Pressed = isleftpressed()
             if IsVisible and WindowActive then
@@ -738,7 +751,7 @@ function Library:Create(Options)
                     local ButtonBorder = TabObj.ButtonBorder
                     local ButtonText = TabObj.ButtonText
                     if Main:IsObjectHovered(Button) then
-                        HoveredButton = Button
+HoveredButton = Button
                         ButtonBorder.Color = Colors["Accent"]
                         ButtonText.Color = Colors["Selected"]
                         if Mouse.Clicked then
@@ -829,22 +842,26 @@ function Library:Create(Options)
                 end
 
                 -- Stop Slider Dragging
-                if Mouse.Clicked then
-                    local function StopDraggingSliders(Sections)
-                        for _, SectionObj in ipairs(Sections) do
-                            if SectionObj.Visible and SectionObj.Interfaces then
-                                for _, Object in ipairs(SectionObj.Interfaces) do
-                                    if Object.Type == "Slider" and Object.Dragging then
-                                        Object.Dragging = false
+                if not Mouse.Pressed then
+                    if Main.ActiveTab then
+                        local CurrentTabContent = Main.TabContents[Main.ActiveTab]
+                        if CurrentTabContent then
+                            local function StopDraggingSliders(Sections)
+                                for _, SectionObj in ipairs(Sections) do
+                                    if SectionObj.Visible and SectionObj.Interfaces then
+                                        for _, Object in ipairs(SectionObj.Interfaces) do
+                                            if Object.Type == "Slider" and Object.Dragging then
+                                                Object.Dragging = false
+                                            end
+                                        end
                                     end
                                 end
                             end
+                            StopDraggingSliders(CurrentTabContent.LeftSections)
+                            StopDraggingSliders(CurrentTabContent.RightSections)
                         end
                     end
-                    StopDraggingSliders(CurrentTabContent.LeftSections)
-                    StopDraggingSliders(CurrentTabContent.RightSections)
                 end
-
             end
             wait()
         end
