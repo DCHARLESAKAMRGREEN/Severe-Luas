@@ -837,17 +837,21 @@ spawn(function()
                                         end
                                     end
                                 end
-CheckButtonClick(CurrentTabContent.LeftSections)
-                                    if not UIClickHandled then
-                                        CheckButtonClick(CurrentTabContent.RightSections)
                                     end
                                 end
                             end
                         end
+
+                        CheckButtonClick(CurrentTabContent.LeftSections)
+                        if not UIClickHandled then
+                            CheckButtonClick(CurrentTabContent.RightSections)
+                        end
                     end
                 end
             end
-            if WindowActive and WindowActive.ActiveTab then
+
+            -- Handle slider dragging
+            if Mouse.Pressed and not UIClickHandled and WindowActive.ActiveTab then
                 local CurrentTabContent = WindowActive.TabContents[WindowActive.ActiveTab]
                 if CurrentTabContent then
                     local function CheckSliderDrag(Sections)
@@ -855,113 +859,88 @@ CheckButtonClick(CurrentTabContent.LeftSections)
                             if SectionObj.Visible and SectionObj.Interfaces then
                                 for _, Object in ipairs(SectionObj.Interfaces) do
                                     if Object.Type == "Slider" and Object.Dragging then
-                                        local SliderBackground = Object.Background
-                                        if SliderBackground and SliderBackground.Size and SliderBackground.Size.x then
-                                            local SliderX = SliderBackground.Position.x
-                                            local SliderWidth = SliderBackground.Size.x
-                                            local MouseX = Mouse.X
-                                            local NewValue = Object.Min + ((math.clamp(MouseX, SliderX, SliderX + SliderWidth) - SliderX) / SliderWidth) * (Object.Max - Object.Min)
-                                            Object:SetValue(NewValue)
-                                            IsHovered = true
+                                        if Object.Background and Object.Background.Size and Object.Background.Position then
+                                            local BackgroundPos = Object.Background.Position
+                                            local BackgroundSize = Object.Background.Size
+                                            local MinX = BackgroundPos.x
+                                            local MaxX = MinX + BackgroundSize.x
+                                            local NewValue = ((Mouse.X - MinX) / BackgroundSize.x) * (Object.Max - Object.Min) + Object.Min
+                                            Object:SetValue(math.clamp(NewValue, Object.Min, Object.Max))
                                             UIClickHandled = true
+                                            return true
                                         end
-                                        if not Mouse.Pressed then
-                                            Object.Dragging = false
-                                        end
-                                        return
                                     end
                                 end
                             end
                         end
+                        return false
                     end
-                    CheckSliderDrag(CurrentTabContent.LeftSections)
-                    CheckSliderDrag(CurrentTabContent.RightSections)
-                end
-            end
-        else
-            IsDragging = false
-        end
-        if WindowActive then
-            for _, TabObj in ipairs(WindowActive.Tabs) do
-                if TabObj.Button.Visible and WindowActive:IsObjectHovered(TabObj.Button) then
-                    HoveredButton = TabObj.Button
-                    break
-                end
-            end
-            if not HoveredButton then
-                local function CheckButtonHover(Sections)
-                    for _, SectionObj in ipairs(Sections) do
-                        if SectionObj.Visible and SectionObj.Interfaces then
-                            for _, Object in ipairs(SectionObj.Interfaces) do
-                                if Object.Type == "Button" and Object.ButtonBackground.Visible then
-                                    if WindowActive:IsObjectHovered(Object.ButtonBackground) then
-                                        HoveredButton = Object.ButtonBackground
-                                        return
-                                    end
-                                elseif Object.Type == "Toggle" and Object.OuterBox.Visible then
-                                    if WindowActive:IsObjectHovered(Object.OuterBox) then
-                                        HoveredButton = Object.OuterBox
-                                        return
-                                    end
-                                elseif Object.Type == "Slider" and Object.Background.Visible then
-                                    if WindowActive:IsObjectHovered(Object.Background) then
-                                        HoveredButton = Object.Background
-                                        return
-                                    end
-                                end
-                            end
-                        end
+
+                    if not CheckSliderDrag(CurrentTabContent.LeftSections) then
+                        CheckSliderDrag(CurrentTabContent.RightSections)
                     end
                 end
+            end
+
+            if not Mouse.Pressed then
                 if WindowActive.ActiveTab then
                     local CurrentTabContent = WindowActive.TabContents[WindowActive.ActiveTab]
                     if CurrentTabContent then
-                        CheckButtonHover(CurrentTabContent.LeftSections)
-                        if not HoveredButton then
-                            CheckButtonHover(CurrentTabContent.RightSections)
+                        local function ResetSliderDrag(Sections)
+                            for _, SectionObj in ipairs(Sections) do
+                                if SectionObj.Visible and SectionObj.Interfaces then
+                                    for _, Object in ipairs(SectionObj.Interfaces) do
+                                        if Object.Type == "Slider" then
+                                            Object.Dragging = false
+                                        end
+                                    end
+                                end
+                            end
                         end
+                        ResetSliderDrag(CurrentTabContent.LeftSections)
+                        ResetSliderDrag(CurrentTabContent.RightSections)
                     end
                 end
             end
-            for _, TabObj in ipairs(WindowActive.Tabs) do
-                if TabObj.Button.Visible then
-                    local ButtonBorder = TabObj.ButtonBorder
-                    if TabObj.Name == WindowActive.ActiveTab then
-                        ButtonBorder.Color = Colors["Selected"]
-                    elseif WindowActive:IsObjectHovered(TabObj.Button) then
-                        ButtonBorder.Color = Colors["Accent"]
-                    else
-                        ButtonBorder.Color = Colors["Tab Border"]
-                    end
-                end
-            end
+
+            -- Handle button hover states
             if WindowActive.ActiveTab then
                 local CurrentTabContent = WindowActive.TabContents[WindowActive.ActiveTab]
                 if CurrentTabContent then
-                    local function CheckButtonBorderHover(Sections)
+                    local function UpdateHoverStates(Sections)
                         for _, SectionObj in ipairs(Sections) do
                             if SectionObj.Visible and SectionObj.Interfaces then
                                 for _, Object in ipairs(SectionObj.Interfaces) do
                                     if Object.Type == "Button" and Object.ButtonBackground.Visible then
-                                        local ButtonBorder = Object.ButtonBorder
-                                        ButtonBorder.Color = WindowActive:IsObjectHovered(Object.ButtonBackground) and Colors["Accent"] or Object.DefaultBorderColor
+                                        local IsHovered = WindowActive:IsObjectHovered(Object.ButtonBackground)
+                                        Object.ButtonBorder.Color = IsHovered and Colors["Accent"] or Object.DefaultBorderColor
+                                        if IsHovered then
+                                            HoveredButton = Object
+                                        end
                                     elseif Object.Type == "Toggle" and Object.OuterBox.Visible then
-                                        local ToggleBorder = Object.OuterBox
-                                        ToggleBorder.Color = WindowActive:IsObjectHovered(Object.OuterBox) and Colors["Accent"] or Object.DefaultBorderColor
                                         Object.HoverOutline.Visible = WindowActive:IsObjectHovered(Object.OuterBox)
+                                        if WindowActive:IsObjectHovered(Object.OuterBox) then
+                                            HoveredButton = Object
+                                        end
                                     elseif Object.Type == "Slider" and Object.Background.Visible then
-                                        local SliderBorder = Object.Border
-                                        SliderBorder.Color = WindowActive:IsObjectHovered(Object.Background) and Colors["Accent"] or Object.DefaultBorderColor
+                                        if WindowActive:IsObjectHovered(Object.Background) then
+                                            HoveredButton = Object
+                                        end
                                     end
                                 end
                             end
                         end
                     end
-                    CheckButtonBorderHover(CurrentTabContent.LeftSections)
-                    CheckButtonBorderHover(CurrentTabContent.RightSections)
+                    UpdateHoverStates(CurrentTabContent.LeftSections)
+                    UpdateHoverStates(CurrentTabContent.RightSections)
                 end
             end
         end
+
+        setmouseiconenabled(MouseService, not IsHovered)
         wait()
     end
 end)
+
+print'e'
+return Library
