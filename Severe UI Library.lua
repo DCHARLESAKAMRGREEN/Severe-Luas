@@ -37,18 +37,15 @@ local Running = true
 function Library:Unload()
     Running = false
     if WindowActive then
-local function RemoveDrawingObjects(T)
-    for _, V in pairs(T) do
-        if type(V) == "table" and V.Remove then
-            V:Remove()
-        elseif type(V) == "table" then
-            if V and type(V.Color) == "table" then
-                --Potentially remove this object
+        local function RemoveDrawingObjects(T)
+            for _, V in pairs(T) do
+                if type(V) == "table" and V.Remove then
+                    V:Remove()
+                elseif type(V) == "table" then
+                    RemoveDrawingObjects(V)
+                end
             end
-            RemoveDrawingObjects(V)
         end
-    end
-end
         RemoveDrawingObjects(WindowActive)
         WindowActive = nil
     end
@@ -845,15 +842,15 @@ spawn(function()
                         for _, SectionObj in ipairs(Sections) do
                             if SectionObj.Visible and SectionObj.Interfaces then
                                 for InterfaceIndex, Object in ipairs(SectionObj.Interfaces) do
-                                    if Object.Type == "Button" then
-                                        local Hovered = WindowActive:IsObjectHovered(Object.ButtonBackground)
-                                        if Hovered then
-                                            IsHovered = true
-                                            HoveredButton = Object
-                                            Object.OuterBox.Color = Colors["Accent"]
-                                        else
-                                            Object.OuterBox.Color = Object.DefaultBorderColor
-                                        end
+if Object.Type == "Button" then
+    local Hovered = WindowActive:IsObjectHovered(Object.ButtonBackground)
+    if Hovered then
+        IsHovered = true
+        HoveredButton = Object
+        Object.ButtonBorder.Color = Colors["Accent"] -- This should reference ButtonBorder, not OuterBox
+    else
+        Object.ButtonBorder.Color = Object.DefaultBorderColor -- Fix here too
+    end
                                     elseif Object.Type == "Slider" then -- Add this elseif block
                                         local Hovered = WindowActive:IsObjectHovered(Object.Background)
                                         if Hovered or Object.Dragging then -- Highlight if hovered or dragging
