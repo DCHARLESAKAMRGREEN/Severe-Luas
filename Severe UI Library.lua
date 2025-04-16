@@ -37,15 +37,18 @@ local Running = true
 function Library:Unload()
     Running = false
     if WindowActive then
-        local function RemoveDrawingObjects(T)
-            for _, V in pairs(T) do
-                if type(V) == "table" and V.Remove then
-                    V:Remove()
-                elseif type(V) == "table" then
-                    RemoveDrawingObjects(V)
-                end
+local function RemoveDrawingObjects(T)
+    for _, V in pairs(T) do
+        if type(V) == "table" and V.Remove then
+            V:Remove()
+        elseif type(V) == "table" then
+            if V and type(V.Color) == "table" then
+                --Potentially remove this object
             end
+            RemoveDrawingObjects(V)
         end
+    end
+end
         RemoveDrawingObjects(WindowActive)
         WindowActive = nil
     end
