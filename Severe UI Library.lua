@@ -349,26 +349,37 @@ function Library:Create(Options)
                         Object.Text.Position = {ToggleX + ToggleWidth + Padding, ToggleY + 4}
                         Object.Text.Center = false
                         Object.Text.Size = 12
-                        CurrentInternalY = CurrentInternalY + ToggleHeight + Padding
-                    elseif Object.Type == "Slider" then
-                        local SliderHeight = 18
-                        local SliderWidth = Width - (Padding * 2)
-                        local SliderX = ColumnX + Padding
-                        local SliderY = CurrentInternalY + 15
-                        SetObjectVisibility(Object.Background, true)
-                        SetObjectVisibility(Object.Border, true)
-                        SetObjectVisibility(Object.Fill, true)
-                        SetObjectVisibility(Object.Text, true)
-                        SetObjectVisibility(Object.ValueText, true)
-                        Object.Background.Position = {SliderX, SliderY}
-                        Object.Background.Size = {SliderWidth, SliderHeight}
-                        Object.Border.Position = {SliderX, SliderY}
-                        Object.Border.Size = {SliderWidth, SliderHeight}
-                        Object.Fill.Position = {SliderX, SliderY}
-                        Object.Fill.Size = {((Object.Value - Object.Min) / (Object.Max - Object.Min)) * SliderWidth, SliderHeight}
-                        Object.Text.Position = {SliderX, SliderY - 15}
-                        Object.ValueText.Position = {SliderX + SliderWidth - 60, SliderY - 15}
-                        CurrentInternalY = CurrentInternalY + SliderHeight + Padding + 15
+                        
+                        -- Add slider under toggle if it exists
+                        if Object.Slider then
+                            local SliderHeight = 12
+                            local SliderWidth = Width - (Padding * 2)
+                            local SliderX = ToggleX
+                            local SliderY = CurrentInternalY + 2
+                            
+                            SetObjectVisibility(Object.Slider.Background, true)
+                            SetObjectVisibility(Object.Slider.Border, true)
+                            SetObjectVisibility(Object.Slider.Fill, true)
+                            SetObjectVisibility(Object.Slider.ValueText, true)
+                            
+                            Object.Slider.Background.Position = {SliderX, SliderY}
+                            Object.Slider.Background.Size = {SliderWidth, SliderHeight}
+                            Object.Slider.Border.Position = {SliderX, SliderY}
+                            Object.Slider.Border.Size = {SliderWidth, SliderHeight}
+                            Object.Slider.Fill.Position = {SliderX, SliderY}
+                            
+                            local FillWidth = ((Object.Slider.Value - Object.Slider.Min) / (Object.Slider.Max - Object.Slider.Min)) * SliderWidth
+                            Object.Slider.Fill.Size = {FillWidth, SliderHeight}
+                            
+                            Object.Slider.ValueText.Position = {
+                                SliderX + (FillWidth / 2),
+                                SliderY + (SliderHeight / 2) - 5
+                            }
+                            
+                            CurrentInternalY = CurrentInternalY + SliderHeight + Padding + 2
+                        else
+                            CurrentInternalY = CurrentInternalY + ToggleHeight + Padding
+                        end
                     end
                 end
             end
@@ -548,6 +559,69 @@ function Library:Create(Options)
                 ToggleText.Center = false
                 ToggleText.Visible = self.Visible
                 local ToggleState = DefaultState
+                
+                -- Create slider if specified in options
+                local SliderObj = nil
+                if Options.Slider then
+                    SliderObj = {
+                        Type = "Slider",
+                        Name = Options.Slider.Name or (ToggleName.." Slider"),
+                        Min = Options.Slider.Min or 0,
+                        Max = Options.Slider.Max or 100,
+                        Value = math.clamp(Options.Slider.Default or ((Options.Slider.Max - Options.Slider.Min) / 2), Options.Slider.Min or 0, Options.Slider.Max or 100),
+                        Units = Options.Slider.Units or "",
+                        Callback = Options.Slider.Callback or function() end,
+                        Visible = false
+                    }
+                    
+                    SliderObj.Background = Drawing.new("Square")
+                    SliderObj.Background.Color = Colors["Object Background"]
+                    SliderObj.Background.Filled = true
+                    SliderObj.Background.Thickness = 1
+                    SliderObj.Background.Transparency = 1
+                    SliderObj.Background.Visible = false
+                    
+                    SliderObj.Border = Drawing.new("Square")
+                    SliderObj.Border.Color = Colors["Object Border"]
+                    SliderObj.Border.Filled = false
+                    SliderObj.Border.Thickness = 1
+                    SliderObj.Border.Transparency = 1
+                    SliderObj.Border.Visible = false
+                    
+                    SliderObj.Fill = Drawing.new("Square")
+                    SliderObj.Fill.Color = Colors["Accent"]
+                    SliderObj.Fill.Filled = true
+                    SliderObj.Fill.Transparency = 0.5
+                    SliderObj.Fill.Visible = false
+                    
+                    SliderObj.ValueText = Drawing.new("Text")
+                    SliderObj.ValueText.Text = string.format("%.1f%s", SliderObj.Value, SliderObj.Units)
+                    SliderObj.ValueText.Size = 10
+                    SliderObj.ValueText.Font = 5
+                    SliderObj.ValueText.Color = Colors["Text"]
+                    SliderObj.ValueText.Outline = true
+                    SliderObj.ValueText.OutlineColor = {0, 0, 0}
+                    SliderObj.ValueText.Transparency = 1
+                    SliderObj.ValueText.Center = true
+                    SliderObj.ValueText.Visible = false
+                    
+                    function SliderObj:SetValue(NewValue)
+                        self.Value = math.clamp(NewValue, self.Min, self.Max)
+                        self.ValueText.Text = string.format("%.1f%s", self.Value, self.Units)
+                        if self.Background.Size and self.Background.Size.x then
+                            local FillWidth = ((self.Value - self.Min) / (self.Max - self.Min)) * self.Background.Size.x
+                            self.Fill.Size = {FillWidth, self.Background.Size.y}
+                            self.ValueText.Position = {
+                                self.Background.Position.x + (FillWidth / 2),
+                                self.Background.Position.y + (self.Background.Size.y / 2) - 5
+                            }
+                        end
+                        if self.Callback then
+                            spawn(function() self.Callback(self.Value) end)
+                        end
+                    end
+                end
+                
                 local ToggleObj = {
                     Type = "Toggle",
                     Name = ToggleName,
@@ -556,6 +630,7 @@ function Library:Create(Options)
                     OuterBox = ToggleOuterBox,
                     InnerBox = ToggleInnerBox,
                     Text = ToggleText,
+                    Slider = SliderObj,
                     DefaultBorderColor = Colors["Object Border"],
                     OriginalInnerColor = ToggleState and Colors["Accent"] or Colors["Object Background"],
                     Visible = self.Visible
@@ -565,6 +640,16 @@ function Library:Create(Options)
                     self.State = NewState
                     self.InnerBox.Color = NewState and Colors["Accent"] or Colors["Object Background"]
                     self.OriginalInnerColor = self.InnerBox.Color
+                    if self.Slider then
+                        self.Slider.Visible = NewState
+                        if Main.ActiveTab == TabContent.Name then
+                            SetObjectVisibility(self.Slider.Background, NewState and IsVisible)
+                            SetObjectVisibility(self.Slider.Border, NewState and IsVisible)
+                            SetObjectVisibility(self.Slider.Fill, NewState and IsVisible)
+                            SetObjectVisibility(self.Slider.ValueText, NewState and IsVisible)
+                            Main:UpdateLayout()
+                        end
+                    end
                     if self.Callback then
                         spawn(function() self.Callback(NewState) end)
                     end
@@ -575,94 +660,6 @@ function Library:Create(Options)
                     Main:UpdateLayout()
                 end
                 return ToggleObj
-            end
-
-            function SectionObj:Slider(Options)
-                local SliderName = Options.Name or "Slider"
-                local Min = Options.Min or 0
-                local Max = Options.Max or 100
-                local Default = math.clamp(Options.Default or ((Max - Min) / 2), Min, Max)
-                local Units = Options.Units or ""
-                local Callback = Options.Callback or function() end
-                
-                local SliderBackground = Drawing.new("Square")
-                SliderBackground.Color = Colors["Object Background"]
-                SliderBackground.Filled = true
-                SliderBackground.Thickness = 1
-                SliderBackground.Transparency = 1
-                SliderBackground.Visible = self.Visible
-                
-                local SliderBorder = Drawing.new("Square")
-                SliderBorder.Color = Colors["Object Border"]
-                SliderBorder.Filled = false
-                SliderBorder.Thickness = 1
-                SliderBorder.Transparency = 1
-                SliderBorder.Visible = self.Visible
-                
-                local SliderFill = Drawing.new("Square")
-                SliderFill.Color = Colors["Accent"]
-                SliderFill.Filled = true
-                SliderFill.Transparency = 0.5
-                SliderFill.Visible = self.Visible
-                
-                local SliderText = Drawing.new("Text")
-                SliderText.Text = SliderName
-                SliderText.Size = 12
-                SliderText.Font = 5
-                SliderText.Color = Colors["Text"]
-                SliderText.Outline = true
-                SliderText.OutlineColor = {0, 0, 0}
-                SliderText.Transparency = 1
-                SliderText.Center = false
-                SliderText.Visible = self.Visible
-                
-                local ValueText = Drawing.new("Text")
-                ValueText.Text = Default..Units
-                ValueText.Size = 12
-                ValueText.Font = 5
-                ValueText.Color = Colors["Text"]
-                ValueText.Outline = true
-                ValueText.OutlineColor = {0, 0, 0}
-                ValueText.Transparency = 1
-                ValueText.Center = false
-                ValueText.Visible = self.Visible
-                
-                local SliderObj = {
-                    Type = "Slider",
-                    Name = SliderName,
-                    Min = Min,
-                    Max = Max,
-                    Value = Default,
-                    Units = Units,
-                    Callback = Callback,
-                    Background = SliderBackground,
-                    Border = SliderBorder,
-                    Fill = SliderFill,
-                    Text = SliderText,
-                    ValueText = ValueText,
-                    DefaultBorderColor = Colors["Object Border"],
-                    OriginalBackgroundColor = Colors["Object Background"],
-                    Visible = self.Visible,
-                    Dragging = false
-                }
-
-                function SliderObj:SetValue(NewValue)
-                    self.Value = math.clamp(NewValue, self.Min, self.Max)
-                    self.ValueText.Text = string.format("%.1f%s", self.Value, self.Units)
-                    if self.Background.Size and self.Background.Size.x then
-                        local FillWidth = ((self.Value - self.Min) / (self.Max - self.Min)) * self.Background.Size.x
-                        self.Fill.Size = {FillWidth, self.Background.Size.y}
-                    end
-                    if self.Callback then
-                        spawn(function() self.Callback(self.Value) end)
-                    end
-                end
-
-                table.insert(self.Interfaces, SliderObj)
-                if IsVisible and Main.ActiveTab == TabContent.Name then
-                    Main:UpdateLayout()
-                end
-                return SliderObj
             end
 
             if Side == "Left" then
@@ -836,99 +833,30 @@ spawn(function()
             end
 
             if WindowActive.ActiveTab then
-                local CurrentTabContent = WindowActive.TabContents[WindowActive.ActiveTab]
-                if CurrentTabContent then
-                    local function UpdateButtonVisuals(Sections)
-                        for _, SectionObj in ipairs(Sections) do
-                            if SectionObj.Visible and SectionObj.Interfaces then
-                                for InterfaceIndex, Object in ipairs(SectionObj.Interfaces) do
-if Object.Type == "Button" then
-    local Hovered = WindowActive:IsObjectHovered(Object.ButtonBackground)
-    if Hovered then
-        IsHovered = true
-        HoveredButton = Object
-        Object.ButtonBorder.Color = Colors["Accent"] -- This should reference ButtonBorder, not OuterBox
-    else
-        Object.ButtonBorder.Color = Object.DefaultBorderColor -- Fix here too
-    end
-                                    elseif Object.Type == "Slider" then -- Add this elseif block
-                                        local Hovered = WindowActive:IsObjectHovered(Object.Background)
-                                        if Hovered or Object.Dragging then -- Highlight if hovered or dragging
-                                            IsHovered = true
-                                            HoveredButton = Object -- Keep track for potential cursor changes etc.
-                                            Object.Border.Color = Colors["Accent"]
-                                        else
-                                            Object.Border.Color = Object.DefaultBorderColor
+                local CurrentTabContent = WindowActive
+                if WindowActive.ActiveTab then
+                    local CurrentTabContent = WindowActive.TabContents[WindowActive.ActiveTab]
+                    if CurrentTabContent then
+                        local function StopDraggingSliders(Sections)
+                            for _, SectionObj in ipairs(Sections) do
+                                if SectionObj.Visible and SectionObj.Interfaces then
+                                    for _, Object in ipairs(SectionObj.Interfaces) do
+                                        if Object.Type == "Slider" and Object.Dragging then
+                                            Object.Dragging = false
                                         end
                                     end
                                 end
                             end
                         end
+                        StopDraggingSliders(CurrentTabContent.LeftSections)
+                        StopDraggingSliders(CurrentTabContent.RightSections)
                     end
-                    UpdateButtonVisuals(CurrentTabContent.LeftSections)
-                    UpdateButtonVisuals(CurrentTabContent.RightSections)
                 end
             end
 
-            -- Handle Slider Dragging (Add this section)
-            local ActiveSlider = nil
-            if WindowActive.ActiveTab then
-                 local CurrentTabContent = WindowActive.TabContents[WindowActive.ActiveTab]
-                 if CurrentTabContent then
-                     local function FindDraggingSlider(Sections)
-                         for _, SectionObj in ipairs(Sections) do
-                             if SectionObj.Visible and SectionObj.Interfaces then
-                                 for _, Object in ipairs(SectionObj.Interfaces) do
-                                     if Object.Type == "Slider" and Object.Dragging then
-                                         return Object
-                                     end
-                                 end
-                             end
-                         end
-                         return nil
-                     end
-                     ActiveSlider = FindDraggingSlider(CurrentTabContent.LeftSections) or FindDraggingSlider(CurrentTabContent.RightSections)
-                 end
-            end
-
-            if ActiveSlider and Mouse.Pressed then
-                 IsHovered = true -- Keep hover state while dragging slider
-                 UIClickHandled = true -- Prevent other actions while dragging
-                 local MouseX = Mouse.X
-                 local SliderX = ActiveSlider.Background.Position.x
-                 local SliderW = ActiveSlider.Background.Size.x
-                 if SliderW > 0 then -- Avoid division by zero
-                     local Ratio = math.clamp((MouseX - SliderX) / SliderW, 0, 1)
-                     local NewValue = ActiveSlider.Min + (ActiveSlider.Max - ActiveSlider.Min) * Ratio
-                     ActiveSlider:SetValue(NewValue) -- Update slider value while dragging
-                 end
-            end
-
-             -- Stop Slider Dragging (Add this section)
-            if not Mouse.Pressed then
-                 if WindowActive.ActiveTab then
-                     local CurrentTabContent = WindowActive.TabContents[WindowActive.ActiveTab]
-                     if CurrentTabContent then
-                         local function StopDraggingSliders(Sections)
-                             for _, SectionObj in ipairs(Sections) do
-                                 if SectionObj.Visible and SectionObj.Interfaces then
-                                     for _, Object in ipairs(SectionObj.Interfaces) do
-                                         if Object.Type == "Slider" and Object.Dragging then
-                                             Object.Dragging = false
-                                         end
-                                     end
-                                 end
-                             end
-                         end
-                         StopDraggingSliders(CurrentTabContent.LeftSections)
-                         StopDraggingSliders(CurrentTabContent.RightSections)
-                     end
-                 end
-            end
-
-        end -- End of 'if IsVisible and WindowActive then'
+        end
         wait()
-    end -- End of 'while Running do'
-end) -- End of 'spawn(function()'
+    end
+end)
 
 return Library
