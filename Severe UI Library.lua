@@ -128,8 +128,9 @@ function ToggleUI()
     end
 end
 
-function Library:Create(TitleText)
+function Library:Create(Options)
     local Main = {}
+    local TitleText = Options.Name or "Severe UI"
 
     local function SetInitialVisibility(Object)
         if Object and Object.Visible ~= nil then
@@ -147,7 +148,7 @@ function Library:Create(TitleText)
     SetInitialVisibility(Main.WindowBackground)
 
     Main.Title = Drawing.new("Text")
-    Main.Title.Text = TitleText or "Severe UI"
+    Main.Title.Text = TitleText
     Main.Title.Size = 16
     Main.Title.Font = 5
     Main.Title.Color = Colors["Text"]
@@ -401,8 +402,8 @@ function Library:Create(TitleText)
         end
     end
 
-    function Main:Tab(TabName)
-        if not TabName then TabName = "Tab " .. (#Main.Tabs + 1) end
+    function Main:Tab(Options)
+        local TabName = Options.Name or "Tab " .. (#Main.Tabs + 1)
         local TabButton = Drawing.new("Square")
         TabButton.Color = Colors["Tab Toggle Background"]
         TabButton.Filled = true
@@ -437,10 +438,9 @@ function Library:Create(TitleText)
             Visible = false
         }
 
-        function TabContent:Section(SectionName, Options)
-            Options = Options or {}
+        function TabContent:Section(Options)
+            local SectionName = Options.Name or "Section"
             local Side = Options.Side or "Left"
-            SectionName = SectionName or "Section"
             local SectionBackground = Drawing.new("Square")
             SectionBackground.Color = Colors["Section Background"]
             SectionBackground.Filled = true
@@ -475,7 +475,9 @@ function Library:Create(TitleText)
                 CalculatedHeight = 0
             }
 
-            function SectionObj:Button(ButtonName, Callback)
+            function SectionObj:Button(Options)
+                local ButtonName = Options.Name or "Button"
+                local Callback = Options.Callback or function() end
                 local ButtonBackground = Drawing.new("Square")
                 ButtonBackground.Color = Colors["Object Background"]
                 ButtonBackground.Filled = true
@@ -489,7 +491,7 @@ function Library:Create(TitleText)
                 ButtonBorder.Transparency = 1
                 ButtonBorder.Visible = self.Visible
                 local ButtonText = Drawing.new("Text")
-                ButtonText.Text = ButtonName or "Button"
+                ButtonText.Text = ButtonName
                 ButtonText.Size = 12
                 ButtonText.Font = 5
                 ButtonText.Color = Colors["Text"]
@@ -517,7 +519,10 @@ function Library:Create(TitleText)
                 return ButtonObj
             end
 
-            function SectionObj:Toggle(ToggleName, DefaultState, Callback)
+            function SectionObj:Toggle(Options)
+                local ToggleName = Options.Name or "Toggle"
+                local DefaultState = Options.Default or false
+                local Callback = Options.Callback or function() end
                 local ToggleOuterBox = Drawing.new("Square")
                 ToggleOuterBox.Size = {18, 18}
                 ToggleOuterBox.Filled = false
@@ -533,7 +538,7 @@ function Library:Create(TitleText)
                 ToggleInnerBox.Visible = self.Visible
                 ToggleInnerBox.Color = DefaultState and Colors["Accent"] or Colors["Object Background"]
                 local ToggleText = Drawing.new("Text")
-                ToggleText.Text = ToggleName or "Toggle"
+                ToggleText.Text = ToggleName
                 ToggleText.Size = 12
                 ToggleText.Font = 5
                 ToggleText.Color = Colors["Text"]
@@ -542,7 +547,7 @@ function Library:Create(TitleText)
                 ToggleText.Transparency = 1
                 ToggleText.Center = false
                 ToggleText.Visible = self.Visible
-                local ToggleState = DefaultState or false
+                local ToggleState = DefaultState
                 local ToggleObj = {
                     Type = "Toggle",
                     Name = ToggleName,
@@ -572,9 +577,13 @@ function Library:Create(TitleText)
                 return ToggleObj
             end
 
-            function SectionObj:Slider(SliderName, Min, Max, Default, Units, Callback)
-                Units = Units or ""
-                Default = math.clamp(Default or Min, Min, Max)
+            function SectionObj:Slider(Options)
+                local SliderName = Options.Name or "Slider"
+                local Min = Options.Min or 0
+                local Max = Options.Max or 100
+                local Default = math.clamp(Options.Default or ((Max - Min) / 2), Min, Max)
+                local Units = Options.Units or ""
+                local Callback = Options.Callback or function() end
                 
                 local SliderBackground = Drawing.new("Square")
                 SliderBackground.Color = Colors["Object Background"]
@@ -838,15 +847,6 @@ spawn(function()
                                         if Hovered then
                                             IsHovered = true
                                             HoveredButton = Object
-                                        end
-                                        if Object.ButtonBackground.Color ~= Colors["Selected"] then
-                                            Object.ButtonBorder.Color = Hovered and Colors["Accent"] or Object.DefaultBorderColor
-                                        end
-                                    elseif Object.Type == "Toggle" then
-                                        local Hovered = WindowActive:IsObjectHovered(Object.OuterBox)
-if Hovered then
-                                            IsHovered = true
-                                            HoveredButton = Object
                                             Object.OuterBox.Color = Colors["Accent"]
                                         else
                                             Object.OuterBox.Color = Object.DefaultBorderColor
@@ -931,5 +931,4 @@ if Hovered then
     end -- End of 'while Running do'
 end) -- End of 'spawn(function()'
 
-print'1'
 return Library
