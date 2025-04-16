@@ -188,7 +188,7 @@ function Library:Create(Options)
 
     Main.Window2Border = Drawing.new("Square")
     Main.Window2Border.Position = {Main.WindowBackground2.Position.x, Main.WindowBackground2.Position.y}
-    Main.Window2Border.Size = {Main.WindowBackground2.Size.x, Main.Window2Border.Size.y}
+    Main.Window2Border.Size = {Main.WindowBackground2.Size.x, Main.WindowBackground2.Size.y}
     Main.Window2Border.Color = Colors["Window Border"]
     Main.Window2Border.Filled = false
     Main.Window2Border.Thickness = 1
@@ -227,7 +227,7 @@ function Library:Create(Options)
                 ObjectX = ObjectX - ObjectW / 2
             end
             ObjectY = ObjectY - ObjectH / 4
-            return MouseX >= ObjectX and MouseX <= ObjectX + ObjectW and MouseY >= ObjectY and MouseY <= ObjectY + ObjectH
+            return MouseX >= ObjectX and MouseX <= ObjectX + ObjectW and MouseY <= ObjectY + ObjectH
         end
         return false
     end
@@ -771,8 +771,7 @@ Content = TabContent
                                         HoveredButton = Object
                                         Object.ButtonBackground.Color = {
                                             math.min(Object.OriginalBackgroundColor[1] + 10, 255),
-                                            math.min(Object.OriginalBackgroundColor[2] + 10, 255),
-                                            math.min(Object.OriginalBackgroundColor[3] + 10, 255)
+                                            math.min(Object.OriginalBackgroundColor[2] + 10, 255)
                                         }
                                         Object.ButtonBorder.Color = Colors["Accent"]
                                     else
@@ -908,5 +907,3 @@ Content = TabContent
         wait()
     end -- End of 'while Running do'
 end) -- End of 'spawn(function()
-
-return Library
