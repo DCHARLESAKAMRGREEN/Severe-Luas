@@ -346,9 +346,9 @@ function Library:Create(TitleText)
                         Object.OuterBox.Size = {ToggleWidth, ToggleHeight}
                         Object.InnerBox.Position = {ToggleX + 2, ToggleY + 2}
                         Object.InnerBox.Size = {14, 14}
-                        Object.Text.Position = {ToggleX + ToggleWidth + Padding, ToggleY + 10}
+                        Object.Text.Position = {ToggleX + ToggleWidth + Padding, ToggleY}
                         Object.Text.Center = false
-                        Object.Text.Size = 14
+                        Object.Text.Size = 13
                         CurrentInternalY = CurrentInternalY + ToggleHeight + Padding
                     end
                 end
@@ -756,5 +756,4 @@ spawn(function()
     end
 end)
 
-print'1'
 return Library
