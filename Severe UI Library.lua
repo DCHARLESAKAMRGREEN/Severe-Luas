@@ -32,6 +32,27 @@ local DragOffsetY = 0
 local IsVisible = true
 local IsToggled = false
 local HoveredButton = nil
+local Running = true
+
+function Library:Unload()
+    Running = false
+    if WindowActive then
+        -- Remove all drawing objects
+        local function RemoveDrawingObjects(t)
+            for _, v in pairs(t) do
+                if type(v) == "table" and v.Remove then
+                    v:Remove()
+                elseif type(v) == "table" then
+                    RemoveDrawingObjects(v)
+                end
+            end
+        end
+        
+        RemoveDrawingObjects(WindowActive)
+        WindowActive = nil
+    end
+    Library = nil
+end
 
 local function SetObjectVisibility(Object, Visible)
     if Object and Object.Visible ~= nil then
@@ -159,7 +180,7 @@ function Library:Create(TitleText)
 
     Main.WindowBackground2 = Drawing.new("Square")
     Main.WindowBackground2.Position = {Main.WindowBackground.Position.x + 10, Main.WindowBackground.Position.y + 48}
-    Main.WindowBackground2.Size = {Main.WindowBackground.Size.x - 20, Main.WindowBackground.Size.y - 60}
+    Main.WindowBackground2.Size = {Main.WindowBackground.Size.x - 20, Main.WindowBackground.Size.y - 68}
     Main.WindowBackground2.Color = Colors["Window Background 2"]
     Main.WindowBackground2.Filled = true
     Main.WindowBackground2.Thickness = 1
@@ -298,7 +319,7 @@ function Library:Create(TitleText)
             if SectionObj.Interfaces then
                 for _, Object in ipairs(SectionObj.Interfaces) do
                     if Object.Type == "Button" then
-                        local ButtonHeight = 20
+                        local ButtonHeight = 18
                         local ButtonWidth = Width - (Padding * 2)
                         local ButtonX = ColumnX + Padding
                         local ButtonY = CurrentInternalY
@@ -311,7 +332,7 @@ function Library:Create(TitleText)
                         Object.ButtonBorder.Size = {ButtonWidth, ButtonHeight}
                         Object.ButtonText.Position = {ButtonX + math.floor(ButtonWidth / 2), ButtonY + 3}
                         Object.ButtonText.Center = true
-                        Object.ButtonText.Size = 13
+                        Object.ButtonText.Size = 12
                         CurrentInternalY = CurrentInternalY + ButtonHeight + Padding
                     elseif Object.Type == "Toggle" then
                         local ToggleHeight = 18
@@ -326,9 +347,9 @@ function Library:Create(TitleText)
                         Object.OuterBox.Size = {ToggleWidth, ToggleHeight}
                         Object.InnerBox.Position = {ToggleX + 2, ToggleY + 2}
                         Object.InnerBox.Size = {14, 14}
-                        Object.Text.Position = {ToggleX + ToggleWidth + Padding, ToggleY + 5}
+                        Object.Text.Position = {ToggleX + ToggleWidth + Padding, ToggleY + 4}
                         Object.Text.Center = false
-                        Object.Text.Size = 13
+                        Object.Text.Size = 12
                         CurrentInternalY = CurrentInternalY + ToggleHeight + Padding
                     end
                 end
@@ -595,7 +616,7 @@ function Library:Create(TitleText)
 end
 
 spawn(function()
-    while true do
+    while Running do
         local MouseLocation = getmouselocation(MouseService)
         Mouse.X = MouseLocation.x
         Mouse.Y = MouseLocation.y
