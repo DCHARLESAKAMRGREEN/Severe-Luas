@@ -832,8 +832,16 @@ spawn(function()
                 end
             end
 
-            if WindowActive.ActiveTab then
-                local CurrentTabContent = WindowActive
+            if Mouse.Pressed and WindowActive.ActiveSlider then
+                local ActiveSlider = WindowActive.ActiveSlider
+                local SliderX = ActiveSlider.Background.Position.x
+                local SliderWidth = ActiveSlider.Background.Size.x
+                local Ratio = math.clamp((Mouse.X - SliderX) / SliderWidth, 0, 1)
+                local NewValue = ActiveSlider.Min + (ActiveSlider.Max - ActiveSlider.Min) * Ratio
+                ActiveSlider:SetValue(NewValue)
+            end
+
+            if not Mouse.Pressed then
                 if WindowActive.ActiveTab then
                     local CurrentTabContent = WindowActive.TabContents[WindowActive.ActiveTab]
                     if CurrentTabContent then
@@ -854,9 +862,10 @@ spawn(function()
                 end
             end
 
-        end
+        end 
         wait()
     end
 end)
 
+print'1'
 return Library
