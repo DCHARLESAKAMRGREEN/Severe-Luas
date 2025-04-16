@@ -298,7 +298,7 @@ function Library:Create(TitleText)
             if SectionObj.Interfaces then
                 for _, Object in ipairs(SectionObj.Interfaces) do
                     if Object.Type == "Button" then
-                        local ButtonHeight = 18
+                        local ButtonHeight = 20
                         local ButtonWidth = Width - (Padding * 2)
                         local ButtonX = ColumnX + Padding
                         local ButtonY = CurrentInternalY
@@ -311,7 +311,7 @@ function Library:Create(TitleText)
                         Object.ButtonBorder.Size = {ButtonWidth, ButtonHeight}
                         Object.ButtonText.Position = {ButtonX + math.floor(ButtonWidth / 2), ButtonY + 3}
                         Object.ButtonText.Center = true
-                        Object.ButtonText.Size = 12
+                        Object.ButtonText.Size = 13
                         CurrentInternalY = CurrentInternalY + ButtonHeight + Padding
                     elseif Object.Type == "Toggle" then
                         local ToggleHeight = 18
@@ -328,7 +328,7 @@ function Library:Create(TitleText)
                         Object.InnerBox.Size = {14, 14}
                         Object.Text.Position = {ToggleX + ToggleWidth + Padding, ToggleY + 4}
                         Object.Text.Center = false
-                        Object.Text.Size = 12
+                        Object.Text.Size = 13
                         CurrentInternalY = CurrentInternalY + ToggleHeight + Padding
                     end
                 end
