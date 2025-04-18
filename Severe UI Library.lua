@@ -321,7 +321,7 @@ function Library:Create(Options)
 
     Main.TabBackground = Drawing.new("Square")
     Main.TabBackground.Position = {Main.WindowBackground.Position.x + 10, Main.WindowBackground.Position.y + 25}
-    Main.TabBackground.Size = {Main.WindowBackground.Size.x - 20, 20}
+    Main.TabBackground.Size = {Main.WindowBackground.Size.x - 20, 19}
     Main.TabBackground.Color = Colors["Tab Background"]
     Main.TabBackground.Filled = true
     Main.TabBackground.Thickness = 1
@@ -477,14 +477,14 @@ function Library:Create(Options)
         local BaseY = ParentPos.y
         local LeftColumnX = BaseX + Padding
         local RightColumnX = LeftColumnX + ColumnWidth + Padding
-        local InitialY = BaseY + Padding
+        local InitialY = BaseY + Padding + 5
         local CurrentLeftY = InitialY
         local CurrentRightY = InitialY
 
         local function UpdateSectionLayout(SectionObj, ColumnX, StartY, Width)
             local InnerWidth = Width - (Padding * 2)
             local LineThickness = 1
-            local BorderThickness = SectionObj.Border.Thickness or 1
+            local BorderThickness = SectionObj.Border.Thickness
 
             SetObjectVisibility(SectionObj.Background, true)
             SetObjectVisibility(SectionObj.Border, true)
@@ -522,10 +522,10 @@ function Library:Create(Options)
                         Object.ButtonBorder.Size = {ButtonWidth, ButtonHeight}
                         Object.ButtonText.Position = {
                             ButtonX + math.floor(ButtonWidth / 2),
-                            ButtonY + math.floor(ButtonHeight / 2) - 6
+                            ButtonY + math.floor(ButtonHeight / 2) - 7
                         }
                         Object.ButtonText.Center = true
-                        Object.ButtonText.Size = 12
+                        Object.ButtonText.Size = 13
                         CurrentInternalY = CurrentInternalY + ButtonHeight + Padding
                     elseif Object.Type == "Toggle" then
                         local ToggleHeight = 18
@@ -545,7 +545,6 @@ function Library:Create(Options)
                             ToggleY + math.floor(ToggleHeight / 2) - 6
                         }
                         Object.Text.Center = false
-                        Object.Text.Size = 12
                         CurrentInternalY = CurrentInternalY + ToggleHeight + Padding
                     elseif Object.Type == "Slider" then
                         local SliderHeight = 15
@@ -627,7 +626,7 @@ function Library:Create(Options)
         SetInitialVisibility(TabButtonBorder)
         local TabButtonText = Drawing.new("Text")
         TabButtonText.Text = TabName
-        TabButtonText.Size = 12
+        TabButtonText.Size = 13
         TabButtonText.Font = 5
         TabButtonText.Color = Colors["Text"]
         TabButtonText.Outline = true
@@ -709,7 +708,7 @@ function Library:Create(Options)
                 ButtonBorder.Visible = self.Visible
                 local ButtonText = Drawing.new("Text")
                 ButtonText.Text = ButtonName
-                ButtonText.Size = 12
+                ButtonText.Size = 13
                 ButtonText.Font = 5
                 ButtonText.Color = Colors["Text"]
                 ButtonText.Outline = true
@@ -757,7 +756,7 @@ function Library:Create(Options)
                 ToggleInnerBox.Color = DefaultState and Colors["Accent"] or Colors["Object Background"]
                 local ToggleText = Drawing.new("Text")
                 ToggleText.Text = ToggleName
-                ToggleText.Size = 14
+                ToggleText.Size = 13
                 ToggleText.Font = 5
                 ToggleText.Color = Colors["Text"]
                 ToggleText.Outline = true
@@ -831,7 +830,7 @@ function Library:Create(Options)
 
                 local SliderText = Drawing.new("Text")
                 SliderText.Text = SliderName
-                SliderText.Size = 12
+                SliderText.Size = 13
                 SliderText.Font = 5
                 SliderText.Color = Colors["Text"]
                 SliderText.Outline = true
@@ -842,7 +841,7 @@ function Library:Create(Options)
 
                 local ValueText = Drawing.new("Text")
                 ValueText.Text = Default .. Units
-                ValueText.Size = 12
+                ValueText.Size = 13
                 ValueText.Font = 5
                 ValueText.Color = Colors["Text"]
                 ValueText.Outline = true
