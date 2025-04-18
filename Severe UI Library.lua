@@ -1,18 +1,18 @@
 local Colors = {
-    ["Accent"] = {173, 29, 85},
-    ["Window Background"] = {23, 0, 13},
-    ["Window Background 2"] = {18, 1, 14},
-    ["Window Border"] = {64, 28, 50},
-    ["Tab Background"] = {18, 1, 14},
-    ["Tab Border"] = {64, 28, 50},
-    ["Tab Toggle Background"] = {18, 1, 14},
+    ["Accent"] = {203, 166, 247},
+    ["Window Background"] = {24, 24, 37},
+    ["Window Background 2"] = {17, 17, 27},
+    ["Window Border"] = {49, 50, 68},
+    ["Tab Background"] = {17, 17, 27},
+    ["Tab Border"] = {49, 50, 68},
+    ["Tab Toggle Background"] = {24, 24, 37},
     ["Selected"] = {255, 255, 255},
-    ["Section Background"] = {18, 1, 14},
-    ["Section Border"] = {64, 28, 50},
+    ["Section Background"] = {17, 17, 27},
+    ["Section Border"] = {49, 50, 68},
     ["Text"] = {210, 210, 210},
     ["Disabled Text"] = {110, 110, 110},
-    ["Object Background"] = {18, 1, 14},
-    ["Object Border"] = {64, 28, 50},
+    ["Object Background"] = {24, 24, 37},
+    ["Object Border"] = {49, 50, 68},
     ["Dropdown Option Background"] = {19, 19, 19}
 }
 
@@ -551,7 +551,7 @@ function Library:Create(Options)
                         local SliderHeight = 15
                         local SliderWidth = InnerWidth - (Padding * 2)
                         local SliderX = ColumnX + Padding + Padding
-                        local SliderY = CurrentInternalY + 15
+                        local SliderY = CurrentInternalY + 14
                         SetObjectVisibility(Object.Background, true)
                         SetObjectVisibility(Object.Border, true)
                         SetObjectVisibility(Object.Fill, true)
