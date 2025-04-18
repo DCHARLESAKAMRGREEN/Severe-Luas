@@ -1057,6 +1057,7 @@ spawn(
                                                     Mouse.X >= ToggleX and Mouse.X <= TextX + TextBoundsX and
                                                     Mouse.Y >= ToggleY and
                                                     Mouse.Y <= ToggleY + ToggleHeight
+
                                                 if IsToggleHovered then
                                                     Object:SetState(not Object.State)
                                                     UIClickHandled = true
