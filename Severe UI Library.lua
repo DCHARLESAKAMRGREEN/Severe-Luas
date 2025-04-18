@@ -161,7 +161,7 @@ function Library:Create(Options)
 
     Main.TabBackground = Drawing.new("Square")
     Main.TabBackground.Position = {Main.WindowBackground.Position.x + 10, Main.WindowBackground.Position.y + 25}
-    Main.TabBackground.Size = {Main.WindowBackground.Size.x - 20, 23}
+    Main.TabBackground.Size = {Main.WindowBackground.Size.x - 20, 20}
     Main.TabBackground.Color = Colors["Tab Background"]
     Main.TabBackground.Filled = true
     Main.TabBackground.Thickness = 1
@@ -178,8 +178,8 @@ function Library:Create(Options)
     SetInitialVisibility(Main.TabBorder)
 
     Main.WindowBackground2 = Drawing.new("Square")
-    Main.WindowBackground2.Position = {Main.WindowBackground.Position.x + 10, Main.WindowBackground.Position.y + 48}
-    Main.WindowBackground2.Size = {Main.WindowBackground.Size.x - 20, Main.WindowBackground.Size.y - 68}
+    Main.WindowBackground2.Position = {Main.WindowBackground.Position.x + 10, Main.WindowBackground.Position.y + 40}
+    Main.WindowBackground2.Size = {Main.WindowBackground.Size.x - 20, Main.WindowBackground.Size.y - 50}
     Main.WindowBackground2.Color = Colors["Window Background 2"]
     Main.WindowBackground2.Filled = true
     Main.WindowBackground2.Thickness = 1
@@ -243,7 +243,7 @@ function Library:Create(Options)
         Main.Title.Position = {BaseX + 10, BaseY + 5}
         Main.TabBackground.Position = {BaseX + 10, BaseY + 25}
         Main.TabBorder.Position = {Main.TabBackground.Position.x, Main.TabBackground.Position.y}
-        Main.WindowBackground2.Position = {BaseX + 10, BaseY + 48}
+        Main.WindowBackground2.Position = {BaseX + 10, BaseY + 40}
         Main.Window2Border.Position = {Main.WindowBackground2.Position.x, Main.WindowBackground2.Position.y}
         Main.WindowBorder.Position = {BaseX, BaseY}
         Main:UpdateLayout()
@@ -350,25 +350,29 @@ function Library:Create(Options)
                         Object.Text.Center = false
                         Object.Text.Size = 12
                         CurrentInternalY = CurrentInternalY + ToggleHeight + Padding
-                    elseif Object.Type == "Slider" then
-                        local SliderHeight = 18
-                        local SliderWidth = Width - (Padding * 2)
-                        local SliderX = ColumnX + Padding
-                        local SliderY = CurrentInternalY + 15
-                        SetObjectVisibility(Object.Background, true)
-                        SetObjectVisibility(Object.Border, true)
-                        SetObjectVisibility(Object.Fill, true)
-                        SetObjectVisibility(Object.Text, true)
-                        SetObjectVisibility(Object.ValueText, true)
-                        Object.Background.Position = {SliderX, SliderY}
-                        Object.Background.Size = {SliderWidth, SliderHeight}
-                        Object.Border.Position = {SliderX, SliderY}
-                        Object.Border.Size = {SliderWidth, SliderHeight}
-                        Object.Fill.Position = {SliderX, SliderY}
-                        Object.Fill.Size = {((Object.Value - Object.Min) / (Object.Max - Object.Min)) * SliderWidth, SliderHeight}
-                        Object.Text.Position = {SliderX, SliderY - 15}
-                        Object.ValueText.Position = {SliderX + SliderWidth - 60, SliderY - 15}
-                        CurrentInternalY = CurrentInternalY + SliderHeight + Padding + 15
+elseif Object.Type == "Slider" then
+    local SliderHeight = 16
+    local SliderWidth = Width - (Padding * 2)
+    local SliderX = ColumnX + Padding
+    local SliderY = CurrentInternalY + 15
+    SetObjectVisibility(Object.Background, true)
+    SetObjectVisibility(Object.Border, true)
+    SetObjectVisibility(Object.Fill, true)
+    SetObjectVisibility(Object.Text, true)
+    SetObjectVisibility(Object.ValueText, true)
+    Object.Background.Position = {SliderX, SliderY}
+    Object.Background.Size = {SliderWidth, SliderHeight}
+    Object.Border.Position = {SliderX, SliderY}
+    Object.Border.Size = {SliderWidth, SliderHeight}
+    Object.Fill.Position = {SliderX, SliderY}
+    Object.Fill.Size = {((Object.Value - Object.Min) / (Object.Max - Object.Min)) * SliderWidth, SliderHeight}
+    Object.Text.Position = {SliderX, SliderY - 15}
+    
+    local SliderCenterX = SliderX + (SliderWidth / 2)
+    local SliderCenterY = SliderY + (SliderHeight / 2) - 6
+    Object.ValueText.Position = {SliderCenterX, SliderCenterY}
+    
+    CurrentInternalY = CurrentInternalY + SliderHeight + Padding + 15
                     end
                 end
             end
@@ -428,7 +432,7 @@ function Library:Create(Options)
         SetInitialVisibility(TabButtonText)
         local SelectedHighlight = Drawing.new("Square")
         SelectedHighlight.Color = Colors["Selected"]
-        SelectedHighlight.Transparency = 0.135
+        SelectedHighlight.Transparency = 0.085
         SelectedHighlight.Filled = true
         SelectedHighlight.Visible = false
         local TabContent = {
@@ -577,93 +581,109 @@ function Library:Create(Options)
                 return ToggleObj
             end
 
-            function SectionObj:Slider(Options)
-                local SliderName = Options.Name or "Slider"
-                local Min = Options.Min or 0
-                local Max = Options.Max or 100
-                local Default = math.clamp(Options.Default or ((Max - Min) / 2), Min, Max)
-                local Units = Options.Units or ""
-                local Callback = Options.Callback or function() end
-                
-                local SliderBackground = Drawing.new("Square")
-                SliderBackground.Color = Colors["Object Background"]
-                SliderBackground.Filled = true
-                SliderBackground.Thickness = 1
-                SliderBackground.Transparency = 1
-                SliderBackground.Visible = self.Visible
-                
-                local SliderBorder = Drawing.new("Square")
-                SliderBorder.Color = Colors["Object Border"]
-                SliderBorder.Filled = false
-                SliderBorder.Thickness = 1
-                SliderBorder.Transparency = 1
-                SliderBorder.Visible = self.Visible
-                
-                local SliderFill = Drawing.new("Square")
-                SliderFill.Color = Colors["Accent"]
-                SliderFill.Filled = true
-                SliderFill.Transparency = 0.5
-                SliderFill.Visible = self.Visible
-                
-                local SliderText = Drawing.new("Text")
-                SliderText.Text = SliderName
-                SliderText.Size = 12
-                SliderText.Font = 5
-                SliderText.Color = Colors["Text"]
-                SliderText.Outline = true
-                SliderText.OutlineColor = {0, 0, 0}
-                SliderText.Transparency = 1
-                SliderText.Center = false
-                SliderText.Visible = self.Visible
-                
-                local ValueText = Drawing.new("Text")
-                ValueText.Text = Default..Units
-                ValueText.Size = 12
-                ValueText.Font = 5
-                ValueText.Color = Colors["Text"]
-                ValueText.Outline = true
-                ValueText.OutlineColor = {0, 0, 0}
-                ValueText.Transparency = 1
-                ValueText.Center = false
-                ValueText.Visible = self.Visible
-                
-                local SliderObj = {
-                    Type = "Slider",
-                    Name = SliderName,
-                    Min = Min,
-                    Max = Max,
-                    Value = Default,
-                    Units = Units,
-                    Callback = Callback,
-                    Background = SliderBackground,
-                    Border = SliderBorder,
-                    Fill = SliderFill,
-                    Text = SliderText,
-                    ValueText = ValueText,
-                    DefaultBorderColor = Colors["Object Border"],
-                    OriginalBackgroundColor = Colors["Object Background"],
-                    Visible = self.Visible,
-                    Dragging = false
-                }
+function SectionObj:Slider(Options)
+    local SliderName = Options.Name or "Slider"
+    local Min = Options.Min or 0
+    local Max = Options.Max or 100
+    local Default = math.clamp(Options.Default or ((Max - Min) / 2), Min, Max)
+    local Units = Options.Units or ""
+    local Increment = Options.Increment or 1
+    local Callback = Options.Callback or function() end
+    
+    local SliderBackground = Drawing.new("Square")
+    SliderBackground.Color = Colors["Object Background"]
+    SliderBackground.Filled = true
+    SliderBackground.Thickness = 1
+    SliderBackground.Transparency = 1
+    SliderBackground.Visible = self.Visible
+    
+    local SliderBorder = Drawing.new("Square")
+    SliderBorder.Color = Colors["Object Border"]
+    SliderBorder.Filled = false
+    SliderBorder.Thickness = 1
+    SliderBorder.Transparency = 1
+    SliderBorder.Visible = self.Visible
+    
+    local SliderFill = Drawing.new("Square")
+    SliderFill.Color = Colors["Accent"]
+    SliderFill.Filled = true
+    SliderFill.Transparency = 0.5
+    SliderFill.Visible = self.Visible
+    
+    local SliderText = Drawing.new("Text")
+    SliderText.Text = SliderName
+    SliderText.Size = 12
+    SliderText.Font = 5
+    SliderText.Color = Colors["Text"]
+    SliderText.Outline = true
+    SliderText.OutlineColor = {0, 0, 0}
+    SliderText.Transparency = 1
+    SliderText.Center = false
+    SliderText.Visible = self.Visible
+    
+    local ValueText = Drawing.new("Text")
+    ValueText.Text = Default..Units
+    ValueText.Size = 12
+    ValueText.Font = 5
+    ValueText.Color = Colors["Text"]
+    ValueText.Outline = true
+    ValueText.OutlineColor = {0, 0, 0}
+    ValueText.Transparency = 1
+    ValueText.Center = true
+    ValueText.Visible = self.Visible
+    
+    local SliderObj = {
+        Type = "Slider",
+        Name = SliderName,
+        Min = Min,
+        Max = Max,
+        Value = Default,
+        Units = Units,
+	Increment = Increment, 
+        Callback = Callback,
+        Background = SliderBackground,
+        Border = SliderBorder,
+        Fill = SliderFill,
+        Text = SliderText,
+        ValueText = ValueText,
+        DefaultBorderColor = Colors["Object Border"],
+        OriginalBackgroundColor = Colors["Object Background"],
+        Visible = self.Visible,
+        Dragging = false
+    }
 
-                function SliderObj:SetValue(NewValue)
-                    self.Value = math.clamp(NewValue, self.Min, self.Max)
-                    self.ValueText.Text = string.format("%.1f%s", self.Value, self.Units)
-                    if self.Background.Size and self.Background.Size.x then
-                        local FillWidth = ((self.Value - self.Min) / (self.Max - self.Min)) * self.Background.Size.x
-                        self.Fill.Size = {FillWidth, self.Background.Size.y}
-                    end
-                    if self.Callback then
-                        spawn(function() self.Callback(self.Value) end)
-                    end
-                end
+    function SliderObj:SetValue(NewValue)
+        local snappedValue = Min + (math.floor((NewValue - Min) / self.Increment + 0.5) * self.Increment)
+        self.Value = math.clamp(snappedValue, self.Min, self.Max)
 
-                table.insert(self.Interfaces, SliderObj)
-                if IsVisible and Main.ActiveTab == TabContent.Name then
-                    Main:UpdateLayout()
-                end
-                return SliderObj
-            end
+        local format = "%.0f%s"
+        if self.Increment < 1 then
+            local decimalPlaces = math.max(0, math.ceil(math.abs(math.log10(self.Increment))))
+            format = "%." .. decimalPlaces .. "f%s"
+        end
+        
+        self.ValueText.Text = string.format(format, self.Value, self.Units)
+        
+        if self.Background.Size and self.Background.Size.x then
+            local FillWidth = ((self.Value - self.Min) / (self.Max - self.Min)) * self.Background.Size.x
+            self.Fill.Size = {FillWidth, self.Background.Size.y}
+            
+            local SliderCenterX = self.Background.Position.x + (self.Background.Size.x / 2)
+            local SliderCenterY = self.Background.Position.y + (self.Background.Size.y / 2) - 6  
+            self.ValueText.Position = {SliderCenterX, SliderCenterY}
+        end
+        if self.Callback then
+            spawn(function() self.Callback(self.Value) end)
+        end
+    end
+
+
+    table.insert(self.Interfaces, SliderObj)
+    if IsVisible and Main.ActiveTab == TabContent.Name then
+        Main:UpdateLayout()
+    end
+    return SliderObj
+end
 
             if Side == "Left" then
                 table.insert(self.LeftSections, SectionObj)
@@ -796,7 +816,7 @@ spawn(function()
                                         if Object.Type == "Button" and Object.ButtonBackground.Visible then
                                             if WindowActive:IsObjectHovered(Object.ButtonBackground) then
                                                 Object.ButtonBackground.Color = Colors["Selected"]
-                                                Object.ButtonBackground.Transparency = 0.135
+                                                Object.ButtonBackground.Transparency = 0.085
                                                 Object.ButtonBorder.Color = Colors["Accent"]
                                                 local TargetButtonObj = Object
                                                 spawn(function()
@@ -899,18 +919,18 @@ elseif Object.Type == "Toggle" then
                  end
             end
 
-            if ActiveSlider and Mouse.Pressed then
-                 IsHovered = true
-                 UIClickHandled = true 
-                 local MouseX = Mouse.X
-                 local SliderX = ActiveSlider.Background.Position.x
-                 local SliderW = ActiveSlider.Background.Size.x
-                 if SliderW > 0 then 
-                     local Ratio = math.clamp((MouseX - SliderX) / SliderW, 0, 1)
-                     local NewValue = ActiveSlider.Min + (ActiveSlider.Max - ActiveSlider.Min) * Ratio
-                     ActiveSlider:SetValue(NewValue) 
-                 end
-            end
+if ActiveSlider and Mouse.Pressed then
+    IsHovered = true
+    UIClickHandled = true 
+    local MouseX = Mouse.X
+    local SliderX = ActiveSlider.Background.Position.x
+    local SliderW = ActiveSlider.Background.Size.x
+    if SliderW > 0 then 
+        local Ratio = math.clamp((MouseX - SliderX) / SliderW, 0, 1)
+        local RawValue = ActiveSlider.Min + (ActiveSlider.Max - ActiveSlider.Min) * Ratio
+        ActiveSlider:SetValue(RawValue) 
+    end
+end
 
             if not Mouse.Pressed then
                  if WindowActive.ActiveTab then
