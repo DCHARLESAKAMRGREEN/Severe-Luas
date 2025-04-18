@@ -548,7 +548,7 @@ function Library:Create(Options)
                         Object.Text.Position = {SliderX, SliderY - 15}
 
                         local SliderCenterX = SliderX + (SliderWidth / 2)
-                        local SliderCenterY = SliderY + (SliderHeight / 2) - 6
+                        local SliderCenterY = SliderY + (SliderHeight / 2) - 6.5
                         Object.ValueText.Position = {SliderCenterX, SliderCenterY}
                         Object.ValueText.Center = true
 
@@ -1047,7 +1047,17 @@ spawn(
                                                     return
                                                 end
                                             elseif Object.Type == "Toggle" and Object.OuterBox.Visible then
-                                                if WindowActive:IsObjectHovered(Object.OuterBox) then
+                                                local ToggleX = Object.OuterBox.Position.x
+                                                local ToggleY = Object.OuterBox.Position.y
+                                                local ToggleWidth = Object.OuterBox.Size.x
+                                                local ToggleHeight = Object.OuterBox.Size.y
+                                                local TextX = Object.Text.Position.x
+                                                local TextBoundsX = Object.Text.TextBounds.x
+                                                local IsToggleHovered =
+                                                    Mouse.X >= ToggleX and Mouse.X <= TextX + TextBoundsX and
+                                                    Mouse.Y >= ToggleY and
+                                                    Mouse.Y <= ToggleY + ToggleHeight
+                                                if IsToggleHovered then
                                                     Object:SetState(not Object.State)
                                                     UIClickHandled = true
                                                     return
@@ -1087,8 +1097,17 @@ spawn(
                                                 Object.ButtonBorder.Color = Object.DefaultBorderColor
                                             end
                                         elseif Object.Type == "Toggle" then
-                                            local Hovered = WindowActive:IsObjectHovered(Object.OuterBox)
-                                            if Hovered then
+                                            local ToggleX = Object.OuterBox.Position.x
+                                            local ToggleY = Object.OuterBox.Position.y
+                                            local ToggleWidth = Object.OuterBox.Size.x
+                                            local ToggleHeight = Object.OuterBox.Size.y
+                                            local TextX = Object.Text.Position.x
+                                            local TextBoundsX = Object.Text.TextBounds.x
+                                            local IsToggleHovered =
+                                                Mouse.X >= ToggleX and Mouse.X <= TextX + TextBoundsX and
+                                                Mouse.Y >= ToggleY and
+                                                Mouse.Y <= ToggleY + ToggleHeight
+                                            if IsToggleHovered then
                                                 IsHovered = true
                                                 HoveredButton = Object
                                                 Object.OuterBox.Color = Colors["Accent"]
