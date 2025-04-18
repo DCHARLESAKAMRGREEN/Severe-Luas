@@ -36,19 +36,95 @@ local Running = true
 
 function Library:Unload()
     Running = false
+    
     if WindowActive then
-        local function RemoveDrawingObjects(T)
-            for _, V in pairs(T) do
-                if type(V) == "table" and V.Remove then
-                    V:Remove()
-                elseif type(V) == "table" then
-                    RemoveDrawingObjects(V)
+        IsDragging = false
+        IsToggled = false
+        HoveredButton = nil
+        
+        if WindowActive.Tabs then
+            for _, TabObj in ipairs(WindowActive.Tabs) do
+                if TabObj.Button then TabObj.Button:Remove() end
+                if TabObj.ButtonBorder then TabObj.ButtonBorder:Remove() end
+                if TabObj.ButtonText then TabObj.ButtonText:Remove() end
+                if TabObj.SelectedHighlight then TabObj.SelectedHighlight:Remove() end
+                
+                if TabObj.Content then
+                    if TabObj.Content.LeftSections then
+                        for _, SectionObj in ipairs(TabObj.Content.LeftSections) do
+                            if SectionObj.Background then SectionObj.Background:Remove() end
+                            if SectionObj.Border then SectionObj.Border:Remove() end
+                            if SectionObj.Title then SectionObj.Title:Remove() end
+                            
+                            if SectionObj.Interfaces then
+                                for _, InterfaceObj in ipairs(SectionObj.Interfaces) do
+                                    if InterfaceObj.Type == "Button" then
+                                        if InterfaceObj.ButtonBackground then InterfaceObj.ButtonBackground:Remove() end
+                                        if InterfaceObj.ButtonBorder then InterfaceObj.ButtonBorder:Remove() end
+                                        if InterfaceObj.ButtonText then InterfaceObj.ButtonText:Remove() end
+                                    elseif InterfaceObj.Type == "Toggle" then
+                                        if InterfaceObj.OuterBox then InterfaceObj.OuterBox:Remove() end
+                                        if InterfaceObj.InnerBox then InterfaceObj.InnerBox:Remove() end
+                                        if InterfaceObj.Text then InterfaceObj.Text:Remove() end
+                                    elseif InterfaceObj.Type == "Slider" then
+                                        if InterfaceObj.Background then InterfaceObj.Background:Remove() end
+                                        if InterfaceObj.Border then InterfaceObj.Border:Remove() end
+                                        if InterfaceObj.Fill then InterfaceObj.Fill:Remove() end
+                                        if InterfaceObj.Text then InterfaceObj.Text:Remove() end
+                                        if InterfaceObj.ValueText then InterfaceObj.ValueText:Remove() end
+                                    end
+                                end
+                            end
+                        end
+                    end
+                    
+                    if TabObj.Content.RightSections then
+                        for _, SectionObj in ipairs(TabObj.Content.RightSections) do
+                            if SectionObj.Background then SectionObj.Background:Remove() end
+                            if SectionObj.Border then SectionObj.Border:Remove() end
+                            if SectionObj.Title then SectionObj.Title:Remove() end
+                            
+                            if SectionObj.Interfaces then
+                                for _, InterfaceObj in ipairs(SectionObj.Interfaces) do
+                                    if InterfaceObj.Type == "Button" then
+                                        if InterfaceObj.ButtonBackground then InterfaceObj.ButtonBackground:Remove() end
+                                        if InterfaceObj.ButtonBorder then InterfaceObj.ButtonBorder:Remove() end
+                                        if InterfaceObj.ButtonText then InterfaceObj.ButtonText:Remove() end
+                                    elseif InterfaceObj.Type == "Toggle" then
+                                        if InterfaceObj.OuterBox then InterfaceObj.OuterBox:Remove() end
+                                        if InterfaceObj.InnerBox then InterfaceObj.InnerBox:Remove() end
+                                        if InterfaceObj.Text then InterfaceObj.Text:Remove() end
+                                    elseif InterfaceObj.Type == "Slider" then
+                                        if InterfaceObj.Background then InterfaceObj.Background:Remove() end
+                                        if InterfaceObj.Border then InterfaceObj.Border:Remove() end
+                                        if InterfaceObj.Fill then InterfaceObj.Fill:Remove() end
+                                        if InterfaceObj.Text then InterfaceObj.Text:Remove() end
+                                        if InterfaceObj.ValueText then InterfaceObj.ValueText:Remove() end
+                                    end
+                                end
+                            end
+                        end
+                    end
                 end
             end
         end
-        RemoveDrawingObjects(WindowActive)
+        
+        if WindowActive.WindowBackground then WindowActive.WindowBackground:Remove() end
+        if WindowActive.Title then WindowActive.Title:Remove() end
+        if WindowActive.TabBackground then WindowActive.TabBackground:Remove() end
+        if WindowActive.TabBorder then WindowActive.TabBorder:Remove() end
+        if WindowActive.WindowBackground2 then WindowActive.WindowBackground2:Remove() end
+        if WindowActive.Window2Border then WindowActive.Window2Border:Remove() end
+        if WindowActive.WindowBorder then WindowActive.WindowBorder:Remove() end
+        
+        WindowActive.Tabs = {}
+        WindowActive.TabButtons = {}
+        WindowActive.TabContents = {}
         WindowActive = nil
     end
+    
+    Drawing.clear()
+    
     Library = nil
 end
 
@@ -329,7 +405,7 @@ function Library:Create(Options)
                         Object.ButtonBackground.Size = {ButtonWidth, ButtonHeight}
                         Object.ButtonBorder.Position = {ButtonX, ButtonY}
                         Object.ButtonBorder.Size = {ButtonWidth, ButtonHeight}
-                        Object.ButtonText.Position = {ButtonX + math.floor(ButtonWidth / 2), ButtonY + 3}
+                        Object.ButtonText.Position = {ButtonX + math.floor(ButtonWidth / 2), ButtonY + math.floor(ButtonHeight / 2) - 6}
                         Object.ButtonText.Center = true
                         Object.ButtonText.Size = 12
                         CurrentInternalY = CurrentInternalY + ButtonHeight + Padding
@@ -344,9 +420,9 @@ function Library:Create(Options)
                         SetObjectVisibility(Object.Text, true)
                         Object.OuterBox.Position = {ToggleX, ToggleY}
                         Object.OuterBox.Size = {ToggleWidth, ToggleHeight}
-                        Object.InnerBox.Position = {ToggleX + 2, ToggleY + 2}
-                        Object.InnerBox.Size = {14, 14}
-                        Object.Text.Position = {ToggleX + ToggleWidth + Padding, ToggleY + 3.5}
+                        Object.InnerBox.Position = {ToggleX + 1, ToggleY + 1}
+                        Object.InnerBox.Size = {16, 16}
+                        Object.Text.Position = {ToggleX + ToggleWidth + Padding, ToggleY + math.floor(ToggleHeight / 2) - 6}
                         Object.Text.Center = false
                         Object.Text.Size = 12
                         CurrentInternalY = CurrentInternalY + ToggleHeight + Padding
@@ -371,6 +447,7 @@ elseif Object.Type == "Slider" then
     local SliderCenterX = SliderX + (SliderWidth / 2)
     local SliderCenterY = SliderY + (SliderHeight / 2) - 6
     Object.ValueText.Position = {SliderCenterX, SliderCenterY}
+    Object.ValueText.Center = true
     
     CurrentInternalY = CurrentInternalY + SliderHeight + Padding + 15
                     end
@@ -535,10 +612,10 @@ elseif Object.Type == "Slider" then
                 ToggleOuterBox.Visible = self.Visible
                 ToggleOuterBox.Color = Colors["Object Border"]
                 local ToggleInnerBox = Drawing.new("Square")
-                ToggleInnerBox.Size = {14, 14}
+                ToggleInnerBox.Size = {16, 16}
                 ToggleInnerBox.Filled = true
                 ToggleInnerBox.Thickness = 1
-                ToggleInnerBox.Transparency = 1
+                ToggleInnerBox.Transparency = 0.65
                 ToggleInnerBox.Visible = self.Visible
                 ToggleInnerBox.Color = DefaultState and Colors["Accent"] or Colors["Object Background"]
                 local ToggleText = Drawing.new("Text")
@@ -607,7 +684,7 @@ function SectionObj:Slider(Options)
     local SliderFill = Drawing.new("Square")
     SliderFill.Color = Colors["Accent"]
     SliderFill.Filled = true
-    SliderFill.Transparency = 0.5
+    SliderFill.Transparency = 0.65
     SliderFill.Visible = self.Visible
     
     local SliderText = Drawing.new("Text")
@@ -669,7 +746,7 @@ function SectionObj:Slider(Options)
             self.Fill.Size = {FillWidth, self.Background.Size.y}
             
             local SliderCenterX = self.Background.Position.x + (self.Background.Size.x / 2)
-            local SliderCenterY = self.Background.Position.y + (self.Background.Size.y / 2) - 6  
+            local SliderCenterY = self.Background.Position.y + (self.Background.Size.y / 2) - 6.5  
             self.ValueText.Position = {SliderCenterX, SliderCenterY}
         end
         if self.Callback then
@@ -820,7 +897,7 @@ spawn(function()
                                                 Object.ButtonBorder.Color = Colors["Accent"]
                                                 local TargetButtonObj = Object
                                                 spawn(function()
-                                                    wait(0.05)
+                                                    wait(0.075)
                                                     if IsVisible and WindowActive and TargetButtonObj and TargetButtonObj.ButtonBackground.Visible then
                                                         TargetButtonObj.ButtonBackground.Color = TargetButtonObj.OriginalBackgroundColor
                                                         TargetButtonObj.ButtonBackground.Transparency = TargetButtonObj.OriginalBackgroundTransparency
