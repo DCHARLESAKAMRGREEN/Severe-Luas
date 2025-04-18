@@ -1,18 +1,18 @@
 local Colors = {
-    ["Accent"] = {67, 12, 122},
-    ["Window Background"] = {40, 40, 40},
-    ["Window Background 2"] = {30, 30, 30},
-    ["Window Border"] = {45, 45, 45},
-    ["Tab Background"] = {20, 20, 20},
-    ["Tab Border"] = {45, 45, 45},
-    ["Tab Toggle Background"] = {28, 28, 28},
+    ["Accent"] = {173, 29, 85},
+    ["Window Background"] = {23, 0, 13},
+    ["Window Background 2"] = {18, 1, 14},
+    ["Window Border"] = {64, 28, 50},
+    ["Tab Background"] = {18, 1, 14},
+    ["Tab Border"] = {64, 28, 50},
+    ["Tab Toggle Background"] = {18, 1, 14},
     ["Selected"] = {255, 255, 255},
-    ["Section Background"] = {18, 18, 18},
-    ["Section Border"] = {35, 35, 35},
-    ["Text"] = {200, 200, 200},
+    ["Section Background"] = {18, 1, 14},
+    ["Section Border"] = {64, 28, 50},
+    ["Text"] = {210, 210, 210},
     ["Disabled Text"] = {110, 110, 110},
-    ["Object Background"] = {25, 25, 25},
-    ["Object Border"] = {35, 35, 35},
+    ["Object Background"] = {18, 1, 14},
+    ["Object Border"] = {64, 28, 50},
     ["Dropdown Option Background"] = {19, 19, 19}
 }
 
@@ -346,7 +346,7 @@ function Library:Create(Options)
                         Object.OuterBox.Size = {ToggleWidth, ToggleHeight}
                         Object.InnerBox.Position = {ToggleX + 2, ToggleY + 2}
                         Object.InnerBox.Size = {14, 14}
-                        Object.Text.Position = {ToggleX + ToggleWidth + Padding, ToggleY + 4}
+                        Object.Text.Position = {ToggleX + ToggleWidth + Padding, ToggleY + 3.5}
                         Object.Text.Center = false
                         Object.Text.Size = 12
                         CurrentInternalY = CurrentInternalY + ToggleHeight + Padding
