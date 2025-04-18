@@ -69,7 +69,6 @@ function Library:Unload()
                             if SectionObj.Title then
                                 SectionObj.Title:Remove()
                             end
-
                             if SectionObj.Interfaces then
                                 for _, InterfaceObj in ipairs(SectionObj.Interfaces) do
                                     if InterfaceObj.Type == "Button" then
@@ -107,6 +106,9 @@ function Library:Unload()
                                         end
                                         if InterfaceObj.ValueText then
                                             InterfaceObj.ValueText:Remove()
+                                            if SectionObj.SectionTopLine then
+                                                SectionObj.SectionTopLine:Remove()
+                                            end
                                         end
                                     end
                                 end
@@ -163,6 +165,9 @@ function Library:Unload()
                                         end
                                         if InterfaceObj.ValueText then
                                             InterfaceObj.ValueText:Remove()
+                                            if SectionObj.SectionTopLine then
+                                                SectionObj.SectionTopLine:Remove()
+                                            end
                                         end
                                     end
                                 end
@@ -218,6 +223,7 @@ local function SetInterfaceVisibility(UI, Visible)
             SetObjectVisibility(Object.Background, Visible)
             SetObjectVisibility(Object.Border, Visible)
             SetObjectVisibility(Object.Title, Visible)
+            SetObjectVisibility(Object.SectionTopLine, Visible)
             Object.Visible = Visible
             if Object.Interfaces then
                 SetInterfaceVisibility(Object.Interfaces, Visible)
@@ -354,7 +360,7 @@ function Library:Create(Options)
     Main.WindowBorder.Position = {Main.WindowBackground.Position.x, Main.WindowBackground.Position.y}
     Main.WindowBorder.Color = Colors["Accent"]
     Main.WindowBorder.Filled = false
-    Main.WindowBorder.Thickness = 1
+    Main.WindowBorder.Thickness = 1.25
     Main.WindowBorder.Transparency = 1
     SetInitialVisibility(Main.WindowBorder)
 
@@ -476,21 +482,36 @@ function Library:Create(Options)
         local CurrentRightY = InitialY
 
         local function UpdateSectionLayout(SectionObj, ColumnX, StartY, Width)
+            local InnerWidth = Width - (Padding * 2)
+            local LineThickness = 1
+            local BorderThickness = SectionObj.Border.Thickness or 1
+
             SetObjectVisibility(SectionObj.Background, true)
             SetObjectVisibility(SectionObj.Border, true)
             SetObjectVisibility(SectionObj.Title, true)
-            SectionObj.Background.Position = {ColumnX, StartY}
-            SectionObj.Border.Position = {ColumnX, StartY}
-            local TitleHeight = SectionObj.Title.TextBounds and SectionObj.Title.TextBounds.y or 12
-            SectionObj.Title.Position = {ColumnX + Padding, StartY + 3}
-            local CurrentInternalY = StartY + TitleHeight + Padding * 2
+            SetObjectVisibility(SectionObj.SectionTopLine, true)
+
+            SectionObj.Background.Position = {ColumnX + Padding, StartY}
+            SectionObj.Background.Size = {InnerWidth, 0}
+
+            SectionObj.Border.Position = {ColumnX + Padding - BorderThickness, StartY + Padding - 1}
+            SectionObj.Border.Size = {InnerWidth + BorderThickness * 2, 0}
+
+            SectionObj.SectionTopLine.Position = {ColumnX + Padding, StartY + Padding}
+            SectionObj.SectionTopLine.Size = {InnerWidth, LineThickness}
+            SectionObj.SectionTopLine.Color = Colors["Accent"]
+
+            local TitleHeight = SectionObj.Title.TextBounds and SectionObj.Title.TextBounds.y
+            SectionObj.Title.Position = {ColumnX + Padding + Padding, StartY + Padding + LineThickness + Padding - 1.5}
+
+            local CurrentInternalY = StartY + Padding + LineThickness + Padding + TitleHeight + Padding
 
             if SectionObj.Interfaces then
                 for _, Object in ipairs(SectionObj.Interfaces) do
                     if Object.Type == "Button" then
                         local ButtonHeight = 18
-                        local ButtonWidth = Width - (Padding * 2)
-                        local ButtonX = ColumnX + Padding
+                        local ButtonWidth = InnerWidth - (Padding * 2)
+                        local ButtonX = ColumnX + Padding + Padding
                         local ButtonY = CurrentInternalY
                         SetObjectVisibility(Object.ButtonBackground, true)
                         SetObjectVisibility(Object.ButtonBorder, true)
@@ -509,8 +530,8 @@ function Library:Create(Options)
                     elseif Object.Type == "Toggle" then
                         local ToggleHeight = 18
                         local ToggleWidth = 18
-                        local TextWidth = Width - ToggleWidth - (Padding * 3)
-                        local ToggleX = ColumnX + Padding
+                        local TextWidth = InnerWidth - ToggleWidth - Padding
+                        local ToggleX = ColumnX + Padding + Padding
                         local ToggleY = CurrentInternalY
                         SetObjectVisibility(Object.OuterBox, true)
                         SetObjectVisibility(Object.InnerBox, true)
@@ -527,9 +548,9 @@ function Library:Create(Options)
                         Object.Text.Size = 12
                         CurrentInternalY = CurrentInternalY + ToggleHeight + Padding
                     elseif Object.Type == "Slider" then
-                        local SliderHeight = 16
-                        local SliderWidth = Width - (Padding * 2)
-                        local SliderX = ColumnX + Padding
+                        local SliderHeight = 15
+                        local SliderWidth = InnerWidth - (Padding * 2)
+                        local SliderX = ColumnX + Padding + Padding
                         local SliderY = CurrentInternalY + 15
                         SetObjectVisibility(Object.Background, true)
                         SetObjectVisibility(Object.Border, true)
@@ -557,8 +578,8 @@ function Library:Create(Options)
                 end
             end
             local TotalSectionHeight = (CurrentInternalY - StartY)
-            SectionObj.Background.Size = {Width, TotalSectionHeight}
-            SectionObj.Border.Size = {Width, TotalSectionHeight}
+            SectionObj.Background.Size = {InnerWidth, TotalSectionHeight}
+            SectionObj.Border.Size = {InnerWidth + BorderThickness * 2, TotalSectionHeight + BorderThickness - Padding}
             SectionObj.CalculatedHeight = TotalSectionHeight
             return StartY + TotalSectionHeight + Padding
         end
@@ -651,6 +672,12 @@ function Library:Create(Options)
             SectionTitle.Transparency = 1
             SectionTitle.Center = false
             SectionTitle.Visible = false
+            local SectionTopLine = Drawing.new("Square")
+            SectionTopLine.Color = Colors["Accent"]
+            SectionTopLine.Filled = true
+            SectionTopLine.Thickness = 1
+            SectionTopLine.Transparency = 1
+            SectionTopLine.Visible = false
             local SectionObj = {
                 Type = "Section",
                 Name = SectionName,
@@ -658,6 +685,7 @@ function Library:Create(Options)
                 Background = SectionBackground,
                 Border = SectionBorder,
                 Title = SectionTitle,
+                SectionTopLine = SectionTopLine,
                 Interfaces = {},
                 Visible = false,
                 CalculatedHeight = 0
@@ -889,6 +917,7 @@ function Library:Create(Options)
                 SetObjectVisibility(SectionBackground, true)
                 SetObjectVisibility(SectionBorder, true)
                 SetObjectVisibility(SectionTitle, true)
+                SetObjectVisibility(SectionTopLine, true)
                 Main:UpdateLayout()
             end
             return SectionObj
