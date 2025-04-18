@@ -757,7 +757,7 @@ function Library:Create(Options)
                 ToggleInnerBox.Color = DefaultState and Colors["Accent"] or Colors["Object Background"]
                 local ToggleText = Drawing.new("Text")
                 ToggleText.Text = ToggleName
-                ToggleText.Size = 12
+                ToggleText.Size = 14
                 ToggleText.Font = 5
                 ToggleText.Color = Colors["Text"]
                 ToggleText.Outline = true
