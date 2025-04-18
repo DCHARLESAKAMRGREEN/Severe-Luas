@@ -528,8 +528,8 @@ function Library:Create(Options)
                         Object.ButtonText.Size = 13
                         CurrentInternalY = CurrentInternalY + ButtonHeight + Padding
                     elseif Object.Type == "Toggle" then
-                        local ToggleHeight = 18
-                        local ToggleWidth = 18
+                        local ToggleHeight = 16
+                        local ToggleWidth = 16
                         local TextWidth = InnerWidth - ToggleWidth - Padding
                         local ToggleX = ColumnX + Padding + Padding
                         local ToggleY = CurrentInternalY
@@ -539,7 +539,7 @@ function Library:Create(Options)
                         Object.OuterBox.Position = {ToggleX, ToggleY}
                         Object.OuterBox.Size = {ToggleWidth, ToggleHeight}
                         Object.InnerBox.Position = {ToggleX + 1, ToggleY + 1}
-                        Object.InnerBox.Size = {16, 16}
+                        Object.InnerBox.Size = {14, 14}
                         Object.Text.Position = {
                             ToggleX + ToggleWidth + Padding,
                             ToggleY + math.floor(ToggleHeight / 2) - 6
