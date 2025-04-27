@@ -1,6 +1,6 @@
 local Players = game:GetService("Players")
-local player = Players.LocalPlayer or Players:GetChildren()[1]
-local power = player.Backpack.ActionValues.Power
+local Player = Players.LocalPlayer
+local Power = Player.Backpack.ActionValues.Power
 
 local ShotAdjustments = {
     [100] = 69.5 - 9.15, [95] = 69.5 - 8.25, [90] = 69.5 - 8, 
@@ -20,39 +20,39 @@ local LayupAdjustments = {
     [20] = 68 - 0.1
 }
 
-local function getPowerValue(ping, pingTable)
-    local sortedThresholds = {}
-    for threshold in pairs(pingTable) do
-        table.insert(sortedThresholds, threshold)
+local function GetPowerValue(Ping, PingTable)
+    local SortedThresholds = {}
+    for Threshold in pairs(PingTable) do
+        table.insert(SortedThresholds, Threshold)
     end
-    table.sort(sortedThresholds, function(a, b) return a > b end)
+    table.sort(SortedThresholds, function(a, b) return a > b end)
 
-    for _, threshold in ipairs(sortedThresholds) do
-        if ping >= threshold then
-            return pingTable[threshold]
+    for _, Threshold in ipairs(SortedThresholds) do
+        if Ping >= Threshold then
+            return PingTable[Threshold]
         end
     end
-    return pingTable[30]
+    return PingTable[30]
 end
 
 while true do
-    local pressedKeys = getpressedkeys()
-    local ping = getping()
+    local PressedKeys = getpressedkeys()
+    local Ping = getping()
 
-    local powerValue
-    if table.find(pressedKeys, "Shift") and table.find(pressedKeys, "W") then
-        powerValue = getPowerValue(ping, LayupAdjustments)
+    local PowerValue
+    if table.find(PressedKeys, "Shift") and table.find(PressedKeys, "W") then
+        PowerValue = GetPowerValue(Ping, LayupAdjustments)
     else
-        powerValue = getPowerValue(ping, ShotAdjustments)
+        PowerValue = GetPowerValue(Ping, ShotAdjustments)
     end
 
-    if table.find(pressedKeys, "E") or table.find(pressedKeys, "Space") then
-        if power.Value >= powerValue then
-            if table.find(pressedKeys, "E") then
+    if table.find(PressedKeys, "E") or table.find(PressedKeys, "Space") then
+        if Power.Value >= PowerValue then
+            if table.find(PressedKeys, "E") then
                 keyrelease(0x45)
             end
 
-            if table.find(pressedKeys, "Space") then
+            if table.find(PressedKeys, "Space") then
                 keyrelease(0x20)
             end
         end
