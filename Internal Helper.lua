@@ -126,13 +126,15 @@ Helper.BrickColors = {
 }
 
 Helper.getbrickcolor = function(Part)
-    local Color = getmemoryvalue(Part, 0x1A8, "dword")
+    local Primitive = Helper.Primitive.Get(Part)
+    local Color = getmemoryvalue(Primitive, 0x1A8, "dword")
     return Helper.BrickColors[Color] or Color
 end
 
 Helper.setbrickcolor = function(Part, Color)
+    local Primitive = Helper.Primitive.Get(Part)
     local Color = Helper.BrickColors[Color]
-    setmemoryvalue(Part, 0x1A8, "dword", Color)
+    setmemoryvalue(Primitive, 0x1A8, "dword", Color)
 end
 
 -- <Humanoid>
