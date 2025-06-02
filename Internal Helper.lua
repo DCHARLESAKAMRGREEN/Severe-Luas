@@ -27,14 +27,6 @@ Helper.setanchored = function(Part, Value)
     setmemoryvalue(Primitive, Offsets.Anchored, "bool", Value)
 end
 
-Helper.getpartsize = function(Part)
-    local Primitive = Helper.Primitive.Get(Part)
-    local SizeX = getmemoryvalue(Primitive, Offsets.PartSize, "float")
-    local SizeY = getmemoryvalue(Primitive, Offsets.PartSize + 0x4, "float")
-    local SizeZ = getmemoryvalue(Primitive, Offsets.PartSize + 0x8, "float")
-    return {X = SizeX, Y = SizeY, Z = SizeZ}
-end
-
 Helper.setpartsize = function(Part, Size)
     local Primitive = Helper.Primitive.Get(Part)
     setmemoryvalue(Primitive, Offsets.PartSize, "float", Size.X)
