@@ -70,6 +70,71 @@ Helper.setmaterial = function(Part, MaterialName)
     end
 end
 
+-- <Color>
+Helper.BrickColors = {
+    [0x00F3F3F2] = "White", [0x00A2A5A1] = "Grey", [0x0099E9F9] = "Light yellow", [0x009AC7D7] = "Brick yellow",
+    [0x00B8DAC2] = "Light green (Mint)", [0x00C8BAE8] = "Light reddish violet", [0x00DBBB80] = "Pastel Blue", [0x004284CB] = "Light orange brown",
+    [0x00698ECC] = "Nougat", [0x001C28C4] = "Bright red", [0x00A070C4] = "Med. reddish violet", [0x00AC690D] = "Bright blue",
+    [0x0030CDF5] = "Bright yellow", [0x00324762] = "Earth orange", [0x00352A1B] = "Black", [0x006C6E6D] = "Dark grey",
+    [0x00477F28] = "Dark green", [0x008CC4A1] = "Medium green", [0x009BCFF3] = "Lig. Yellowich orange", [0x004B974B] = "Bright green",
+    [0x00355FA0] = "Dark orange", [0x00DECAC1] = "Light bluish violet", [0x00ECECEC] = "Transparent", [0x004B54CD] = "Tr. Red",
+    [0x00F0DFC1] = "Tr. Lg blue", [0x00E8B67B] = "Tr. Blue", [0x008DF1F7] = "Tr. Yellow", [0x00E4D2B4] = "Light blue",
+    [0x006C85D9] = "Tr. Flu. Reddish orange", [0x008DB684] = "Tr. Green", [0x0084F1F8] = "Tr. Flu. Green", [0x00DEE8EC] = "Phosph. White",
+    [0x00B6C4EE] = "Light red", [0x007A86DA] = "Medium red", [0x00CA996E] = "Medium blue", [0x00B7C1C7] = "Light grey",
+    [0x007C326B] = "Bright violet", [0x00409BE2] = "Br. yellowish orange", [0x004185DA] = "Bright orange", [0x009C8F00] = "Bright bluish green",
+    [0x00435C68] = "Earth yellow", [0x00935443] = "Bright bluish violet", [0x00B1B7BF] = "Tr. Brown", [0x00AC7468] = "Medium bluish violet",
+    [0x00C8ADE5] = "Tr. Medi. reddish violet", [0x003CD2C7] = "Med. yellowish green", [0x00AFA555] = "Med. bluish green", [0x00D5D7B7] = "Light bluish green",
+    [0x0047BDA4] = "Br. yellowish green", [0x00A7E4D9] = "Lig. yellowish green", [0x0058ACE7] = "Med. yellowish orange", [0x004C6FD3] = "Br. reddish orange",
+    [0x00783992] = "Bright reddish violet", [0x0092B8EA] = "Light orange", [0x00CBA5A5] = "Tr. Bright bluish violet", [0x0081BCDC] = "Gold",
+    [0x00597AAE] = "Dark nougat", [0x00A8A39C] = "Silver", [0x003D73D5] = "Neon orange", [0x0056DDD8] = "Neon green",
+    [0x009D8674] = "Sand blue", [0x00907C87] = "Sand violet", [0x006498E0] = "Medium orange", [0x00738A95] = "Sand yellow",
+    [0x00563A20] = "Earth blue", [0x002D4627] = "Earth green", [0x00F7E2CF] = "Tr. Flu. Blue", [0x00A18879] = "Sand blue metallic",
+    [0x00A38E95] = "Sand violet metallic", [0x00678793] = "Sand yellow metallic", [0x00575857] = "Dark grey metallic", [0x00321D16] = "Black metallic",
+    [0x00ACA9AB] = "Light grey metallic", [0x00829078] = "Sand green", [0x00777995] = "Sand red", [0x002F2E7B] = "Dark red",
+    [0x007BF6FF] = "Tr. Flu. Yellow", [0x00C2A4E1] = "Tr. Flu. Red", [0x00626C75] = "Gun metallic", [0x005B6997] = "Red flip/flop",
+    [0x005584B4] = "Yellow flip/flop", [0x00888789] = "Silver flip/flop", [0x004BA9D7] = "Curry", [0x002ED6F9] = "Fire Yellow",
+    [0x002DABE8] = "Flame yellowish orange", [0x00284069] = "Reddish brown", [0x002460CF] = "Flame reddish orange", [0x00A5A2A3] = "Medium stone grey",
+    [0x00A46746] = "Royal blue", [0x008B4723] = "Dark Royal blue", [0x0085428E] = "Bright reddish lilac", [0x00625F63] = "Dark stone grey",
+    [0x005D8A82] = "Lemon metalic", [0x00448EB0] = "Dark Curry", [0x00789570] = "Faded green", [0x00B5B579] = "Turquoise",
+    [0x00E9C39F] = "Light Royal blue", [0x00B7816C] = "Medium Royal blue", [0x002A4C90] = "Rust", [0x00465C7C] = "Brown",
+    [0x009F7096] = "Reddish lilac", [0x009B626B] = "Lilac", [0x00CEA9A7] = "Light lilac", [0x009862CD] = "Bright purple",
+    [0x00C8ADE4] = "Light purple", [0x009590DC] = "Light pink", [0x00A0D5F0] = "Light brick yellow", [0x007FB8EB] = "Warm yellowish orange",
+    [0x008DEAFD] = "Cool yellow", [0x00DDBB7D] = "Dove blue", [0x00752B34] = "Medium lilac", [0x00546D50] = "Slime green",
+    [0x00695D5B] = "Smoky grey", [0x00B01000] = "Dark blue", [0x001D652C] = "Parsley green", [0x00AE7C52] = "Steel blue",
+    [0x00825833] = "Storm blue", [0x00DC2A10] = "Lapis", [0x0085153D] = "Dark indigo", [0x00408E34] = "Sea green",
+    [0x004C9A5B] = "Shamrock", [0x00ACA19F] = "Fossil", [0x00592259] = "Mulberry", [0x001D801F] = "Forest green",
+    [0x00C0ADA9] = "Cadet blue", [0x00CF8909] = "Electric blue", [0x007B007B] = "Eggplant", [0x006B9C7C] = "Moss",
+    [0x0085AB8A] = "Artichoke", [0x00B1C4B9] = "Sage green", [0x00D1CBCA] = "Ghost grey", [0x00DEDFDF] = "Quill grey",
+    [0x00000097] = "Crimson", [0x00A6E5B1] = "Mint", [0x00DBC298] = "Baby blue", [0x00DC98FF] = "Carnation pink",
+    [0x005959FF] = "Persimmon", [0x00000075] = "Maroon", [0x0038B8EF] = "Gold", [0x006DD9F8] = "Daisy orange",
+    [0x00ECE7E7] = "Pearl", [0x00E4D4C7] = "Fog", [0x009494FF] = "Salmon", [0x006268BE] = "Terra Cotta",
+    [0x00242456] = "Cocoa", [0x00C7E7F1] = "Wheat", [0x00BBF3FE] = "Buttermilk", [0x00D0B2E0] = "Mauve",
+    [0x00BD90D4] = "Sunrise", [0x00555596] = "Tawny", [0x0096BED3] = "Cashmere", [0x00BCDCE2] = "Khaki",
+    [0x00EAEAED] = "Lily white", [0x00DADAE9] = "Seashell", [0x003E3E88] = "Burgundy", [0x005D9BBC] = "Cork",
+    [0x0078ACB7] = "Burlap", [0x00A3BFCA] = "Beige", [0x00B2B3BB] = "Oyster", [0x004B586C] = "Pine Cone",
+    [0x004F84A0] = "Fawn brown", [0x00888995] = "Hurricane grey", [0x009EA8AB] = "Cloudy grey", [0x008394AF] = "Linen",
+    [0x00666796] = "Copper", [0x00364256] = "Medium brown", [0x003F687E] = "Bronze", [0x005C6669] = "Flint",
+    [0x00424C5A] = "Dark taupe", [0x0009396A] = "Burnt Sienna", [0x00F8F8F8] = "Institutional white", [0x00CDCDCD] = "Mid gray",
+    [0x00111111] = "Really black", [0x000000FF] = "Really red", [0x0000B0FF] = "Deep orange", [0x00FF80B4] = "Alder",
+    [0x004B4BA3] = "Dusty Rose", [0x0042BEC1] = "Olive", [0x0000FFFF] = "New Yeller", [0x00FF0000] = "Really blue",
+    [0x00602000] = "Navy blue", [0x00B95421] = "Deep blue", [0x00ECAF04] = "Cyan", [0x000055AA] = "CGA brown",
+    [0x00AA00AA] = "Magenta", [0x00CC66FF] = "Pink", [0x00D4EE12] = "Teal", [0x00FFFF00] = "Toothpaste",
+    [0x0000FF00] = "Lime green", [0x00157D3A] = "Camo", [0x00648E7F] = "Grime", [0x009F5B8C] = "Lavender",
+    [0x00FFDDAF] = "Pastel light blue", [0x00C9C9FF] = "Pastel orange", [0x00FFA7B1] = "Pastel violet", [0x00E9F39F] = "Pastel blue-green",
+    [0x00CCFFCC] = "Pastel green", [0x00CCFFFF] = "Pastel yellow", [0x0099CCFF] = "Pastel brown", [0x00D12562] = "Royal purple",
+    [0x00BF00FF] = "Hot pink"
+}
+
+Helper.getbrickcolor = function(Part)
+    local Color = getmemoryvalue(Part, 0x1A8, "dword")
+    return Helper.BrickColors[Color] or Color
+end
+
+Helper.setbrickcolor = function(Part, Color)
+    local Color = Helper.BrickColors[Color]
+    setmemoryvalue(Part, 0x1A8, "dword", Color)
+end
+
 -- <Humanoid>
 Helper.getrigtype = function(Humanoid)
     local RigType = getmemoryvalue(Humanoid, Offsets.RigType, "dword")
