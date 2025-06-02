@@ -312,8 +312,8 @@ Helper.TeamColors = {
 }
 
 Helper.getteamcolor = function(Team)
-    local ColorDword = getmemoryvalue(Team, Offsets.TeamColor, "dword")
-    return Helper.TeamColors[ColorDword] or ColorDword
+    local Color = getmemoryvalue(Team, Offsets.TeamColor, "dword")
+    return Helper.TeamColors[Color] or Color
 end
 
 -- <Proximity Prompt>
