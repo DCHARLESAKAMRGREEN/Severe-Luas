@@ -127,12 +127,16 @@ Helper.BrickColors = {
 
 Helper.getbrickcolor = function(Part)
     local Color = getmemoryvalue(Part, 0x1A8, "dword")
-    return Helper.BrickColors[Color]
+    return Helper.BrickColors[Color] or Color
 end
 
 Helper.setbrickcolor = function(Part, Color)
-    local Color = Helper.BrickColors[Color]
-    setmemoryvalue(Part, 0x1A8, "dword", Color)
+    for k,v in pairs(Helper.BrickColors) do
+        if v == Color then
+            setmemoryvalue(Part, 0x1A8, "dword", k)
+            break
+        end
+    end
 end
 
 -- <Humanoid>
@@ -308,8 +312,8 @@ Helper.TeamColors = {
 }
 
 Helper.getteamcolor = function(Team)
-    local Color = getmemoryvalue(Team, Offsets.TeamColor, "dword")
-    return Helper.TeamColors[Color] or Color
+    local ColorDword = getmemoryvalue(Team, Offsets.TeamColor, "dword")
+    return Helper.TeamColors[ColorDword] or ColorDword
 end
 
 -- <Proximity Prompt>
