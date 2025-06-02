@@ -127,7 +127,7 @@ Helper.BrickColors = {
 
 Helper.getbrickcolor = function(Part)
     local Color = getmemoryvalue(Part, 0x1A8, "dword")
-    return Helper.BrickColors[Color] or Color
+    return Helper.BrickColors[Color]
 end
 
 Helper.setbrickcolor = function(Part, Color)
