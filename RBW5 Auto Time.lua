@@ -1,22 +1,21 @@
-local Workspace = findservice(Game, "Workspace")
-local Player = getlocalplayer()
-local Character = getname(Player)
+local Character = waitforchild(Workspace, getname(getlocalplayer()))
 local Threshold = 1
 
 local Adjustments = {
-    {Ping = 95, Value = 0.4500},
-    {Ping = 85, Value = 0.5400},
-    {Ping = 70, Value = 0.5675},
-    {Ping = 62, Value = 0.6185},
-    {Ping = 52, Value = 0.6950},
-    {Ping = 40, Value = 0.7290},
-    {Ping = 25, Value = 0.7500}
+    {Ping = 100, Value = 0.6495},
+    {Ping = 91, Value = 0.6640},
+    {Ping = 80, Value = 0.6945}, 
+    {Ping = 70, Value = 0.7205},
+    {Ping = 62, Value = 0.7390},
+    {Ping = 51, Value = 0.7985},
+    {Ping = 40, Value = 0.8340},
+    {Ping = 25, Value = 0.8625}
 }
 
 table.sort(Adjustments, function(a, b) return a.Ping > b.Ping end)
 
-local Properties = findfirstchild(findfirstchild(Workspace, Character), "Properties")
-local ShotMeter = findfirstchild(Properties, "ShotMeter")
+local Properties = waitforchild(Character, "Properties")
+local ShotMeter = waitforchild(Properties, "ShotMeter")
 
 while true do
     local Ping = getping()
@@ -27,10 +26,11 @@ while true do
                 break
             end
         end
+        wait()
     end
 
     local ShotValue = getvalue(ShotMeter)
-    if typeof(ShotValue) == "number" and ShotValue ~= 2 and ShotValue >= Threshold then
+    if ShotValue ~= 2 and ShotValue >= Threshold then
         keyrelease(0x45)
     end
 
