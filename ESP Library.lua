@@ -27,30 +27,59 @@ local Library = (function()
     end)
 
     local function DrawText(Params, Text)
-        local TextObj = Drawing.new("Text")
-        TextObj.Text = Text
-        TextObj.Color = Params.TextColor or Params.Color or {255, 255, 255}
-        TextObj.Font = Params.TextFont or 29
-        TextObj.Size = Params.TextSize or 12
-        TextObj.Center = true
-        TextObj.Outline = true
-        TextObj.OutlineColor = {0, 0, 0}
-        TextObj.Visible = false
-        return TextObj
+        local Text = Drawing.new("Text")
+        Text.Text = Text
+        Text.Color = Params.TextColor or Params.Color or {255, 255, 255}
+        Text.Font = Params.TextFont or 29
+        Text.Size = Params.TextSize or 12
+        Text.Center = true
+        Text.Outline = true
+        Text.OutlineColor = {0, 0, 0}
+        Text.Visible = false
+        return Text
+    end
+
+    local function RenderText(Params)
+        local Position = getposition(Params.Part)
+        if not Position then return end
+        
+        local ObjectDistance = GetDistance(Position, Camera)
+        local ScreenPos, OnScreen = worldtoscreenpoint({Position.x, Position.y, Position.z})
+        
+        if ObjectDistance > RenderDistance then
+            if Drawings[Params.Part] then
+                Remove(Drawings[Params.Part])
+                Drawings[Params.Part] = nil
+            end
+            return
+        end
+        
+        local Contents = Params.Distance and string.format("%s\n[%d studs]", Params.Text, math.floor(ObjectDistance)) or Params.Text
+        
+        if not Drawings[Params.Part] then
+            Drawings[Params.Part] = DrawText(Params, Contents)
+        else
+            Drawings[Params.Part].Text = Contents
+        end
+        
+        Drawings[Params.Part].Visible = OnScreen
+        if OnScreen then
+            Drawings[Params.Part].Position = {ScreenPos.x, ScreenPos.y}
+        end
     end
 
     local function Renderer()
         while true do
-            for _, DrawingEntry in pairs(Drawings) do
+            for _, Drawings in pairs(Drawings) do
                 local Visible = false
                 local MinX, MaxX, MinY, MaxY = math.huge, -math.huge, math.huge, -math.huge
 
-                for _, Part in ipairs(DrawingEntry.Parts) do
+                for _, Part in ipairs(Drawings.Parts) do
                     if not Part then
-                        Remove(DrawingEntry.BBox)
-                        Remove(DrawingEntry.BBoxOutline)
-                        Remove(DrawingEntry.NameText)
-                        Remove(DrawingEntry.DistanceText)
+                        Remove(Drawings.BBox)
+                        Remove(Drawings.BBoxOutline)
+                        Remove(Drawings.NameText)
+                        Remove(Drawings.DistanceText)
                         Drawings[_] = nil
                         break
                     end
@@ -92,31 +121,31 @@ local Library = (function()
 
                 if Visible then
                     local CenterX = (MinX + MaxX) / 2
-                    DrawingEntry.BBox.PointA = {MinX, MinY}
-                    DrawingEntry.BBox.PointB = {MaxX, MinY}
-                    DrawingEntry.BBox.PointC = {MaxX, MaxY}
-                    DrawingEntry.BBox.PointD = {MinX, MaxY}
-                    DrawingEntry.BBox.Visible = true
-                    DrawingEntry.BBoxOutline.PointA = {MinX, MinY}
-                    DrawingEntry.BBoxOutline.PointB = {MaxX, MinY}
-                    DrawingEntry.BBoxOutline.PointC = {MaxX, MaxY}
-                    DrawingEntry.BBoxOutline.PointD = {MinX, MaxY}
-                    DrawingEntry.BBoxOutline.Visible = true
+                    Drawings.BBox.PointA = {MinX, MinY}
+                    Drawings.BBox.PointB = {MaxX, MinY}
+                    Drawings.BBox.PointC = {MaxX, MaxY}
+                    Drawings.BBox.PointD = {MinX, MaxY}
+                    Drawings.BBox.Visible = true
+                    Drawings.BBoxOutline.PointA = {MinX, MinY}
+                    Drawings.BBoxOutline.PointB = {MaxX, MinY}
+                    Drawings.BBoxOutline.PointC = {MaxX, MaxY}
+                    Drawings.BBoxOutline.PointD = {MinX, MaxY}
+                    Drawings.BBoxOutline.Visible = true
 
-                    if DrawingEntry.NameText then
-                        DrawingEntry.NameText.Position = {CenterX, MinY - 20}
-                        DrawingEntry.NameText.Visible = true
+                    if Drawings.NameText then
+                        Drawings.NameText.Position = {CenterX, MinY - 20}
+                        Drawings.NameText.Visible = true
                     end
-                    if DrawingEntry.DistanceText then
-                        DrawingEntry.DistanceText.Text = string.format("[%d]", math.floor(GetDistance(getposition(DrawingEntry.Parts[1]), Camera)))
-                        DrawingEntry.DistanceText.Position = {CenterX, MaxY + 5}
-                        DrawingEntry.DistanceText.Visible = true
+                    if Drawings.DistanceText then
+                        Drawings.DistanceText.Text = string.format("[%d]", math.floor(GetDistance(getposition(Drawings.Parts[1]), Camera)))
+                        Drawings.DistanceText.Position = {CenterX, MaxY + 5}
+                        Drawings.DistanceText.Visible = true
                     end
                 else
-                    DrawingEntry.BBox.Visible = false
-                    DrawingEntry.BBoxOutline.Visible = false
-                    if DrawingEntry.NameText then DrawingEntry.NameText.Visible = false end
-                    if DrawingEntry.DistanceText then DrawingEntry.DistanceText.Visible = false end
+                    Drawings.BBox.Visible = false
+                    Drawings.BBoxOutline.Visible = false
+                    if Drawings.NameText then Drawings.NameText.Visible = false end
+                    if Drawings.DistanceText then Drawings.DistanceText.Visible = false end
                 end
             end
             wait()
@@ -153,11 +182,11 @@ local Library = (function()
     end
 
     local function RemoveAll()
-        for _, DrawingEntry in pairs(Drawings) do
-            Remove(DrawingEntry.BBox)
-            Remove(DrawingEntry.BBoxOutline)
-            Remove(DrawingEntry.NameText)
-            Remove(DrawingEntry.DistanceText)
+        for _, Drawings in pairs(Drawings) do
+            Remove(Drawings.BBox)
+            Remove(Drawings.BBoxOutline)
+            Remove(Drawings.NameText)
+            Remove(Drawings.DistanceText)
         end
         Drawings = {}
         Cache = {Size = {}, Corners = {}}
@@ -166,6 +195,8 @@ local Library = (function()
     spawn(Renderer)
 
     return {
+        RenderDistance = 500,
+        RenderText = RenderText,
         RenderBBox = RenderBBox,
         Remove = Remove,
         RemoveAll = RemoveAll
