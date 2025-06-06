@@ -1,11 +1,7 @@
 local Library = (function()
     local RenderDistance = 500
     local Drawings = {}
-
-    local Cache = {
-        Size = {},
-        Corners = {}
-    }
+    local Cache = {Size = {}, Corners = {}}
 
     local function GetDistance(P1, P2)
         local Delta = {x = P2.x - P1.x, y = P2.y - P1.y, z = P2.z - P1.z}
@@ -27,16 +23,16 @@ local Library = (function()
     end)
 
     local function DrawText(Params, Text)
-        local Text = Drawing.new("Text")
-        Text.Text = Text
-        Text.Color = Params.TextColor or Params.Color or {255, 255, 255}
-        Text.Font = Params.TextFont or 29
-        Text.Size = Params.TextSize or 12
-        Text.Center = true
-        Text.Outline = true
-        Text.OutlineColor = {0, 0, 0}
-        Text.Visible = false
-        return Text
+        local TextObj = Drawing.new("Text")
+        TextObj.Text = Text
+        TextObj.Color = Params.TextColor or Params.Color or {255, 255, 255}
+        TextObj.Font = Params.TextFont or 29
+        TextObj.Size = Params.TextSize or 12
+        TextObj.Center = true
+        TextObj.Outline = true
+        TextObj.OutlineColor = {0, 0, 0}
+        TextObj.Visible = false
+        return TextObj
     end
 
     local function RenderText(Params)
@@ -54,12 +50,12 @@ local Library = (function()
             return
         end
         
-        local Contents = Params.Distance and string.format("%s\n[%d studs]", Params.Text, math.floor(ObjectDistance)) or Params.Text
+        local TextContent = Params.Distance and string.format("%s\n[%d studs]", Params.Text, math.floor(ObjectDistance)) or Params.Text
         
         if not Drawings[Params.Part] then
-            Drawings[Params.Part] = DrawText(Params, Contents)
+            Drawings[Params.Part] = DrawText(Params, TextContent)
         else
-            Drawings[Params.Part].Text = Contents
+            Drawings[Params.Part].Text = TextContent
         end
         
         Drawings[Params.Part].Visible = OnScreen
@@ -195,7 +191,7 @@ local Library = (function()
     spawn(Renderer)
 
     return {
-        RenderDistance = 500,
+        RenderDistance = RenderDistance,
         RenderText = RenderText,
         RenderBBox = RenderBBox,
         Remove = Remove,
