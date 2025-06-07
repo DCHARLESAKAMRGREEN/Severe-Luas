@@ -1,8 +1,8 @@
 local Threshold = 1
 
 local Adjustments = {
-    {Ping = 100, Value = 0.64925},
-    {Ping = 91, Value = 0.66525},
+    {Ping = 100, Value = 0.64960},
+    {Ping = 91, Value = 0.665240},
     {Ping = 80, Value = 0.6955}, 
     {Ping = 70, Value = 0.7225},
     {Ping = 60, Value = 0.7410},
