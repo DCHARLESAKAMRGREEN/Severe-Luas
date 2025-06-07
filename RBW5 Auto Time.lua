@@ -1,19 +1,19 @@
-local Character = waitforchild(Workspace, getname(getlocalplayer()))
 local Threshold = 1
 
 local Adjustments = {
-    {Ping = 100, Value = 0.6495},
-    {Ping = 91, Value = 0.6640},
-    {Ping = 80, Value = 0.6945}, 
-    {Ping = 70, Value = 0.7205},
-    {Ping = 62, Value = 0.7390},
-    {Ping = 51, Value = 0.7985},
-    {Ping = 40, Value = 0.8340},
-    {Ping = 25, Value = 0.8625}
+    {Ping = 100, Value = 0.64925},
+    {Ping = 91, Value = 0.66525},
+    {Ping = 80, Value = 0.6955}, 
+    {Ping = 70, Value = 0.7225},
+    {Ping = 60, Value = 0.7410},
+    {Ping = 51, Value = 0.79815},
+    {Ping = 40, Value = 0.8325},
+    {Ping = 25, Value = 0.86225}
 }
 
 table.sort(Adjustments, function(a, b) return a.Ping > b.Ping end)
 
+local Character = waitforchild(Workspace, getname(getlocalplayer()))
 local Properties = waitforchild(Character, "Properties")
 local ShotMeter = waitforchild(Properties, "ShotMeter")
 
