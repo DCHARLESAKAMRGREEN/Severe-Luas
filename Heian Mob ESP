@@ -1,6 +1,4 @@
-if not RenderDistance then
-    RenderDistance = 500
-end
+local RenderDistance = 500
 
 local Live = findfirstchild(Workspace, "Live")
 local NPCs = findfirstchild(Workspace, "NPCs")
@@ -384,5 +382,3 @@ while true do
     DrawMobs()
     wait()
 end
-
-return "Render Distance"
