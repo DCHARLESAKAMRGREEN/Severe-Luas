@@ -1,4 +1,6 @@
-local RenderDistance = 500
+if not RenderDistance then
+    RenderDistance = 500
+end
 
 local Live = findfirstchild(Workspace, "Live")
 local NPCs = findfirstchild(Workspace, "NPCs")
@@ -37,13 +39,9 @@ local Drawings = {
 
 local function GetMobName(Mob)
     local Name = getname(Mob)
-    Name = Name:gsub("%f[%w_][Cc][Uu][Rr][Ss][Ee]%f[^%w_].*", "")
-    Name = Name:gsub("_", " ")
-    Name = Name:gsub("%-.*", "")
-    Name = Name:gsub("(%a)([%w_']*)", function(first, rest)
+    Name = Name:gsub("%f[%w_][Cc][Uu][Rr][Ss][Ee]%f[^%w_].*", ""):gsub("_", " "):gsub("%-.*", ""):gsub("(%a)([%w_']*)", function(first, rest)
         return first:upper()..rest:lower()
-    end)
-    Name = Name:gsub("%s+", " "):gsub("^%s*(.-)%s*$", "%1")
+    end):gsub("%s+", " "):gsub("^%s*(.-)%s*$", "%1")
     return Name
 end
 
@@ -62,7 +60,6 @@ local function GetCorners(Part)
         y = Size.y/2,
         z = Size.z/2
     }
-    
     return {
         {Position.x + HalfSize.x, Position.y + HalfSize.y, Position.z + HalfSize.z},
         {Position.x - HalfSize.x, Position.y + HalfSize.y, Position.z + HalfSize.z}, 
@@ -79,7 +76,8 @@ local function CreateQuad(Mob)
         local Boxes = Drawings.Boxes
         local Healthbars = Drawings.Healthbars
         local Text = Drawings.Text
-        local Color = Alive.NPCs.Parts[Mob] and {0, 150, 255} or {255, 255, 255}
+        local Name = getname(Mob)
+        local Color = Alive.NPCs.Parts[Mob] and {0, 150, 255} or (Name:lower():find("sorcerer") and {0, 255, 0} or {255, 255, 255})
 
         Boxes.Main[Mob] = Drawing.new("Quad")
         Boxes.Main[Mob].Visible = true
@@ -147,11 +145,11 @@ local function UpdateQuad(Mob)
     if not MobPosition then return end
     
     local Distance = GetDistance(CameraPosition, MobPosition)
-    local Boxes = Drawings.Boxes
-    local Healthbars = Drawings.Healthbars
-    local Text = Drawings.Text
-    
     if Distance > RenderDistance then
+        local Boxes = Drawings.Boxes
+        local Healthbars = Drawings.Healthbars
+        local Text = Drawings.Text
+        
         Boxes.Main[Mob].Visible = false
         Boxes.Outline[Mob].Visible = false
         Text.Names[Mob].Visible = false
@@ -163,8 +161,13 @@ local function UpdateQuad(Mob)
         return
     end
     
-    local MinX, MinY = math.huge, math.huge
-    local MaxX, MaxY = -math.huge, -math.huge
+    local Boxes = Drawings.Boxes
+    local Healthbars = Drawings.Healthbars
+    local Text = Drawings.Text
+    local MinX = math.huge
+    local MinY = math.huge
+    local MaxX = -math.huge
+    local MaxY = -math.huge
     local AVisible = true
     
     for _, Part in ipairs(getchildren(Mob)) do
@@ -312,8 +315,7 @@ local function GetMobs()
     local Active = {}
     
     for _, Mob in ipairs(getchildren(Live)) do
-        local Name = getname(Mob)
-        if Name:find("-") then
+        if getname(Mob):find("-") then
             Active[Mob] = true
             if not Alive.Mobs.Parts[Mob] then
                 Alive.Mobs.Parts[Mob] = findfirstchildofclass(Mob, "Part")
@@ -357,11 +359,7 @@ local function GetNPCs()
     
     for _, NPC in ipairs(getchildren(NPCs)) do
         if Alive.NPCs.Parts[NPC] then
-            local NewPart = findfirstchildofclass(NPC, "Part")
-            if NewPart then
-                Alive.NPCs.Parts[NPC] = NewPart
-                Alive.NPCs.Names[NPC] = GetMobName(NPC)
-            end
+            Alive.NPCs.Names[NPC] = GetMobName(NPC)
         end
     end
 end
@@ -387,3 +385,4 @@ while true do
     wait()
 end
 
+return "Render Distance"
