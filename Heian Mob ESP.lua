@@ -247,8 +247,8 @@ local function UpdateQuad(Mob)
     end
 end
 
-local function DrawMobs()
-    if not Camera or not Live then return end
+local function Draw()
+    if not Camera then return end
     
     CameraPosition = getposition(Camera)
     if not CameraPosition then return end
@@ -379,6 +379,6 @@ spawn(function()
 end)
 
 while true do
-    DrawMobs()
+    Draw()
     wait()
 end
