@@ -366,7 +366,7 @@ GetMobs()
 
 spawn(function()
     while true do
-        wait(1)
+        wait(0.1)
         GetMobs()
     end
 end)
