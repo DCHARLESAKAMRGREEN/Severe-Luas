@@ -216,6 +216,7 @@ local function UpdateQuad(Mob)
 
         Text.Distances[Mob].Position = {MinX + (MaxX - MinX) / 2, MaxY + 5}
         Text.Distances[Mob].Text = math.floor(Distance) .. "m"
+        Text.Distances[Mob].Center = true        
 
         if not Alive.NPCs.Parts[Mob] then
             local HealthBarX = MinX - 6
