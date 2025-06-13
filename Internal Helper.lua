@@ -228,7 +228,7 @@ end
 
 Helper.setfov = function(Camera, Float)
     Float = math.clamp(Float, 1, 180)
-    local Fov = Float / 57.3132533
+    local Fov = Float / 57.2958 + 0.0167
     setmemoryvalue(Camera, Offsets.FOV, "float", Fov)
 end
 
@@ -461,5 +461,11 @@ end
 Helper.getanimationid = function(Animation)
     return getmemoryvalue(Animation, Offsets.AnimationId, "qword")
 end
+
+local Camera = findfirstchildofclass(Workspace, "Camera")
+
+Helper.setfov(Camera, 90)
+print(getcamerafov(Camera))
+
 
 return Helper
