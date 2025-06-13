@@ -462,10 +462,4 @@ Helper.getanimationid = function(Animation)
     return getmemoryvalue(Animation, Offsets.AnimationId, "qword")
 end
 
-local Camera = findfirstchildofclass(Workspace, "Camera")
-
-Helper.setfov(Camera, 90)
-print(getcamerafov(Camera))
-
-
 return Helper
