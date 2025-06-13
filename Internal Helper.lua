@@ -228,7 +228,7 @@ end
 
 Helper.setfov = function(Camera, Float)
     Float = math.clamp(Float, 1, 180)
-    local Fov = Float / 57.2958
+    local Fov = Float / 57.3132533
     setmemoryvalue(Camera, Offsets.FOV, "float", Fov)
 end
 
