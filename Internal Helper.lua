@@ -195,6 +195,13 @@ Helper.setsit = function(Humanoid, Value)
     setmemoryvalue(Humanoid, Offsets.Sit, "qword", Sit[Value])
 end
 
+Helper.getmovedirection = function(Humanoid)
+    local x = getmemoryvalue(Humanoid, 0x160, "float")
+    local y = getmemoryvalue(Humanoid, 0x164, "float")
+    local z = getmemoryvalue(Humanoid, 0x168, "float")
+    return {x = x, y = y, z = z}
+end
+
 -- <Camera>
 Helper.CameraTypes = {
     [0] = "Fixed", [1] = "Attach", [2] = "Watch", [3] = "Track",
@@ -228,8 +235,8 @@ end
 -- <Frame>
 Helper.getframeposition = function(Frame)
     return {
-        X = getmemoryvalue(Frame, Offsets.FramePositionX, "float"),
-        Y = getmemoryvalue(Frame, Offsets.FramePositionY, "float")
+        x = getmemoryvalue(Frame, Offsets.FramePositionX, "float"),
+        y = getmemoryvalue(Frame, Offsets.FramePositionY, "float")
     }
 end
 
@@ -240,8 +247,8 @@ end
 
 Helper.getframeoffset = function(Frame)
     return {
-        X = getmemoryvalue(Frame, 0x3AC, "dword"),
-        Y = getmemoryvalue(Frame, 0x3B4, "dword")
+        x = getmemoryvalue(Frame, 0x3AC, "dword"),
+        y = getmemoryvalue(Frame, 0x3B4, "dword")
     }
 end
 
@@ -260,8 +267,8 @@ end
 
 Helper.getframesize = function(Frame)
     return {
-        X = getmemoryvalue(Frame, Offsets.FrameSizeX, "float"),
-        Y = getmemoryvalue(Frame, Offsets.FrameSizeY, "float")
+        x = getmemoryvalue(Frame, Offsets.FrameSizeX, "float"),
+        y = getmemoryvalue(Frame, Offsets.FrameSizeY, "float")
     }
 end
 
@@ -390,9 +397,9 @@ end
 
 Helper.getfogcolor = function(Lighting)
     return {
-        R = getmemoryvalue(Lighting, Offsets.FogColor, "float") * 255,
-        G = getmemoryvalue(Lighting, Offsets.FogColor + 0x4, "float") * 255,
-        B = getmemoryvalue(Lighting, Offsets.FogColor + 0x8, "float") * 255
+        r = getmemoryvalue(Lighting, Offsets.FogColor, "float") * 255,
+        g = getmemoryvalue(Lighting, Offsets.FogColor + 0x4, "float") * 255,
+        b = getmemoryvalue(Lighting, Offsets.FogColor + 0x8, "float") * 255
     }
 end
 
@@ -404,9 +411,9 @@ end
 
 Helper.getoutdoorambient = function(Lighting)
     return {
-        R = getmemoryvalue(Lighting, Offsets.OutdoorAmbient, "float") * 255,
-        G = getmemoryvalue(Lighting, Offsets.OutdoorAmbient + 0x4, "float") * 255,
-        B = getmemoryvalue(Lighting, Offsets.OutdoorAmbient + 0x8, "float") * 255
+        r = getmemoryvalue(Lighting, Offsets.OutdoorAmbient, "float") * 255,
+        g = getmemoryvalue(Lighting, Offsets.OutdoorAmbient + 0x4, "float") * 255,
+        b = getmemoryvalue(Lighting, Offsets.OutdoorAmbient + 0x8, "float") * 255
     }
 end
 
@@ -433,9 +440,9 @@ end
 -- <Tool>
 Helper.gettoolgripposition = function(Tool)
     return {
-        X = getmemoryvalue(Tool, Offsets.Tool_Grip_Position, "float"),
-        Y = getmemoryvalue(Tool, Offsets.Tool_Grip_Position + 0x4, "float"),
-        Z = getmemoryvalue(Tool, Offsets.Tool_Grip_Position + 0x8, "float")
+        x = getmemoryvalue(Tool, Offsets.Tool_Grip_Position, "float"),
+        y = getmemoryvalue(Tool, Offsets.Tool_Grip_Position + 0x4, "float"),
+        z = getmemoryvalue(Tool, Offsets.Tool_Grip_Position + 0x8, "float")
     }
 end
 
