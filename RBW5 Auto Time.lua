@@ -1,14 +1,14 @@
 local Threshold = 1
 
 local Adjustments = {
-    {Ping = 100, Value = 0.649535},
-    {Ping = 91, Value = 0.665240},
-    {Ping = 80, Value = 0.6955}, 
-    {Ping = 70, Value = 0.7225},
-    {Ping = 60, Value = 0.7420},
-    {Ping = 50, Value = 0.79820},
-    {Ping = 40, Value = 0.8330},
-    {Ping = 25, Value = 0.86220}
+    {Ping = 100, Value = 0.6515},
+    {Ping = 90, Value = 0.6653},
+    {Ping = 80, Value = 0.6960}, 
+    {Ping = 70, Value = 0.7235},
+    {Ping = 60, Value = 0.7423},
+    {Ping = 50, Value = 0.7983},
+    {Ping = 40, Value = 0.8350},
+    {Ping = 25, Value = 0.86226}
 }
 
 table.sort(Adjustments, function(a, b) return a.Ping > b.Ping end)
