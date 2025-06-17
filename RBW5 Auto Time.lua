@@ -1,3 +1,5 @@
+if getplaceid() ~= 15800299024 then return end
+
 local Threshold = 1
 
 local Adjustments = {
@@ -67,7 +69,6 @@ thread.create("Rescan", function()
         wait(0.5)
     end
 end)
-
 
 thread.create("Ping", function()
     while true do
