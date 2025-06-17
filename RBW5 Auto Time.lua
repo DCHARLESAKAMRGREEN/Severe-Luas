@@ -6,48 +6,92 @@ local Adjustments = {
     {Ping = 80, Value = 0.6960}, 
     {Ping = 70, Value = 0.7240},
     {Ping = 60, Value = 0.7430},
-    {Ping = 50, Value = 0.8070},
-    {Ping = 40, Value = 0.8350},
+    {Ping = 50, Value = 0.8075},
+    {Ping = 40, Value = 0.8355},
     {Ping = 25, Value = 0.86226}
 }
 
-local function Rescan(Parent, Name)
-    local Result
-    repeat
-        Result = findfirstchild(Parent, Name)
-        wait(1)
-    until Result
-    return Result
-end
-
 table.sort(Adjustments, function(A, B) return A.Ping > B.Ping end)
 
-local Player = getname(getlocalplayer())
-local Character = Rescan(Workspace, Player)
-local Properties = Rescan(Character, "Properties")
-local ShotMeter = Rescan(Properties, "ShotMeter")
+local Name
+local Character
+local Properties
+local ShotMeter
 
-while true do
-    if not Character then
-        Character = Rescan(Workspace, Player)
-        Properties = Rescan(Character, "Properties")
-        ShotMeter = Rescan(Properties, "ShotMeter")
-    end
+thread.create("Rescan", function()
+    while true do
+        local Player = getlocalplayer()
+        if Player then
+            Name = getname(Player)
+        else
+            Name = nil
+            Character = nil
+            Properties = nil
+            ShotMeter = nil
+            wait(1)
+            continue
+        end
 
-    local Ping = getping()
-    if Ping then
-        for i = 1, #Adjustments do
-            if Ping > Adjustments[i].Ping then
-                Threshold = Adjustments[i].Value
-                break
+        if not Character and Name then
+            Character = findfirstchild(Workspace, Name)
+            if not Character then
+                wait(1)
+                continue
             end
         end
-    end
 
-    local ShotValue = getvalue(ShotMeter)
-    if ShotValue and ShotValue ~= 2 and ShotValue >= Threshold then
-        keyrelease(0x45)
-    end
+        if Character and not Properties then
+            Properties = findfirstchild(Character, "Properties")
+            if not Properties then
+                wait(1)
+                continue
+            end
+        end
 
-    wait()
-end
+        if Properties and not ShotMeter then
+            ShotMeter = findfirstchild(Properties, "ShotMeter")
+            if not ShotMeter then
+                wait(1)
+                continue
+            end
+        end
+
+        if not (Name and Character and Properties and ShotMeter) then
+            if not findfirstchild(Workspace, Name) then
+                Character = nil
+                Properties = nil
+                ShotMeter = nil
+            end
+        end
+
+        wait(0.5)
+    end
+end)
+
+
+thread.create("Ping", function()
+    while true do
+        local Ping = getping()
+        if Ping then
+            for i = 1, #Adjustments do
+                if Ping > Adjustments[i].Ping then
+                    Threshold = Adjustments[i].Value
+                    break
+                end
+            end
+        end
+        wait(0.01)
+    end
+end)
+
+thread.create("Autotime", function()
+    while true do
+        if ShotMeter then
+            local ShotValue = getvalue(ShotMeter)
+            if ShotValue and ShotValue ~= 2 and ShotValue >= Threshold then
+                keyrelease(0x45)
+            end
+        end
+        wait()
+    end
+end)
