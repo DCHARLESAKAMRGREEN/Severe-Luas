@@ -81,7 +81,7 @@ thread.create("Ping", function()
                 end
             end
         end
-        wait(0.01)
+        wait()
     end
 end)
 
