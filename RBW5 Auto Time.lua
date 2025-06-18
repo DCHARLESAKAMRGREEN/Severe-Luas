@@ -1,4 +1,4 @@
-if getplaceid() ~= 15800299024 then return end
+if getgameid() ~= 5462326700 then return end
 
 local Threshold = 1
 
