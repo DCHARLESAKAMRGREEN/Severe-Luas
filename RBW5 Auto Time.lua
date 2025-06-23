@@ -3,6 +3,7 @@ if getgameid() ~= 5462326700 then return end
 local Threshold = 1
 
 local Adjustments = {
+    {Ping = 200, Value = 0.3515},
     {Ping = 100, Value = 0.6515},
     {Ping = 90, Value = 0.6653},
     {Ping = 80, Value = 0.6960}, 
