@@ -149,9 +149,9 @@ end
 
 Helper.setcolor = function(Part, Color)
     local Dword = bit32.bor(
-        math.clamp(Color.R, 0, 255),
-        bit32.lshift(math.clamp(Color.G, 0, 255), 8),
-        bit32.lshift(math.clamp(Color.B, 0, 255), 16)
+        math.clamp(Color.r, 0, 255),
+        bit32.lshift(math.clamp(Color.g, 0, 255), 8),
+        bit32.lshift(math.clamp(Color.b, 0, 255), 16)
     )
     setmemoryvalue(Part, 0x1A8, "dword", Dword)
     return Color.r, Color.g, Color.b
