@@ -139,6 +139,23 @@ Helper.setbrickcolor = function(Part, Color)
     end
 end
 
+Helper.getcolor = function(Part)
+    local Color = getmemoryvalue(Part, 0x1A8, "dword")
+    local r = bit32.band(Color, 0xFF)
+    local g = bit32.band(bit32.rshift(Color, 8), 0xFF)
+    local b = bit32.band(bit32.rshift(Color, 16), 0xFF)
+    return {R = r, G = g, B = b}
+end
+
+Helper.setcolor = function(Part, Color)
+    local Dword = bit32.bor(
+        math.clamp(Color.R, 0, 255),
+        bit32.lshift(math.clamp(Color.G, 0, 255), 8),
+        bit32.lshift(math.clamp(Color.B, 0, 255), 16)
+    )
+    setmemoryvalue(Part, 0x1A8, "dword", Dword)
+end
+
 -- <Humanoid>
 Helper.getrigtype = function(Humanoid)
     local RigType = getmemoryvalue(Humanoid, Offsets.RigType, "dword")
