@@ -144,7 +144,7 @@ Helper.getcolor = function(Part)
     local r = bit32.band(Color, 0xFF)
     local g = bit32.band(bit32.rshift(Color, 8), 0xFF)
     local b = bit32.band(bit32.rshift(Color, 16), 0xFF)
-    return {R = r, G = g, B = b}
+    return {r = r, g = g, b = b}
 end
 
 Helper.setcolor = function(Part, Color)
@@ -154,6 +154,7 @@ Helper.setcolor = function(Part, Color)
         bit32.lshift(math.clamp(Color.B, 0, 255), 16)
     )
     setmemoryvalue(Part, 0x1A8, "dword", Dword)
+    return Color.r, Color.g, Color.b
 end
 
 -- <Humanoid>
