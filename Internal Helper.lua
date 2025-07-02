@@ -18,17 +18,17 @@ Helper.Primitive = {
 
 -- <Part>
 Helper.getanchored = function(Part)
-    local Primitive = Helper.Primitive.Get(Part)
+    local Primitive = Helper.Primitive.get(Part)
     return getmemoryvalue(Primitive, Offsets.Anchored, "bool")
 end
 
 Helper.setanchored = function(Part, Value)
-    local Primitive = Helper.Primitive.Get(Part)
+    local Primitive = Helper.Primitive.get(Part)
     setmemoryvalue(Primitive, Offsets.Anchored, "bool", Value)
 end
 
 Helper.setpartsize = function(Part, Size)
-    local Primitive = Helper.Primitive.Get(Part)
+    local Primitive = Helper.Primitive.get(Part)
     setmemoryvalue(Primitive, Offsets.PartSize, "float", Size.X)
     setmemoryvalue(Primitive, Offsets.PartSize + 0x4, "float", Size.Y)
     setmemoryvalue(Primitive, Offsets.PartSize + 0x8, "float", Size.Z)
@@ -51,7 +51,7 @@ Helper.Materials = {
 }
 
 Helper.getmaterial = function(Part)
-    local Primitive = Helper.Primitive.Get(Part)
+    local Primitive = Helper.Primitive.get(Part)
     local Material = getmemoryvalue(Primitive, Offsets.MaterialType, "dword")
     return Helper.Materials[Material] or Material
 end
@@ -65,13 +65,13 @@ Helper.setmaterial = function(Part, MaterialName)
         end
     end
     if Material then
-        local Primitive = Helper.Primitive.Get(Part)
+        local Primitive = Helper.Primitive.get(Part)
         setmemoryvalue(Primitive, Offsets.MaterialType, "dword", Material)
     end
 end
 
 -- <Color>
-Helper.BrickColors = {
+Helper.brickColors = {
     [0x00F3F3F2] = "White", [0x00A2A5A1] = "Grey", [0x0099E9F9] = "Light yellow", [0x009AC7D7] = "Brick yellow",
     [0x00B8DAC2] = "Light green (Mint)", [0x00C8BAE8] = "Light reddish violet", [0x00DBBB80] = "Pastel Blue", [0x004284CB] = "Light orange brown",
     [0x00698ECC] = "Nougat", [0x001C28C4] = "Bright red", [0x00A070C4] = "Med. reddish violet", [0x00AC690D] = "Bright blue",
@@ -127,11 +127,11 @@ Helper.BrickColors = {
 
 Helper.getbrickcolor = function(Part)
     local Color = getmemoryvalue(Part, 0x1A8, "dword")
-    return Helper.BrickColors[Color] or Color
+    return Helper.brickColors[Color] or Color
 end
 
 Helper.setbrickcolor = function(Part, Color)
-    for k,v in pairs(Helper.BrickColors) do
+    for k,v in pairs(Helper.brickColors) do
         if v == Color then
             setmemoryvalue(Part, 0x1A8, "dword", k)
             break
@@ -159,7 +159,7 @@ end
 
 -- <Humanoid>
 Helper.getrigtype = function(Humanoid)
-    local RigType = getmemoryvalue(Humanoid, Offsets.RigType, "dword")
+    local RigType = getmemoryvalue(Humanoid, Offsets.rigType, "dword")
     return RigType == 1 and "R15" or "R6"
 end
 
@@ -422,9 +422,9 @@ Helper.getfogcolor = function(Lighting)
 end
 
 Helper.setfogcolor = function(Lighting, Color)
-    setmemoryvalue(Lighting, Offsets.FogColor, "float", Color.R / 255)
-    setmemoryvalue(Lighting, Offsets.FogColor + 0x4, "float", Color.G / 255)
-    setmemoryvalue(Lighting, Offsets.FogColor + 0x8, "float", Color.B / 255)
+    setmemoryvalue(Lighting, Offsets.FogColor, "float", Color.r / 255)
+    setmemoryvalue(Lighting, Offsets.FogColor + 0x4, "float", Color.g / 255)
+    setmemoryvalue(Lighting, Offsets.FogColor + 0x8, "float", Color.b / 255)
 end
 
 Helper.getoutdoorambient = function(Lighting)
@@ -436,9 +436,9 @@ Helper.getoutdoorambient = function(Lighting)
 end
 
 Helper.setoutdoorambient = function(Lighting, Color)
-    setmemoryvalue(Lighting, Offsets.OutdoorAmbient, "float", Color.R / 255)
-    setmemoryvalue(Lighting, Offsets.OutdoorAmbient + 0x4, "float", Color.G / 255)
-    setmemoryvalue(Lighting, Offsets.OutdoorAmbient + 0x8, "float", Color.B / 255)
+    setmemoryvalue(Lighting, Offsets.OutdoorAmbient, "float", Color.r / 255)
+    setmemoryvalue(Lighting, Offsets.OutdoorAmbient + 0x4, "float", Color.g / 255)
+    setmemoryvalue(Lighting, Offsets.OutdoorAmbient + 0x8, "float", Color.b / 255)
 end
 
 Helper.getclocktime = function(Lighting)
