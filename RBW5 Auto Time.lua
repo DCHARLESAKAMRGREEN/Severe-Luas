@@ -3,14 +3,13 @@ if getgameid() ~= 5462326700 then return end
 local Threshold = 1
 
 local Adjustments = {
-    {Ping = 200, Value = 0.3515},
-    {Ping = 100, Value = 0.6515},
-    {Ping = 90, Value = 0.6653},
-    {Ping = 80, Value = 0.6960}, 
-    {Ping = 70, Value = 0.7240},
-    {Ping = 60, Value = 0.7440},
-    {Ping = 50, Value = 0.8075},
-    {Ping = 40, Value = 0.8370},
+    {Ping = 100, Value = 0.6518},
+    {Ping = 90, Value = 0.6655},
+    {Ping = 80, Value = 0.6963}, 
+    {Ping = 70, Value = 0.7243},
+    {Ping = 60, Value = 0.7448},
+    {Ping = 50, Value = 0.80865},
+    {Ping = 40, Value = 0.83845},
     {Ping = 25, Value = 0.8635}
 }
 
